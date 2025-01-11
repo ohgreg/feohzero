@@ -11,7 +11,7 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Usage: <fen> <moves> <timeout>\n");
         return 1;
     }
-
+    // feold was here
     char *endptr;
     int timeout = strtol(argv[3], &endptr, 10);
     if (*endptr != '\0') {
