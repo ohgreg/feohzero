@@ -1,0 +1,10 @@
+services:
+  server:
+    build: .
+    command: make run
+    volumes:
+      - .:/engine
+      - ~/.ssh:/root/.ssh
+    ports:
+      - "8000:8000"
+    container_name: feoh

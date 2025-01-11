@@ -25,7 +25,7 @@ OBJECTS = $(SOURCES:$(SRCDIR)/%.c=$(BINDIR)/%.o)
 TARGET ?= engine
 
 ## Optional target: useful for running the website
-WEB_TARGET ?= engine.wasm
+WEB_TARGET ?= web/engine.wasm
 
 ## Emscripten compiler
 EMCC = emcc
