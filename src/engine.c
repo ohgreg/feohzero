@@ -18,7 +18,7 @@ int choose_move(char * fen, char * moves, int timeout) {
 //function to load the chess position from the input FEN.
 Board *loadFEN(char *fen){
 
-    ;
+    
 
     //TO DO: check for invalid FEN format (leave for later)(for now assume it is correct)
     Board *board = malloc(sizeof(Board));
@@ -28,8 +28,7 @@ Board *loadFEN(char *fen){
     }
     memset(board, 0, sizeof(Board));
 
-    //for debug:
-    printf("White King is: %llu\n", board->wK);
+    
 
     int len = strlen(fen);
     int rank = 7;
@@ -55,7 +54,7 @@ Board *loadFEN(char *fen){
                 rank--;
                 continue;
             }
-
+    
             if(c == 'r')
                 board->bR |= (1ULL << index);
             else if(c == 'n')
@@ -81,6 +80,7 @@ Board *loadFEN(char *fen){
             else if(c == 'P')
                 board->wP |= (1ULL << index);
             else if(isdigit(c) == 1){
+                //care with this, may be 49? Indexing at 0
                 int skip = c - 48;
                 file += skip;
                 continue;
@@ -140,7 +140,7 @@ Board *loadFEN(char *fen){
         int en_passant_index = fen[last] - 97; 
         last++;
         if(isdigit(fen[last]) == 1)
-            en_passant_index += (48 - fen[last])*8;
+            en_passant_index += (fen[last] - 49)*8;
         else
             fprintf(stderr, "Invalid En Passant square!\n");
         board->en_passant_square |= (1 << en_passant_index);
@@ -159,6 +159,10 @@ Board *loadFEN(char *fen){
     }
     board->halfMove = halfCounter;
 
+    //skip whitespace
+    while(fen[last] == ' ')
+        last++;
+
     //STEP6: get fullmove counter
     int fullCounter = 0;
     while(isdigit(fen[last]) == 1){
@@ -168,8 +172,7 @@ Board *loadFEN(char *fen){
 
     board->fullMove = fullCounter;
 
-    //printf("last is: %d\n", last);
-    printf("len is: %d\n", len);
+
 
     return board;
 }
@@ -197,10 +200,11 @@ int main(int argc, char *argv[]) {
 
     char *fen = argv[1];
     Board *start = loadFEN(fen);
-    printf("White King is: %llu\n", start->wK);
+    printf("White King is: %llu\n", start->wR);
     printf("Halfmove counter is: %d\n", start->halfMove);
     printf("Fullmove counter is: %d\n", start->fullMove);
-    printf("Tomove is: %llu\n", start->toMove);
+    printf("Tomove is: %d\n", start->toMove);
+    printf("En passant square is: %llu\n", start->en_passant_square);
     
 
     fprintf(stdout, "%d\n", choose_move(argv[1], argv[2], timeout));
