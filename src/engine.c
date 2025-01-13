@@ -56,29 +56,29 @@ Board *loadFEN(char *fen){
             }
     
             if(c == 'r')
-                board->bR |= (1ULL << index);
+                board->bR |= ((unsigned long long)1 << index);
             else if(c == 'n')
-                board->bN |= (1ULL << index);
+                board->bN |= ((unsigned long long)1 << index);
             else if(c == 'b')
-                board->bB |= (1ULL << index);
+                board->bB |= ((unsigned long long)1 << index);
             else if(c == 'q')
-                board->bQ |= (1ULL << index);
+                board->bQ |= ((unsigned long long)1 << index);
             else if(c == 'k')
-                board->bK |= (1ULL << index);
+                board->bK |= ((unsigned long long)1 << index);
             else if(c == 'p')
-                board->bP |= (1ULL << index);
+                board->bP |= ((unsigned long long)1 << index);
             else if(c == 'R')
-                board->wR |= (1ULL << index);
+                board->wR |= ((unsigned long long)1 << index);
             else if(c == 'N')
-                board->wN |= (1ULL << index);
+                board->wN |= ((unsigned long long)1 << index);
             else if(c == 'B')
-                board->wB |= (1ULL << index);
+                board->wB |= ((unsigned long long)1 << index);
             else if(c == 'Q')
-                board->wQ |= (1ULL << index);
+                board->wQ |= ((unsigned long long)1 << index);
             else if(c == 'K')
-                board->wK |= (1ULL << index);
+                board->wK |= ((unsigned long long)1 << index);
             else if(c == 'P')
-                board->wP |= (1ULL << index);
+                board->wP |= ((unsigned long long)1 << index);
             else if(isdigit(c) == 1){
                 //care with this, may be 49? Indexing at 0
                 int skip = c - 48;
@@ -105,6 +105,11 @@ Board *loadFEN(char *fen){
 
     //STEP 3: read castling availability:
     while(fen[last] != ' '){
+        if(fen[last] == '-'){
+            board->castle_white = CANNOT_CASTLE;
+            board->castle_black = CANNOT_CASTLE;
+            break;
+        }
         if(fen[last] == 'K'){
             board->castle_white = CAN_CASTLE_OO;
             if(fen[last+1] == 'Q'){
@@ -172,8 +177,6 @@ Board *loadFEN(char *fen){
 
     board->fullMove = fullCounter;
 
-
-
     return board;
 }
     
@@ -200,11 +203,12 @@ int main(int argc, char *argv[]) {
 
     char *fen = argv[1];
     Board *start = loadFEN(fen);
-    printf("White King is: %llu\n", start->wR);
+    printf("White King is: %llu\n", start->bP);
     printf("Halfmove counter is: %d\n", start->halfMove);
     printf("Fullmove counter is: %d\n", start->fullMove);
     printf("Tomove is: %d\n", start->toMove);
     printf("En passant square is: %llu\n", start->en_passant_square);
+    printf("Castling availability for white is: %u\n", start->castle_white);
     
 
     fprintf(stdout, "%d\n", choose_move(argv[1], argv[2], timeout));
