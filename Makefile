@@ -5,7 +5,9 @@ SRCDIR = src
 ## List all files you want to be part of your engine below
 ## (Okay to add more files)
 SOURCES = \
-  $(SRCDIR)/engine.c
+  $(SRCDIR)/engine.c \
+  $(SRCDIR)/parser.c \
+  $(SRCDIR)/utils.c
 
 ## You SHOULD NOT modify the parameters below
 
@@ -13,7 +15,7 @@ SOURCES = \
 CC = gcc
 
 ## Compiler flags
-CFLAGS = -Wall -Wextra -Werror -pedantic
+CFLAGS = -Wall -Wextra -Werror -pedantic -Iinclude
 
 ## Where to put the object files
 BINDIR ?= build
@@ -31,7 +33,7 @@ WEB_TARGET ?= web/engine.wasm
 EMCC = emcc
 
 ## Emscripten flags
-EMCC_FLAGS = -s WASM=1 -s EXPORTED_FUNCTIONS='["_choose_move"]' --no-entry -O3
+EMCC_FLAGS = -s WASM=1 -s EXPORTED_FUNCTIONS='["_choose_move"]' --no-entry -O3 -Iinclude
 
 ## Create the build directory if it doesn't exist
 $(BINDIR):
@@ -61,3 +63,13 @@ run: $(WEB_TARGET)
 .PHONY: clean
 clean:
 	rm -rf $(BINDIR) $(TARGET) $(WEB_TARGET)
+
+## Format the source code using clang-format
+CLANG_FORMAT = clang-format
+CLANG_FORMAT_OPTS = -i
+
+.PHONY: format
+format:
+	@echo "Running clang-format on source files..."
+	@which $(CLANG_FORMAT) > /dev/null || (echo "clang-format is not installed. Please install it first." && exit 1)
+	@find $(SRCDIR) -type f \( -name "*.c" -o -name "*.cpp" -o -name "*.h" \) -exec $(CLANG_FORMAT) $(CLANG_FORMAT_OPTS) {} +
