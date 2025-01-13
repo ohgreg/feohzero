@@ -2,3 +2,4 @@ build
 engine
 *.wasm
 compile_commands.json
+.cache/
