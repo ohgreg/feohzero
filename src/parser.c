@@ -1,7 +1,11 @@
 #include "parser.h"
+#include "board.h"
+#include "utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+//i may have fucked up the includes by the way i dont think i need to include all of those but it kept giving errors idk 
 
 // function to load the chess position from the input FEN.
 Board *loadFEN(char *fen) {
@@ -157,6 +161,8 @@ Board *loadFEN(char *fen) {
     }
 
     board->full_move = fullCounter;
+
+    update_occupied(board);
 
     return board;
 }

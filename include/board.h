@@ -50,4 +50,18 @@ typedef struct {
     U16 full_move;
 } Board;
 
+typedef struct {
+
+    unsigned int start_pos : 6;
+    unsigned int final_pos : 6;
+    unsigned int promo : 3;
+
+} Move;
+
+
+
+/*  ### FUNCTIONS ###  */
+
+
+
 #endif
