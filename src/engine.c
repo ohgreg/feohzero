@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
 
     Move *my_move = malloc(sizeof(Move));
     my_move->start_pos = 1;
-    my_move->final_pos = 18;
+    my_move->final_pos = 55;
     my_move->promo = 0;
 
     apply_move(start, my_move);

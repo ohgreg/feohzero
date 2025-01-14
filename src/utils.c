@@ -152,5 +152,6 @@ void apply_move(Board *board, Move *move) {
     }
     //update the general occupied variable
     board->occupied ^= ((U64)1 << move->start_pos);
+    board->occupied |= ((U64)1 << move->final_pos);
     board->turn = ~board->turn;
 }
