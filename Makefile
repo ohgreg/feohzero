@@ -6,8 +6,8 @@ SRCDIR = src
 ## (Okay to add more files)
 SOURCES = \
   $(SRCDIR)/engine.c \
-  $(SRCDIR)/parser.c \
-  $(SRCDIR)/utils.c
+  $(SRCDIR)/fen.c \
+  $(SRCDIR)/board.c
 
 ## You SHOULD NOT modify the parameters below
 

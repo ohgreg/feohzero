@@ -1,11 +1,10 @@
-#include "parser.h"
 #include "board.h"
-#include "utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-//i may have fucked up the includes by the way i dont think i need to include all of those but it kept giving errors idk 
+// i may have fucked up the includes by the way i dont think i need to include
+// all of those but it kept giving errors idk
 
 // function to load the chess position from the input FEN.
 Board *loadFEN(char *fen) {
@@ -44,29 +43,29 @@ Board *loadFEN(char *fen) {
         }
 
         if (c == 'p')
-            board->black[0] |= ((U64)1 << index);
+            board->pieces[1][0] |= ((U64)1 << index);
         else if (c == 'n')
-            board->black[1] |= ((U64)1 << index);
+            board->pieces[1][1] |= ((U64)1 << index);
         else if (c == 'b')
-            board->black[2] |= ((U64)1 << index);
+            board->pieces[1][2] |= ((U64)1 << index);
         else if (c == 'r')
-            board->black[3] |= ((U64)1 << index);
+            board->pieces[1][3] |= ((U64)1 << index);
         else if (c == 'q')
-            board->black[4] |= ((U64)1 << index);
+            board->pieces[1][4] |= ((U64)1 << index);
         else if (c == 'k')
-            board->black[5] |= ((U64)1 << index);
+            board->pieces[1][5] |= ((U64)1 << index);
         else if (c == 'P')
-            board->white[0] |= ((U64)1 << index);
+            board->pieces[0][0] |= ((U64)1 << index);
         else if (c == 'N')
-            board->white[1] |= ((U64)1 << index);
+            board->pieces[0][1] |= ((U64)1 << index);
         else if (c == 'B')
-            board->white[2] |= ((U64)1 << index);
+            board->pieces[0][2] |= ((U64)1 << index);
         else if (c == 'R')
-            board->white[3] |= ((U64)1 << index);
+            board->pieces[0][3] |= ((U64)1 << index);
         else if (c == 'Q')
-            board->white[4] |= ((U64)1 << index);
+            board->pieces[0][4] |= ((U64)1 << index);
         else if (c == 'K')
-            board->white[5] |= ((U64)1 << index);
+            board->pieces[0][5] |= ((U64)1 << index);
         else if ('0' < c && c < '9') {
             // care with this, may be 49? Indexing at 0
             int skip = c - 48;

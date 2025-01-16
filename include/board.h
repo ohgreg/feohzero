@@ -1,6 +1,10 @@
 #ifndef BOARD_H
 #define BOARD_H
 
+#define CLEAR_BIT(c, n) ((c) &= ~((U64)1 << (n)))
+#define ENABLE_BIT(c, n) ((c) |= ((U64)1 << (n)))
+#define IS_SET_BIT(c, n) (((c) & ((U64)1 << (n))) != 0)
+
 #include <stdint.h>
 
 typedef uint64_t U64;
@@ -34,12 +38,10 @@ typedef enum {
 // define structure for representing the board state
 typedef struct {
     // use 2 arrays of 6 for black and white
-    U64 white[6];
-    U64 black[6];
+    U64 pieces[2][6];
 
-    U64 white_occupied;
-    U64 black_occupied;
-    U64 occupied;
+    // 0 for white, 1 for black, 2 for both
+    U64 occupied[3];
 
     Turn turn : 1;                 // 1 bit
     CastleRights castle_white : 2; // 2 bits
@@ -58,10 +60,9 @@ typedef struct {
 
 } Move;
 
-
-
 /*  ### FUNCTIONS ###  */
-
-
+void print_board(const Board *board);
+void apply_move(Board *board, Move *move);
+void update_occupied(Board *board);
 
 #endif

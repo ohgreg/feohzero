@@ -1,6 +1,5 @@
 #include "board.h"
-#include "parser.h"
-#include "utils.h"
+#include "fen.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -26,16 +25,36 @@ int main(int argc, char *argv[]) {
 
     char *fen = argv[1];
     Board *start = loadFEN(fen);
-    print_board(start);
+    // print_board(start);
 
     Move *my_move = malloc(sizeof(Move));
-    my_move->start_pos = 1;
-    my_move->final_pos = 55;
+    my_move->start_pos = 12;
+    my_move->final_pos = 28;
     my_move->promo = 0;
 
     apply_move(start, my_move);
     print_board(start);
 
+    my_move->start_pos = 51;
+    my_move->final_pos = 35;
+    my_move->promo = 0;
+
+    apply_move(start, my_move);
+    print_board(start);
+
+    my_move->start_pos = 28;
+    my_move->final_pos = 35;
+    my_move->promo = 0;
+
+    apply_move(start, my_move);
+    print_board(start);
+
+    my_move->start_pos = 59;
+    my_move->final_pos = 35;
+    my_move->promo = 0;
+
+    apply_move(start, my_move);
+    print_board(start);
 
     (void)choose_move(argv[1], argv[2], timeout);
 
