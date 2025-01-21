@@ -181,7 +181,7 @@ int findOrigin(Board *Board, int pieceRank, int pieceFile, PieceType piece, int 
                                 k1 = -i;
                                 k2 = i;
                         } 
-                        if(final_rank+k1 <= 7 && final_file+k2 <= 7 && dir[0] == 0){
+                        if(final_rank+k1 <= 7 && final_file+k2 <= 7 && dir[j] == 0){
                         start_pos = 8*(final_rank+k1) + final_file+k2;
                         if(IS_SET_BIT(Board->occupied[2], start_pos) && !IS_SET_BIT(Board->pieces[turn][BISHOP], start_pos))
                             dir[j] = 1;
@@ -190,12 +190,14 @@ int findOrigin(Board *Board, int pieceRank, int pieceFile, PieceType piece, int 
                     }
                     else
                         dir[j] = 1;
-                        
+
                     }
                 }
+                break;
 
+            case ROOK:
 
-            break;
+            
         }
     }
 
