@@ -160,50 +160,38 @@ int findOrigin(Board *Board, int pieceRank, int pieceFile, PieceType piece, int 
                 break;
             case BISHOP:
                 int dir[4] = {0};
-                for(int i=1; i<=7; i++){
-                    // check top right diagonal movement
-                    if(final_rank+i <= 7 && final_file+i <= 7 && dir[0] == 0){
-                        start_pos = 8*(final_rank+i) + final_file+i;
+                for(int i=1; i<=7; i++) {
+                    for(int j=0; j<4; j++) {
+                        int k1;
+                        int k2;
+                        switch (j) {
+                            case 0: 
+                                k1 = i;
+                                k2 = i;
+                                break;
+                            case 1:
+                                k1 = i;
+                                k2 = -i;
+                                break;
+                            case 2: 
+                                k1 = -i;
+                                k2 = -i;
+                                break;
+                            case 3:
+                                k1 = -i;
+                                k2 = i;
+                        } 
+                        if(final_rank+k1 <= 7 && final_file+k2 <= 7 && dir[0] == 0){
+                        start_pos = 8*(final_rank+k1) + final_file+k2;
                         if(IS_SET_BIT(Board->occupied[2], start_pos) && !IS_SET_BIT(Board->pieces[turn][BISHOP], start_pos))
-                            dir[0] = 1;
+                            dir[j] = 1;
                         else
                             return start_pos;
                     }
                     else
-                        dir[0] = 1;
-
-                    // check top left diagonal movement
-                    if(final_rank+i <= 7 && final_file-i >= 0 && dir[1] == 0){
-                        start_pos = 8*(final_rank+i) + final_file-i;
-                        if(IS_SET_BIT(Board->occupied[2], start_pos) && !IS_SET_BIT(Board->pieces[turn][BISHOP], start_pos))
-                            dir[1] = 1;
-                        else
-                            return start_pos;
+                        dir[j] = 1;
+                        
                     }
-                    else
-                        dir[1] = 1;
-
-                    // check bottom left diagonal movement
-                    if(final_rank-i >= 0 && final_file-i >=0 && dir[2] == 0){
-                        start_pos = 8*(final_rank-i) + final_file-i;
-                        if(IS_SET_BIT(Board->occupied[2], start_pos) && !IS_SET_BIT(Board->pieces[turn][BISHOP], start_pos))
-                            dir[2] = 1;
-                        else
-                            return start_pos;
-                    }
-                    else
-                        dir[2] = 1;
-
-                    // check bottom right diagonal movement
-                    if(final_rank-i >= 0 && final_file+i <= 7 && dir[3] == 0){
-                        start_pos = 8*(final_rank-i) + final_file+i;
-                        if(IS_SET_BIT(Board->occupied[2], start_pos) && !IS_SET_BIT(Board->pieces[turn][BISHOP], start_pos))
-                            dir[3] = 1;
-                        else
-                            return start_pos;
-                    }
-                    else
-                        dir[3] = 1;
                 }
 
 
