@@ -37,7 +37,7 @@ typedef enum {
 
 // define structure for representing the board state
 typedef struct {
-    // use 2 arrays of 6 for black and white
+    // use 2 arrays of 6 for black(1) and white(0)
     U64 pieces[2][6];
 
     // 0 for white, 1 for black, 2 for both
@@ -57,6 +57,8 @@ typedef struct {
     unsigned int start_pos : 6;
     unsigned int final_pos : 6;
     unsigned int promo : 3;
+    unsigned int check : 1;
+    unsigned int mate : 1;
 
 } Move;
 
@@ -64,5 +66,6 @@ typedef struct {
 void print_board(const Board *board);
 void apply_move(Board *board, Move *move);
 void update_occupied(Board *board);
+Move translateMove(const char* moveStr);
 
 #endif
