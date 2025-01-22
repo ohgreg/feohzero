@@ -4,6 +4,7 @@
 #define CLEAR_BIT(c, n) ((c) &= ~((U64)1 << (n)))
 #define ENABLE_BIT(c, n) ((c) |= ((U64)1 << (n)))
 #define IS_SET_BIT(c, n) (((c) & ((U64)1 << (n))) != 0)
+#define CTZ(c) (__builtin_ctz(c))
 
 #include <stdint.h>
 
@@ -23,7 +24,7 @@ typedef enum {
 
 // enum for castling rights (2 bits for each player)
 typedef enum {
-    CANNOT_CASTLE = 0, // 00
+    CANNOT_CASTLE = 0,   // 00
     CAN_CASTLE_OO = 1,   // 01
     CAN_CASTLE_OOO = 2,  // 10
     CAN_CASTLE = 3       // 11 (both sides)
@@ -66,6 +67,6 @@ typedef struct {
 void print_board(const Board *board);
 void apply_move(Board *board, Move *move);
 void update_occupied(Board *board);
-Move translateMove(const char* moveStr);
+Move *translate_move(const char *moveStr, Board *Board);
 
 #endif
