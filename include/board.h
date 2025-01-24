@@ -4,7 +4,8 @@
 #define CLEAR_BIT(c, n) ((c) &= ~((U64)1 << (n)))
 #define ENABLE_BIT(c, n) ((c) |= ((U64)1 << (n)))
 #define IS_SET_BIT(c, n) (((c) & ((U64)1 << (n))) != 0)
-#define CTZ(c) (__builtin_ctz(c))
+#define LSB(c) (__builtin_ctzll(c))
+#define POP_LSB(n, c) n = LSB(c); CLEAR_BIT(c, n);
 
 #include <stdint.h>
 
@@ -63,8 +64,9 @@ typedef struct {
 
 } Move;
 
-/*  ### FUNCTIONS ###  */
+// function prototypes
 void print_board(const Board *board);
+void print_bitboard(const U64 board) ;
 void apply_move(Board *board, Move *move);
 void update_occupied(Board *board);
 Move *translate_move(const char *moveStr, Board *Board);

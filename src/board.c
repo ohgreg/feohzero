@@ -59,6 +59,20 @@ void print_board(const Board *board) {
     printf("\n     a  b  c  d  e  f  g  h\n"); // file letters
 }
 
+void print_bitboard(const U64 board) {
+    for (int rank = 7; rank >= 0; rank--) {
+        for (int file = 0; file < 8; file++) {
+            if (IS_SET_BIT(board, 8 * rank + file)) {
+                putchar('1');
+                continue;
+            }
+            putchar('.');
+        }
+        putchar('\n');
+    }
+    putchar('\n');
+}
+
 // update which squares are occupied in the board and by what color
 void update_occupied(Board *board) {
     for (int i = 0; i < 6; i++) {

@@ -24,46 +24,14 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    init_LUT();
+
     char *fen = argv[1];
     Board *start = loadFEN(fen);
-    // print_board(start);
-
-    Move *my_move = malloc(sizeof(Move));
-    my_move->start_pos = 12;
-    my_move->final_pos = 28;
-    my_move->promo = 0;
-
-    apply_move(start, my_move);
-    print_board(start);
-    printf("\n%llx\n\n", generate_pawn_moves(start, 51));
-
-    my_move->start_pos = 51;
-    my_move->final_pos = 35;
-    my_move->promo = 0;
-
-    apply_move(start, my_move);
-    print_board(start);
-    printf("\n%llx\n\n", generate_pawn_moves(start, 28));
-
-    my_move->start_pos = 28;
-    my_move->final_pos = 35;
-    my_move->promo = 0;
-
-    apply_move(start, my_move);
-    print_board(start);
-    LUT lut;
-    init_knight_LUT(&lut);
-    printf("\n%llx\n\n", generate_knight_moves(start, &lut, 62));
-
-    my_move->start_pos = 62;
-    my_move->final_pos = 45;
-    my_move->promo = 0;
-
-    apply_move(start, my_move);
     print_board(start);
 
-    init_king_LUT(&lut);
-    printf("\n%llx\n\n", generate_king_moves(start, &lut, 4));
+    // ./engine "3p3p/8/1p6/8/1P1Q2p1/2PpP3/8/8 w KQkq - 0 1" 0 0
+    print_bitboard(generate_queen_moves(start, 27));
 
     (void)choose_move(argv[1], argv[2], timeout);
 

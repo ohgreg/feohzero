@@ -17,23 +17,41 @@
 #define FILE_GH (FILE_G | FILE_H)
 #define FILE_AB (FILE_A | FILE_B)
 
+extern const U64 rook_magic[64];
+extern const U64 bishop_magic[64];
+
+extern const int rook_shift[64];
+extern const int bishop_shift[64];
+
+extern int rook_offset[64];
+extern int bishop_offset[64];
+
+extern U64 rook_mask[64];
+extern U64 bishop_mask[64];
+
 // struct for LUTs
 typedef struct {
     U64 knight[64];
     U64 king[64];
-    U64 *rook;
-    U64 *bishop;
+    U64 rook[102400];
+    U64 bishop[5248];
 } LUT;
 
+extern LUT lut;
+
 // function prototypes
-void init_knight_LUT(LUT *lut);
-void init_king_LUT(LUT *lut);
+U64 slide(U64 occupied, int truncate, int pos, int directions[4][2]);
+int square_cnt(U64 value, int squares[64]);
+
+void init_knight_LUT(void);
+void init_king_LUT(void);
+int init_LUT(void);
 
 U64 generate_pawn_moves(Board *board, int pos);
-U64 generate_knight_moves(Board *board, LUT *lut, int pos);
-U64 generate_king_moves(Board *board, LUT *lut, int pos);
-// U64 generate_bishop_moves(Board *board, int pos);
-// U64 generate_rook_moves(Board *board, int pos);
-// U64 generate_queen_moves(Board *board, int pos);
+U64 generate_knight_moves(Board *board, int pos);
+U64 generate_king_moves(Board *board, int pos);
+U64 generate_bishop_moves(Board *board, int pos);
+U64 generate_rook_moves(Board *board, int pos);
+U64 generate_queen_moves(Board *board, int pos);
 
 #endif
