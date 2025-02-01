@@ -3,3 +3,4 @@ engine
 *.wasm
 compile_commands.json
 .cache/
+test_runner

@@ -1,41 +1,53 @@
 #ifndef BOARD_H
 #define BOARD_H
 
-#define CLEAR_BIT(c, n) ((c) &= ~((U64)1 << (n)))
-#define ENABLE_BIT(c, n) ((c) |= ((U64)1 << (n)))
-#define IS_SET_BIT(c, n) (((c) & ((U64)1 << (n))) != 0)
-#define LSB(c) (__builtin_ctzll(c))
-#define POP_LSB(n, c) n = LSB(c); CLEAR_BIT(c, n);
-
 #include <stdint.h>
 
 typedef uint64_t U64;
+typedef uint32_t U32;
 typedef uint16_t U16;
 typedef uint8_t U8;
 
+// clear a bit at position n
+static inline void clear_bit(U64 *c, int n) {
+    *c &= ~((U64)1 << n);
+}
+
+// enable (set) a bit at position n
+static inline void enable_bit(U64 *c, int n) {
+    *c |= ((U64)1 << n);
+}
+
+// check if a bit at position n is set (returns 1 if set, 0 if not)
+static inline int is_set_bit(U64 c, int n) {
+    return (c & ((U64)1 << n)) != 0;
+}
+
+// get the LSB index
+static inline int lsb(U64 c) {
+    return __builtin_ctzll(c);
+}
+
+// pop the LSB and return its index
+static inline int pop_lsb(U64 *c) {
+    int n = lsb(*c);
+    clear_bit(c, n);
+    return n;
+}
+
 // enum for piece types
-typedef enum {
-    PAWN = 0,
-    KNIGHT,
-    BISHOP,
-    ROOK,
-    QUEEN,
-    KING
-} PieceType;
+typedef enum { PAWN = 0, KNIGHT, BISHOP, ROOK, QUEEN, KING } PieceType;
 
 // enum for castling rights (2 bits for each player)
 typedef enum {
-    CANNOT_CASTLE = 0,   // 00
-    CAN_CASTLE_OO = 1,   // 01
-    CAN_CASTLE_OOO = 2,  // 10
-    CAN_CASTLE = 3       // 11 (both sides)
+    CANNOT_CASTLE = 0,  // 00
+    CAN_CASTLE_OO = 1,  // 01
+    CAN_CASTLE_OOO = 2, // 10
+    CAN_CASTLE = 3      // 11 (both sides)
 } CastleRights;
 
 // enum for move type (1 bit in total)
-typedef enum {
-    WHITE_TO_MOVE = 0,
-    BLACK_TO_MOVE = 1
-} Turn;
+typedef enum { WHITE_TO_MOVE = 0, BLACK_TO_MOVE = 1 } Turn;
 
 // define structure for representing the board state
 typedef struct {
@@ -55,18 +67,26 @@ typedef struct {
 } Board;
 
 typedef struct {
+    // do move
+    U8 from;  // start square (0-63)
+    U8 to;    // final square (0-63)
+    U8 promo; // promotion piece type
 
-    unsigned int start_pos : 6;
-    unsigned int final_pos : 6;
-    unsigned int promo : 3;
-    unsigned int check : 1;
-    unsigned int mate : 1;
-
+    // undo move
+    U8 piece;    // moved piece type
+    U8 captured; // captured piece type
+    U8 flags;    // special move flags
+    U8 ep;       // en passant square (0-63)
 } Move;
+
+typedef struct {
+    Move moves[256]; // array of moves
+    int count;       // number of moves stored
+} MoveList;
 
 // function prototypes
 void print_board(const Board *board);
-void print_bitboard(const U64 board) ;
+void print_bitboard(const U64 board);
 void apply_move(Board *board, Move *move);
 void update_occupied(Board *board);
 Move *translate_move(const char *moveStr, Board *Board);

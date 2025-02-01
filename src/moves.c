@@ -99,10 +99,8 @@ U64 slide(U64 occupied, int truncate, int pos, int directions[4][2]) {
 
 int square_cnt(U64 value, int squares[64]) {
     int i = 0;
-    int sq;
     while (value) {
-        POP_LSB(sq, value);
-        squares[i++] = sq;
+        squares[i++] = pop_lsb(&value);
     }
     return i;
 }
@@ -212,49 +210,30 @@ int init_LUT(void) {
     return 0;
 }
 
-U64 generate_knight_moves(Board *board, int pos) {
-    U64 moves = lut.knight[pos];
-    moves &= ~board->occupied[board->turn];
-    return moves;
-}
-
-U64 generate_king_moves(Board *board, int pos) {
-    U64 moves = lut.king[pos];
-    moves &= ~board->occupied[board->turn];
-    return moves;
-}
-
 U64 generate_pawn_moves(Board *board, int pos) {
     U64 moves = 0;
-    int turn = board->turn;
+    int turn = board->turn; // 0 for white, 1 for black
     int dir = turn ? -1 : 1;
 
-    // set en passant as occupied
-    if (board->ep_square != 64)
-        ENABLE_BIT(board->occupied[!turn], board->ep_square);
-
     // capture diagonal left
-    if (IS_SET_BIT(~(turn ? FILE_H : FILE_A) & board->occupied[!turn],
+    if (is_set_bit(~(turn ? FILE_H : FILE_A) & board->occupied[!turn],
                    pos + 7 * dir)) {
-        ENABLE_BIT(moves, pos + 7 * dir);
+        enable_bit(&moves, pos + 7 * dir);
     }
 
     // capture diagonal right
-    if (IS_SET_BIT(~(turn ? FILE_A : FILE_H) & board->occupied[!turn],
+    if (is_set_bit(~(turn ? FILE_A : FILE_H) & board->occupied[!turn],
                    pos + 9 * dir)) {
-        ENABLE_BIT(moves, pos + 9 * dir);
+        enable_bit(&moves, pos + 9 * dir);
     }
 
-    // clear en passant
-    CLEAR_BIT(board->occupied[!turn], board->ep_square);
-
     // move 1 forward
-    if (!IS_SET_BIT(board->occupied[2], pos + 8 * dir)) {
-        ENABLE_BIT(moves, pos + 8 * dir);
+    if (!is_set_bit(board->occupied[2], pos + 8 * dir)) {
+        enable_bit(&moves, pos + 8 * dir);
         // move 2 forward
-        if (IS_SET_BIT(turn ? RANK_2 : RANK_7, pos) &&
-            !IS_SET_BIT(board->occupied[2], pos + 16 * dir)) {
-            ENABLE_BIT(moves, pos + 16 * dir);
+        if (is_set_bit(turn ? RANK_7 : RANK_2, pos) &&
+            !is_set_bit(board->occupied[2], pos + 16 * dir)) {
+            enable_bit(&moves, pos + 16 * dir);
         }
     }
 
@@ -262,23 +241,128 @@ U64 generate_pawn_moves(Board *board, int pos) {
 }
 
 U64 generate_bishop_moves(Board *board, int pos) {
-    U64 moves = lut.bishop[(((board->occupied[2] & bishop_mask[pos]) *
-                             bishop_magic[pos]) >>
-                            bishop_shift[pos]) +
-                           bishop_offset[pos]];
-    moves &= ~board->occupied[board->turn];
-    return moves;
+    return lut.bishop[(((board->occupied[2] & bishop_mask[pos]) *
+                        bishop_magic[pos]) >>
+                       bishop_shift[pos]) +
+                      bishop_offset[pos]];
 }
 
 U64 generate_rook_moves(Board *board, int pos) {
-    U64 moves =
-        lut.rook[(((board->occupied[2] & rook_mask[pos]) * rook_magic[pos]) >>
-                  rook_shift[pos]) +
-                 rook_offset[pos]];
-    moves &= ~board->occupied[board->turn];
-    return moves;
+    return lut
+        .rook[(((board->occupied[2] & rook_mask[pos]) * rook_magic[pos]) >>
+               rook_shift[pos]) +
+              rook_offset[pos]];
 }
 
 U64 generate_queen_moves(Board *board, int pos) {
     return generate_bishop_moves(board, pos) | generate_rook_moves(board, pos);
+}
+
+U64 generate_piece_moves(Board *board, int piece, int pos) {
+    U64 moves = (U64)0;
+    switch (piece) {
+    case PAWN:
+        moves = generate_pawn_moves(board, pos);
+        break;
+    case KNIGHT:
+        moves = lut.knight[pos];
+        break;
+    case BISHOP:
+        moves = generate_bishop_moves(board, pos);
+        break;
+    case ROOK:
+        moves = generate_rook_moves(board, pos);
+        break;
+    case QUEEN:
+        moves = generate_queen_moves(board, pos);
+        break;
+    case KING:
+        moves = lut.king[pos];
+        break;
+    }
+
+    moves &= ~board->occupied[board->turn];
+
+    return moves;
+}
+
+int king_in_check(Board *board) {
+    int turn = board->turn;
+
+    // find the king
+    int king_pos = lsb(board->pieces[!turn][KING]);
+
+    // generate all opponent moves
+    U64 moves = 0;
+    for (int piece = 0; piece < 6; piece++) {
+        U64 pieces = board->pieces[turn][piece];
+        while (pieces != 0) {
+            int from = pop_lsb(&pieces);
+            moves |= generate_piece_moves(board, piece, from);
+        }
+    }
+
+    // check if the king is attacked
+    return is_set_bit(moves, king_pos);
+}
+
+int is_illegal_move(Board *board, Move *move) {
+    Board temp = *board;
+    apply_move(&temp, move);
+    return king_in_check(&temp);
+}
+
+void generate_moves(MoveList *list, Board *board) {
+    int turn = board->turn;
+    U64 pieces, moves;
+    int from, to;
+
+    for (int piece = 0; piece < 6; piece++) {
+        pieces = board->pieces[turn][piece];
+        while (pieces != 0) {
+            from = pop_lsb(&pieces);
+            moves = generate_piece_moves(board, piece, from);
+            while (moves != 0) {
+                to = pop_lsb(&moves);
+                Move move = {from, to, 0, piece, 0, 0, 0};
+                if (is_illegal_move(board, &move)) continue;
+                if (piece == PAWN &&
+                    (to >= (turn ? 0 : 56) && to <= (turn ? 7 : 63))) {
+                    // only promote to knight or queen
+                    for (int promo = KNIGHT; promo <= QUEEN; promo++) {
+                        move.promo = promo;
+                        list->moves[list->count++] = move;
+                    }
+                    continue;
+                }
+                list->moves[list->count++] = move;
+            }
+        }
+    }
+}
+
+void print_move(Move *move) {
+    const char *pieces[] = {"Pawn", "Knight", "Bishop",
+                            "Rook", "Queen",  "King"};
+
+    // print piece type
+    printf("%-6s", pieces[move->piece]);
+
+    // print move details
+    printf(" %c%d -> %c%d", 'a' + (move->from % 8), 1 + move->from / 8,
+           'a' + (move->to % 8), 1 + move->to / 8);
+
+    // handle promotion
+    if (move->promo != 0) {
+        printf(" Promo: %s", pieces[move->promo]);
+    }
+
+    printf("\n");
+}
+
+void print_move_list(MoveList *list) {
+    printf("\n");
+    for (int i = 0; i < list->count; i++) {
+        print_move(&list->moves[i]);
+    }
 }

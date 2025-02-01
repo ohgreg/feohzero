@@ -48,10 +48,15 @@ void init_king_LUT(void);
 int init_LUT(void);
 
 U64 generate_pawn_moves(Board *board, int pos);
-U64 generate_knight_moves(Board *board, int pos);
-U64 generate_king_moves(Board *board, int pos);
 U64 generate_bishop_moves(Board *board, int pos);
 U64 generate_rook_moves(Board *board, int pos);
 U64 generate_queen_moves(Board *board, int pos);
+U64 generate_piece_moves(Board *board, int piece, int pos);
+int king_in_check(Board *board);
+int is_illegal_move(Board *board, Move *move);
+void generate_moves(MoveList *list, Board *board);
+
+void print_move(Move *move);
+void print_move_list(MoveList *list);
 
 #endif

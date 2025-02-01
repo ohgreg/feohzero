@@ -2,6 +2,9 @@
 
 ## Where our implementation is located (don't change)
 SRCDIR = src
+TESTDIR = test
+LIBDIR = libs/unity
+
 ## List all files you want to be part of your engine below
 ## (Okay to add more files)
 SOURCES = \
@@ -24,7 +27,7 @@ BINDIR ?= build
 ## Object filenames derived from source filenames
 OBJECTS = $(SOURCES:$(SRCDIR)/%.c=$(BINDIR)/%.o)
 
-# The name of the binary (executable) file
+## The name of the binary (executable) file
 TARGET ?= engine
 
 ## Optional target: useful for running the website
@@ -73,4 +76,37 @@ CLANG_FORMAT_OPTS = -i
 format:
 	@echo "Running clang-format on source files..."
 	@which $(CLANG_FORMAT) > /dev/null || (echo "clang-format is not installed. Please install it first." && exit 1)
-	@find $(SRCDIR) -type f \( -name "*.c" -o -name "*.cpp" -o -name "*.h" \) -exec $(CLANG_FORMAT) $(CLANG_FORMAT_OPTS) {} +
+	@find $(SRCDIR) include -type f \( -name "*.c" -o -name "*.cpp" -o -name "*.h" \) -exec $(CLANG_FORMAT) $(CLANG_FORMAT_OPTS) {} +
+
+
+## Unit Testing Configuration
+
+## Test directory and Unity library location
+TESTDIR = test
+LIBDIR = libs/unity
+
+## List all test files
+TEST_SOURCES = \
+  $(TESTDIR)/test1.c
+
+## Test object filenames
+TEST_OBJECTS = $(TEST_SOURCES:$(TESTDIR)/%.c=$(BINDIR)/%.o)
+
+## Name of the test binary
+TEST_BIN = test_runner
+
+## Ensure Unity is included in the compilation
+CFLAGS += -I$(LIBDIR)
+
+## Compile each test object file
+$(BINDIR)/%.o: $(TESTDIR)/%.c $(BINDIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+## Build the test executable separately
+$(TEST_BIN): $(TEST_OBJECTS) $(filter-out $(BINDIR)/engine.o, $(OBJECTS)) $(LIBDIR)/unity.c
+	$(CC) $(CFLAGS) $^ -o $@
+
+## Run the tests
+.PHONY: test
+test: $(TEST_BIN)
+	./$(TEST_BIN)
