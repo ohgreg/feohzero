@@ -87,7 +87,8 @@ LIBDIR = libs/unity
 
 ## List all test files
 TEST_SOURCES = \
-  $(TESTDIR)/test1.c
+  $(TESTDIR)/perft.c
+  # $(TESTDIR)/test1.c
 
 ## Test object filenames
 TEST_OBJECTS = $(TEST_SOURCES:$(TESTDIR)/%.c=$(BINDIR)/%.o)

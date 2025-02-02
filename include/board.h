@@ -3,7 +3,6 @@
 
 #include <stdint.h>
 
-
 typedef uint64_t U64;
 typedef uint32_t U32;
 typedef uint16_t U16;
@@ -50,16 +49,15 @@ typedef enum {
 // enum for move type (1 bit in total)
 typedef enum { WHITE_TO_MOVE = 0, BLACK_TO_MOVE = 1 } Turn;
 
-//enum for move flags 
+// enum for move flags
 typedef enum {
-    NORMAL_MOVE = 0,    //00000
-    CAPTURE_MOVE = 1,   //00001
-    EN_PASSANT = 2,     //00010
-    CASTLING = 4,       //00100
-    PROMOTION = 8,      //01000
-    DOUBLE_PAWN_PUSH = 16    //10000
+    NORMAL_MOVE = 0,      // 00000
+    CAPTURE_MOVE = 1,     // 00001
+    EN_PASSANT = 2,       // 00010
+    CASTLING = 4,         // 00100
+    PROMOTION = 8,        // 01000
+    DOUBLE_PAWN_PUSH = 16 // 10000
 } MoveFlags;
-
 
 // define structure for representing the board state
 typedef struct {
@@ -95,7 +93,6 @@ typedef struct {
     Move moves[256]; // array of moves
     int count;       // number of moves stored
 } MoveList;
-
 
 // function prototypes
 void print_board(const Board *board);

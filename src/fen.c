@@ -66,7 +66,7 @@ Board *loadFEN(char *fen) {
             board->pieces[0][4] |= ((U64)1 << index);
         else if (c == 'K')
             board->pieces[0][5] |= ((U64)1 << index);
-        else if ('0' < c && c < '9') {
+        else if ('1' < c && c < '8') {
             // care with this, may be 49? Indexing at 0
             int skip = c - 48;
             file += skip;
@@ -121,18 +121,19 @@ Board *loadFEN(char *fen) {
     while (fen[last] == ' ')
         last++;
 
-    // STEP4: get enpassant square
-
-    if (fen[last] == '-')
-        board->ep_square = 0;
-    else {
-        int en_passant_index = fen[last] - 97;
+    // STEP 4: Get en passant square
+    if (fen[last] == '-') {
+        board->ep_square = 64;
+    } else {
+        int file = fen[last] - 'a';
         last++;
-        if ('0' < fen[last] && fen[last] < '9')
-            en_passant_index += (fen[last] - 49) * 8;
-        else
-            fprintf(stderr, "Invalid En Passant square!\n");
-        board->ep_square |= (1 << en_passant_index);
+        if (fen[last] >= '1' && fen[last] <= '8') {
+            int rank = fen[last] - '1';
+            board->ep_square = rank * 8 + file;
+        } else {
+            fprintf(stderr, "Invalid En Passant square: %c%c\n", fen[last - 1], fen[last]);
+            board->ep_square = 64;
+        }
     }
     last++;
 

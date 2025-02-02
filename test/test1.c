@@ -16,14 +16,19 @@ void tearDown(void) {
 }
 
 void test_generate_moves(void) {
-    start = loadFEN("rnbqkbnr/pppp1ppp/8/3Pp3/8/8/PPP1PPPP/RNBQKBNR w KQkq e6 0 1");
+    start = loadFEN("r3k2r/1b4bq/8/8/8/8/7B/R3K2R w KQkq - 0 1");
     TEST_ASSERT_NOT_NULL(start);
+    // start->ep_square = 40;
     print_board(start);
 
     MoveList list;
     list.count = 0;
     generate_moves(&list, start);
+    apply_move(start, &list.moves[16]);
+    print_board(start);
 
+    list.count = 0;
+    generate_moves(&list, start);
     print_move_list(&list);
 
     free(start);
