@@ -216,13 +216,13 @@ U64 generate_pawn_moves(Board *board, int pos) {
     int dir = turn ? -1 : 1;
 
     // capture diagonal left
-    if (is_set_bit(~(turn ? FILE_H : FILE_A) & board->occupied[!turn],
+    if (is_set_bit(~(turn ? FILE_A : FILE_H) & board->occupied[!turn],
                    pos + 7 * dir)) {
         enable_bit(&moves, pos + 7 * dir);
     }
 
     // capture diagonal right
-    if (is_set_bit(~(turn ? FILE_A : FILE_H) & board->occupied[!turn],
+    if (is_set_bit(~(turn ? FILE_H : FILE_A) & board->occupied[!turn],
                    pos + 9 * dir)) {
         enable_bit(&moves, pos + 9 * dir);
     }
@@ -259,11 +259,10 @@ U64 generate_queen_moves(Board *board, int pos) {
 }
 
 U64 generate_piece_moves(Board *board, int piece, int pos) {
-    U64 moves = (U64)0;
+    U64 moves;
     switch (piece) {
     case PAWN:
-        moves = generate_pawn_moves(board, pos);
-        break;
+        return generate_pawn_moves(board, pos);
     case KNIGHT:
         moves = lut.knight[pos];
         break;
@@ -279,31 +278,55 @@ U64 generate_piece_moves(Board *board, int piece, int pos) {
     case KING:
         moves = lut.king[pos];
         break;
+    default:
+        return 0;
     }
 
-    moves &= ~board->occupied[board->turn];
+    return moves & ~board->occupied[board->turn];
+}
 
+U64 attacked_squares(Board *board) {
+    U64 moves = 0;
+    for (int piece = 0; piece < 6; piece++) {
+        U64 pieces = board->pieces[board->turn][piece];
+        while (pieces) {
+            moves |= generate_piece_moves(board, piece, pop_lsb(&pieces));
+        }
+    }
     return moves;
 }
 
-int king_in_check(Board *board) {
+void generate_castling_moves(MoveList *list, Board *board) {
     int turn = board->turn;
 
-    // find the king
-    int king_pos = lsb(board->pieces[!turn][KING]);
+    CastleRights rights = turn ? board->castle_black : board->castle_white;
 
-    // generate all opponent moves
-    U64 moves = 0;
-    for (int piece = 0; piece < 6; piece++) {
-        U64 pieces = board->pieces[turn][piece];
-        while (pieces != 0) {
-            int from = pop_lsb(&pieces);
-            moves |= generate_piece_moves(board, piece, from);
-        }
+    if (rights == 0) return;
+
+    Board temp = *board;
+    temp.turn = !temp.turn;
+    U64 attacked = attacked_squares(&temp);
+    U64 occupied = board->occupied[2] & ~board->pieces[turn][KING];
+
+    if ((rights & CAN_CASTLE_OO) &&
+        !((occupied | attacked) & (turn ? BSHORT : WSHORT))) {
+        list->moves[list->count++] = (Move){
+            turn ? 60 : 4, turn ? 62 : 6, 0, KING, 0, 0x8, board->ep_square};
     }
+    if ((rights & CAN_CASTLE_OOO) &&
+        !(occupied & (turn ? BLONG_OCCUPIED : WLONG_OCCUPIED)) &&
+        !(attacked & (turn ? BLONG_ATTACKED : WLONG_ATTACKED))) {
+        list->moves[list->count++] = (Move){
+            turn ? 60 : 4, turn ? 58 : 2, 0, KING, 0, 0x8, board->ep_square};
+    }
+}
+
+int king_in_check(Board *board) {
+    // find the king
+    int king_pos = lsb(board->pieces[!board->turn][KING]);
 
     // check if the king is attacked
-    return is_set_bit(moves, king_pos);
+    return is_set_bit(attacked_squares(board), king_pos);
 }
 
 int is_illegal_move(Board *board, Move *move) {
@@ -314,20 +337,17 @@ int is_illegal_move(Board *board, Move *move) {
 
 void generate_moves(MoveList *list, Board *board) {
     int turn = board->turn;
-    U64 pieces, moves;
-    int from, to;
 
     for (int piece = 0; piece < 6; piece++) {
-        pieces = board->pieces[turn][piece];
+        U64 pieces = board->pieces[turn][piece];
         while (pieces != 0) {
-            from = pop_lsb(&pieces);
-            moves = generate_piece_moves(board, piece, from);
+            int from = pop_lsb(&pieces);
+            U64 moves = generate_piece_moves(board, piece, from);
             while (moves != 0) {
-                to = pop_lsb(&moves);
-                Move move = {from, to, 0, piece, 0, 0, 0};
+                int to = pop_lsb(&moves);
+                Move move = {from, to, 0, piece, 0, 0, board->ep_square};
                 if (is_illegal_move(board, &move)) continue;
-                if (piece == PAWN &&
-                    (to >= (turn ? 0 : 56) && to <= (turn ? 7 : 63))) {
+                if (piece == PAWN && is_set_bit(turn ? RANK_1 : RANK_8, to)) {
                     // only promote to knight or queen
                     for (int promo = KNIGHT; promo <= QUEEN; promo++) {
                         move.promo = promo;
@@ -339,6 +359,8 @@ void generate_moves(MoveList *list, Board *board) {
             }
         }
     }
+
+    generate_castling_moves(list, board);
 }
 
 void print_move(Move *move) {
@@ -355,6 +377,11 @@ void print_move(Move *move) {
     // handle promotion
     if (move->promo != 0) {
         printf(" Promo: %s", pieces[move->promo]);
+    }
+
+    // handle castling
+    if (move->flags == 0x8) {
+        printf(" Castling");
     }
 
     printf("\n");
