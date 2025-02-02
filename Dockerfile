@@ -59,4 +59,4 @@ COPY . /engine
 EXPOSE 8000
 
 # Build the project
-CMD ["make", "run"]
+# CMD ["make", "run"]

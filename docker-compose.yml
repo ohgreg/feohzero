@@ -1,7 +1,7 @@
 services:
   server:
     build: .
-    command: make run
+    command: tail -f /dev/null
     volumes:
       - .:/engine
       - ~/.ssh:/root/.ssh

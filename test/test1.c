@@ -16,7 +16,7 @@ void tearDown(void) {
 }
 
 void test_generate_moves(void) {
-    start = loadFEN("r1b2rk1/ppp2ppp/2np1n2/2q1p1B1/2B1P3/bPNP4/P1PNQPPP/R3K2R w KQ - 0 1");
+    start = loadFEN("rnbqkbnr/pppp1ppp/8/3Pp3/8/8/PPP1PPPP/RNBQKBNR w KQkq e6 0 1");
     TEST_ASSERT_NOT_NULL(start);
     print_board(start);
 

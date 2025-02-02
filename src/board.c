@@ -118,6 +118,15 @@ void apply_move(Board *board, Move *move) {
     enable_bit(&board->occupied[turn], move->to);
     clear_bit(&board->occupied[!turn], move->to);
 
+
+    // update en_passant square
+    if (move->flags | DOUBLE_PAWN_PUSH) {
+        board->ep_square = (turn ? (move->to)+8 : (move->to)-8); 
+    } else {
+        board->ep_square = 64;
+    }
+        
+
     // update turn
     board->turn = !board->turn;
 }
@@ -142,7 +151,8 @@ void undo_move(Board *board, Move *move) {
     }
 
     // restore captured piece
-    if (move->captured != 7) {
+    
+    if (move->captured != NONE) {
         enable_bit(&board->pieces[!turn][move->captured], move->to);
     }
 
@@ -155,6 +165,9 @@ void undo_move(Board *board, Move *move) {
 
     // revert turn
     board->turn = !board->turn;
+
+    // revert en passant square
+    board->ep_square = move->ep;
 }
 
 Move *translate_move(const char *moveStr, Board *Board) {

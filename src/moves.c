@@ -317,9 +317,29 @@ void generate_castling_moves(MoveList *list, Board *board) {
         !(occupied & (turn ? BLONG_OCCUPIED : WLONG_OCCUPIED)) &&
         !(attacked & (turn ? BLONG_ATTACKED : WLONG_ATTACKED))) {
         list->moves[list->count++] = (Move){
-            turn ? 60 : 4, turn ? 58 : 2, 0, KING, 0, 0x8, board->ep_square};
+            turn ? 60 : 4, turn ? 58 : 2, 0, KING, 0, 0x4, board->ep_square};
     }
 }
+
+void generate_en_passant(MoveList *list, Board *board) {
+    if(board->ep_square == 64) return;
+    Turn turn = board->turn;
+    U8 ep_sq = board->ep_square;
+    int dir = (turn ? 1 : -1);
+
+    // en passant right capture
+    if(is_set_bit(~(turn ? FILE_A : FILE_H) & board->pieces[turn][PAWN], ep_sq + dir*9)){
+        list->moves[list->count++] = (Move){
+            ep_sq + dir*9, ep_sq, 0, PAWN, NONE, CAPTURE_MOVE | EN_PASSANT, board->ep_square};
+    }
+
+    // en passant left capture
+    if(is_set_bit(~(turn ? FILE_H : FILE_A) & board->pieces[turn][PAWN], ep_sq + dir*7)){
+        list->moves[list->count++] = (Move){
+            ep_sq + dir*7, ep_sq, 0, PAWN, NONE, CAPTURE_MOVE | EN_PASSANT, board->ep_square};
+    }
+}
+
 
 int king_in_check(Board *board) {
     // find the king
@@ -336,7 +356,7 @@ int is_illegal_move(Board *board, Move *move) {
 }
 
 void generate_moves(MoveList *list, Board *board) {
-    int turn = board->turn;
+    Turn turn = board->turn;
 
     for (int piece = 0; piece < 6; piece++) {
         U64 pieces = board->pieces[turn][piece];
@@ -345,15 +365,27 @@ void generate_moves(MoveList *list, Board *board) {
             U64 moves = generate_piece_moves(board, piece, from);
             while (moves != 0) {
                 int to = pop_lsb(&moves);
-                Move move = {from, to, 0, piece, 0, 0, board->ep_square};
+                Move move = {from, to, 0, piece, 0, NONE, board->ep_square};
                 if (is_illegal_move(board, &move)) continue;
-                if (piece == PAWN && is_set_bit(turn ? RANK_1 : RANK_8, to)) {
-                    // only promote to knight or queen
-                    for (int promo = KNIGHT; promo <= QUEEN; promo++) {
-                        move.promo = promo;
-                        list->moves[list->count++] = move;
+            
+                // check if move is a capture and add flag
+                if ((board->occupied[!turn] & ((U64)1 << to)) != 0) move.flags |= CAPTURE_MOVE;
+
+                // check pawn move flags:
+                if (piece == PAWN) {
+                    // check for double pawn push
+                    if(to-from == (turn ? -16 : 16)) move.flags |= DOUBLE_PAWN_PUSH;
+
+                    // check for promotion 
+                    if(is_set_bit(turn ? RANK_1 : RANK_8, to)){
+                        // check all promotions
+                        for (int promo = KNIGHT; promo <= QUEEN; promo++) {
+                            move.promo = promo;
+                            move.flags |= PROMOTION;
+                            list->moves[list->count++] = move;
+                        }
+                        continue;
                     }
-                    continue;
                 }
                 list->moves[list->count++] = move;
             }
@@ -361,6 +393,8 @@ void generate_moves(MoveList *list, Board *board) {
     }
 
     generate_castling_moves(list, board);
+    generate_en_passant(list, board);
+
 }
 
 void print_move(Move *move) {
@@ -380,8 +414,13 @@ void print_move(Move *move) {
     }
 
     // handle castling
-    if (move->flags == 0x8) {
+    if ((move->flags & ~(CASTLING)) == 0) {
         printf(" Castling");
+    }
+
+    // handle en passant
+    if ((move->flags & ~(EN_PASSANT)) == 0){
+        printf(" En Passant");
     }
 
     printf("\n");

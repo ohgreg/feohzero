@@ -62,6 +62,8 @@ U64 generate_bishop_moves(Board *board, int pos);
 U64 generate_rook_moves(Board *board, int pos);
 U64 generate_queen_moves(Board *board, int pos);
 U64 generate_piece_moves(Board *board, int piece, int pos);
+void generate_castling_moves(MoveList *list, Board *board);
+void generate_en_passant(MoveList *list, Board *board);
 int king_in_check(Board *board);
 int is_illegal_move(Board *board, Move *move);
 void generate_moves(MoveList *list, Board *board);
