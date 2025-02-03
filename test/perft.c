@@ -43,12 +43,12 @@ int perft(Board *board, int depth) {
 }
 
 void perft_test(void) {
-    board = loadFEN("1k6/1b6/8/8/7R/8/8/4K2R b K - 0 1");
+    board = loadFEN("8/k1P5/8/1K6/8/8/8/8 w - - 0 1");
     TEST_ASSERT_NOT_NULL(board);
     // board->ep_square = 19;
     print_board(board);
 
-    int depth = 5;
+    int depth = 7;
 
     printf("\nRunning depth: %d\n", depth);
 

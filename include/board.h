@@ -47,7 +47,7 @@ typedef enum {
 } CastleRights;
 
 // enum for move type (1 bit in total)
-typedef enum { WHITE_TO_MOVE = 0, BLACK_TO_MOVE = 1 } Turn;
+typedef enum { WHITE = 0, BLACK = 1 } Turn;
 
 // enum for move flags
 typedef enum {

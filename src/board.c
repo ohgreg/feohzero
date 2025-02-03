@@ -102,7 +102,7 @@ void apply_move(Board *board, Move *move) {
 
     // handle normal capture at move->to
     if (is_set_bit(board->occupied[!turn], move->to)) {
-        for (int i = PAWN; i < QUEEN; i++) {
+        for (int i = PAWN; i <= QUEEN; i++) {
             if (is_set_bit(board->pieces[!turn][i], move->to)) {
                 clear_bit(&board->pieces[!turn][i], move->to);
                 move->captured = i;
@@ -114,9 +114,18 @@ void apply_move(Board *board, Move *move) {
         if (move->to == (turn ? 62 : 6)) { // short castling
             clear_bit(&board->pieces[turn][ROOK], move->to + 1);
             enable_bit(&board->pieces[turn][ROOK], move->to - 1);
+            clear_bit(&board->occupied[turn], move->to + 1);
+            clear_bit(&board->occupied[2], move->to + 1);
+            enable_bit(&board->occupied[turn], move->to - 1);
+            enable_bit(&board->occupied[2], move->to - 1);
+
         } else if (move->to == (turn ? 58 : 2)) { // long castling
             clear_bit(&board->pieces[turn][ROOK], move->to - 2);
             enable_bit(&board->pieces[turn][ROOK], move->to + 1);
+            clear_bit(&board->occupied[turn], move->to - 2);
+            clear_bit(&board->occupied[2], move->to - 2);
+            enable_bit(&board->occupied[turn], move->to + 1);
+            enable_bit(&board->occupied[2], move->to + 1);
         }
     }
     // handle en passant capture
