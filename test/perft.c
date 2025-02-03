@@ -6,7 +6,24 @@
 #include <stdlib.h>
 #include <time.h>
 
+typedef struct {
+    char *fen;
+    int depth;
+    int expected_result;
+} PerftTestCase;
+
 Board * board;
+
+PerftTestCase test_cases[] = {
+    {"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 1, 20},
+    {"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 2, 400},
+    {"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 3, 8902},
+    {"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 4, 197281},
+    {"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 5, 4865609},
+};
+
+const int num_test_cases = sizeof(test_cases) / sizeof(test_cases[0]);
+
 
 void setUp(void) {
     init_LUT();
@@ -42,38 +59,39 @@ int perft(Board *board, int depth) {
     return cnt;
 }
 
-void perft_test(void) {
-    board = loadFEN("8/k1P5/8/1K6/8/8/8/8 w - - 0 1");
-    TEST_ASSERT_NOT_NULL(board);
-    // board->ep_square = 19;
-    print_board(board);
+void perft_tests(void) {
+    for (int i = 0; i < num_test_cases; i++) {
+        PerftTestCase *test = &test_cases[i];
 
-    int depth = 7;
+        board = loadFEN(test->fen);
+        TEST_ASSERT_NOT_NULL(board);
 
-    printf("\nRunning depth: %d\n", depth);
+        printf("\nRunning test %d: Depth %d\n", i + 1, test->depth);
 
-    // Track the start time of the perft test
-    clock_t start = clock();
+        // measure time
+        clock_t start = clock();
+        int total_moves = perft(board, test->depth);
+        clock_t end = clock();
+        double time_taken = (double)(end - start) / CLOCKS_PER_SEC;
 
-    // Call the recursive perft function
-    int total_moves = perft(board, depth);
+        // validate the result
+        TEST_ASSERT_EQUAL_INT_MESSAGE(
+            test->expected_result,
+            total_moves,
+            "Perft test failed"
+        );
 
-    // Track the end time
-    clock_t end = clock();
+        // uutput results
+        printf("Total moves generated: %d (Expected: %d)\n", total_moves, test->expected_result);
+        printf("Time taken: %f seconds\n", time_taken);
 
-    // Calculate elapsed time
-    double time_taken = (double)(end - start) / CLOCKS_PER_SEC;
-
-    // Output results
-    printf("Total moves generated: %d\n", total_moves);
-    printf("Time taken: %f seconds\n", time_taken);
-
-    free(board);
+        free(board);
+    }
 }
 
 // not needed when using generate_test_runner.rb
 int main(void) {
     UNITY_BEGIN();
-    RUN_TEST(perft_test);
+    RUN_TEST(perft_tests);
     return UNITY_END();
 }

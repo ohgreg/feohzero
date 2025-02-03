@@ -1,62 +1,98 @@
-# Use a lightweight Debian base image
-FROM debian:bookworm-slim
+## Base Stage: Install essential dependencies
+FROM debian:bookworm-slim AS base
 
-# Set the working dir
+## Set the working dir
 WORKDIR /engine
 
-# Install development depedencies
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
+## Install base system utils
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    wget \
+    tar \
+    unzip \
+    xz-utils \
+    pkg-config \
+    manpages-dev \
+    openssh-client && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+## Install essential build tools
+RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     clang \
-    valgrind \
-    gdb \
     cmake \
     ninja-build \
     git \
-    curl \
-    wget \
-    unzip \
-    pkg-config \
-    manpages-dev \
+    python3 \
+    python3-pip && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+## Install debugging and profiling tools
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gdb \
+    lldb \
+    valgrind \
+    clang-format \
+    clang-tidy && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+## Install C/C++ libs
+RUN apt-get update && apt-get install -y --no-install-recommends \
     libssl-dev \
     zlib1g-dev \
     libtool \
     autoconf \
-    automake \
-    lldb \
-    python3 \
-    python3-pip \
-    clang-format \
-    clang-tidy \
-    tar \
-    xz-utils \
-    openssh-client && \
+    automake && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Add GitHub's SSH fingerprint to known hosts
+## Install Ruby for Unity test framework
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ruby \
+    ruby-dev && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+## Add GitHub's SSH fingerprint to known hosts
 RUN mkdir -p /root/.ssh && \
     ssh-keyscan github.com >> /root/.ssh/known_hosts
 
-# Use bash as the default shell
+## Set bash as the default shell
 SHELL ["/bin/bash", "-c"]
 
-# Install and activate Emscripten
-RUN git clone https://github.com/emscripten-core/emsdk.git /emsdk
+## Emscripten Stage: Install Emscripten separately
+FROM base AS emscripten
 
-RUN cd /emsdk && \
+WORKDIR /emsdk
+
+## Install and activate Emscripten
+RUN git clone https://github.com/emscripten-core/emsdk.git . && \
     ./emsdk install latest && \
-    ./emsdk activate latest
+    ./emsdk activate latest && \
+    chmod +x /emsdk/emsdk_env.sh && \
+    /emsdk/emsdk_env.sh > /etc/profile.d/emsdk_env.sh
 
-RUN chmod +x /emsdk/emsdk_env.sh
-RUN /emsdk/emsdk_env.sh > /etc/profile.d/emsdk_env.sh
+## Unity Stage: Install Unity separately
+FROM base AS unity
+
+WORKDIR /unity
+
+## Clone Unity test framework repository
+RUN git clone https://github.com/ThrowTheSwitch/Unity.git .
+
+## Final Stage: Copy dependencies & application files
+FROM base AS final
+
+## Copy Emscripten from the emscripten stage
+COPY --from=emscripten /emsdk /emsdk
 ENV PATH="/emsdk:/emsdk/upstream/emscripten:${PATH}"
 
-# Copy all project files
+## Copy Unity from the unity stage
+COPY --from=unity /unity /unity
+
+## Copy project files
 COPY . /engine
 
-# Expose server's port
+## Expose server's port
 EXPOSE 8000
 
-# Build the project
+## Build and run the project
 # CMD ["make", "run"]

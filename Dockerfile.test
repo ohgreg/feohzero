@@ -1,0 +1,44 @@
+## Base Stage: Use Alpine as the base image
+FROM alpine:3.21 AS base
+
+## Set the working directory
+WORKDIR /engine
+
+## Install only essential build tools and Ruby for Unity test framework
+RUN apk update && \
+    apk add --no-cache \
+    gcc \
+    make \
+    libc-dev \
+    git \
+    ruby \
+    ruby-dev \
+    && rm -rf /var/cache/apk/*
+
+## Unity Stage: Install Unity test framework
+FROM base AS unity
+
+WORKDIR /unity
+
+## Clone Unity test framework repository and copy necessary files
+RUN git clone --depth 1 https://github.com/ThrowTheSwitch/Unity.git . && \
+    mkdir -p /engine/libs/unity /engine/scripts/unity && \
+    cp -r /unity/src/* /engine/libs/unity/ && \
+    cp -r /unity/auto/* /engine/scripts/unity/ && \
+    rm -rf /unity
+
+## Final Stage: Copy application files
+FROM base AS final
+
+## Copy Unity files from the unity stage
+COPY --from=unity /engine/libs/unity /engine/libs/unity
+COPY --from=unity /engine/scripts/unity /engine/scripts/unity
+
+## Copy project files into the container
+COPY . /engine
+
+## Ensure the working directory is correct
+WORKDIR /engine
+
+## Set the default command to run the tests
+CMD ["make", "test"]
