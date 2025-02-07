@@ -1,7 +1,7 @@
 #include "board.h"
+#include "eval.h"
 #include "fen.h"
 #include "moves.h"
-#include "eval.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -9,6 +9,19 @@ int choose_move(char *fen, char *moves, int timeout) {
     (void)fen;
     (void)moves;
     (void)timeout;
+
+    init_LUT();
+    init_tables();
+
+    Board board;
+    loadFEN(&board, fen);
+
+    MoveList list;
+    list.count = 0;
+    generate_moves(&list, &board);
+
+    (void)board;
+
     return 0;
 }
 
@@ -25,16 +38,10 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    init_LUT();
-    init_tables();
+    Board start;
+    loadFEN(&start, argv[1]);
+    print_board(&start);
 
-    char *fen = argv[1];
-    Board *start = loadFEN(fen);
-    print_board(start);
-    printf("Eval is: %d\n", eval(start));
-
-    // ./engine "3p3p/8/1p6/8/1P1Q2p1/2PpP3/8/8 w KQkq - 0 1" 0 0
-    //print_bitboard(generate_queen_moves(start, 27));
 
     (void)choose_move(argv[1], argv[2], timeout);
 

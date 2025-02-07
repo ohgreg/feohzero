@@ -15,15 +15,11 @@ typedef struct {
 Board * board;
 
 PerftTestCase test_cases[] = {
-    {"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 1, 20},
-    {"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 2, 400},
-    {"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 3, 8902},
-    {"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 4, 197281},
-    {"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 5, 4865609},
+    // {"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 1, 20},
+    {"n1n5/PPPk4/8/8/8/8/4Kppp/5N1N b - - 0 1", 5, 3605103}
 };
 
 const int num_test_cases = sizeof(test_cases) / sizeof(test_cases[0]);
-
 
 void setUp(void) {
     init_LUT();
@@ -64,6 +60,7 @@ void perft_tests(void) {
         PerftTestCase *test = &test_cases[i];
 
         board = loadFEN(test->fen);
+        print_board(board);
         TEST_ASSERT_NOT_NULL(board);
 
         printf("\nRunning test %d: Depth %d\n", i + 1, test->depth);

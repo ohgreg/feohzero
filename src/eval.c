@@ -168,7 +168,7 @@ int eg_table_black[6][64];
 // for debugging purposes
 void print_tables(int table[6][64]) {
     for(int i=0; i<1; i++) {
-        for(int j=0; j<64; j++) 
+        for(int j=0; j<64; j++)
             printf("%d ", table[i][j]);
         printf("\n");
     }
@@ -176,7 +176,7 @@ void print_tables(int table[6][64]) {
 }
 
 // we can probably skip this function and just hardcode the constants above
-void init_tables() {
+void init_tables(void) {
     PieceType piece;
     for (int sq=0; sq<64; sq++) {
         for (piece = PAWN; piece <= KING; piece++) {
@@ -196,7 +196,7 @@ int eval(const Board* board) {
     PieceType piece;
     //print_tables(mg_table_white);
 
-    // evaluate each piece 
+    // evaluate each piece
     for (piece = PAWN; piece <= KING; piece++) {
         U64 whitePiece = board->pieces[WHITE][piece];
         U64 blackPiece = board->pieces[BLACK][piece];
@@ -212,7 +212,7 @@ int eval(const Board* board) {
             gamePhase += gamephaseInc[piece];
         }
     }
-    
+
     /* get evaluation depending on how deep in the game we are: */
     int mgScore = mg[WHITE] - mg[BLACK];
     int egScore = eg[WHITE] - eg[BLACK];

@@ -3,6 +3,6 @@
 
 #include "board.h"
 
-Board *loadFEN(char *fen);
+void loadFEN(Board *board, char *fen);
 
 #endif
