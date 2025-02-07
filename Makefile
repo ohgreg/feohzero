@@ -11,7 +11,8 @@ SOURCES = \
   $(SRCDIR)/engine.c \
   $(SRCDIR)/fen.c \
   $(SRCDIR)/moves.c \
-  $(SRCDIR)/board.c
+  $(SRCDIR)/board.c \
+  $(SRCDIR)/eval.c
 
 ## You SHOULD NOT modify the parameters below
 
