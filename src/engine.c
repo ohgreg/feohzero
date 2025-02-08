@@ -19,7 +19,11 @@ int choose_move(char *fen, char *moves, int timeout) {
     MoveList list;
     list.count = 0;
     generate_moves(&list, &board);
-
+    print_move_list(&list);
+    apply_move(&board, &list.moves[34]);
+    print_board(&board);
+    undo_move(&board, &list.moves[34]);
+    print_board(&board);
     (void)board;
 
     return 0;
