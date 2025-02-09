@@ -16,6 +16,12 @@ int depth_limited_search(Board *board, int depth, int is_root, Move *best_move, 
     MoveList list;
     list.count = 0;
     generate_moves(&list, board);
+
+    if (list.count == 0 && king_in_check(board))
+        return (board->turn ? INT_MAX : INT_MIN);
+    else if(list.count == 0)
+        return eval(board);
+
     for(int i=0; i<list.count; i++) {
         apply_move(board, &list.moves[i]);
         int recScore = depth_limited_search(board, depth-1, 0, NULL, alpha, beta);
@@ -28,7 +34,7 @@ int depth_limited_search(Board *board, int depth, int is_root, Move *best_move, 
                 }
                 if(recScore > alpha)
                     alpha = recScore;
-                if (beta <= alpha) goto jump;
+                if (beta <= alpha) goto breakLoop;
                     
                 break;
             case BLACK: 
@@ -38,11 +44,11 @@ int depth_limited_search(Board *board, int depth, int is_root, Move *best_move, 
                 }
                 if (recScore < beta) 
                     beta = recScore;
-                if(beta <= alpha) goto jump;
+                if(beta <= alpha) goto breakLoop;
                 break;
         }
     }
-    jump:
+    breakLoop:
 
     if(is_root == 1) 
         *best_move = best_current_move;
