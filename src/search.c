@@ -17,10 +17,8 @@ int depth_limited_search(Board *board, int depth, int is_root, Move *best_move, 
     list.count = 0;
     generate_moves(&list, board);
 
-    if (list.count == 0 && king_in_check(board))
+    if (list.count == 0)
         return (board->turn ? INT_MAX : INT_MIN);
-    else if(list.count == 0)
-        return eval(board);
 
     for(int i=0; i<list.count; i++) {
         apply_move(board, &list.moves[i]);
