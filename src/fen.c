@@ -1,7 +1,7 @@
 #include "board.h"
 
 // function to load a chess position in FEN format to a Board
-void loadFEN(Board *board, char *fen) {
+int loadFEN(Board *board, char *fen) {
     *board = (Board){0};
     int rank = 7, file = 0, last = 0;
 
@@ -12,7 +12,7 @@ void loadFEN(Board *board, char *fen) {
         c = fen[last];
 
         if (c == '\0') {
-            return;
+            return 0;
         } if (c == ' ' || c == '/') {
             file = 0;
             rank--;
@@ -53,7 +53,7 @@ void loadFEN(Board *board, char *fen) {
         last++;
     }
 
-    if (fen[last] == '\0') return;
+    if (fen[last] == '\0') return 0;
 
     // STEP 2: parse turn
     board->turn = (fen[last] == 'w') ? WHITE : BLACK;
@@ -80,7 +80,7 @@ void loadFEN(Board *board, char *fen) {
             board->castle_black |= CAN_CASTLE_OOO;
             break;
         default: // includes '\0'
-            return;
+            return 0;
         }
         last++;
     }
@@ -118,4 +118,6 @@ void loadFEN(Board *board, char *fen) {
     }
 
     update_occupied(board);
+
+    return 1;
 }

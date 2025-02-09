@@ -3,23 +3,36 @@
 #include "fen.h"
 #include "unity.h"
 #include "unity_internals.h"
-#include <stdlib.h>
 #include <time.h>
 
 typedef struct {
+    char *name;
     char *fen;
     int depth;
     int expected_result;
 } PerftTestCase;
 
-Board * board;
-
-PerftTestCase test_cases[] = {
-    // {"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 1, 20},
-    {"n1n5/PPPk4/8/8/8/8/4Kppp/5N1N b - - 0 1", 5, 3605103}
+PerftTestCase testcases[] = {
+    // https://www.chessprogramming.net/perfect-perft/
+    {"Start position", "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 3, 8902},
+    {"Start position", "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 4, 197281},
+    {"Illegal en passant move #1", "3k4/3p4/8/K1P4r/8/8/8/8 b - - 0 1", 6, 1134888},
+    {"Illegal en passant move #2", "8/8/4k3/8/2p5/8/B2P2K1/8 w - - 0 1", 6, 1015133},
+    {"En passant capture checks oppenent", "8/8/1k6/2b5/2pP4/8/5K2/8 b - d3 0 1", 6, 1440467},
+    {"Short castling gives check", "5k2/8/8/8/8/8/8/4K2R w K - 0 1", 6, 661072},
+    {"Long castling gives check", "3k4/8/8/8/8/8/8/R3K3 w Q - 0 1", 6, 803711},
+    {"Castle rights", "r3k2r/1b4bq/8/8/8/8/7B/R3K2R w KQkq - 0 1", 4, 1274206}, // --
+    {"Castling prevented", "r3k2r/8/3Q4/8/8/5q2/8/R3K2R b KQkq - 0 1", 4, 1720476},
+    {"Promote out of check", "2K2r2/4P3/8/8/8/8/8/3k4 w - - 0 1", 6, 3821001},
+    {"Discovered check", "8/8/1P2K3/8/2n5/1q6/8/5k2 b - - 0 1", 5, 1004658},
+    {"Promote to give check", "4k3/1P6/8/8/8/8/K7/8 w - - 0 1", 6, 217342},
+    {"Under promote to give check", "8/P1k5/K7/8/8/8/8/8 w - - 0 1", 6, 92683},
+    {"Self stalemate", "K1k5/8/P7/8/8/8/8/8 w - - 0 1", 6, 2217},
+    {"Stalemate and checkmate #1", "8/k1P5/8/1K6/8/8/8/8 w - - 0 1", 7, 567584},
+    {"Stalemate and checkmate #2", "8/8/2k5/5q2/5n2/8/5K2/8 b - - 0 1", 4, 23527}
 };
 
-const int num_test_cases = sizeof(test_cases) / sizeof(test_cases[0]);
+const int len = sizeof(testcases) / sizeof(testcases[0]);
 
 void setUp(void) {
     init_LUT();
@@ -30,59 +43,53 @@ void tearDown(void) {
 }
 
 int perft(Board *board, int depth) {
-    if (depth == 0) {
+    if (depth == 0)
         return 1;
-    }
 
     MoveList list;
     list.count = 0;
 
     generate_moves(&list, board);
 
-    int cnt = 0;
-    // iterate over all moves in the list
+    int nodes = 0;
     for (int i = 0; i < list.count; i++) {
         Move *move = &list.moves[i];
 
-        // apply the move on a temp board
-        Board new_board = *board;
-        apply_move(&new_board, move);
+        apply_move(board, move);
 
-        // generate moves for the next depth
-        cnt += perft(&new_board, depth - 1);
+        nodes += perft(board, depth - 1);
+
+        undo_move(board, move);
     }
 
-    return cnt;
+    return nodes;
 }
 
 void perft_tests(void) {
-    for (int i = 0; i < num_test_cases; i++) {
-        PerftTestCase *test = &test_cases[i];
+    for (int i = 0; i < len; i++) {
+        PerftTestCase *test = &testcases[i];
+        Board board;
 
-        board = loadFEN(test->fen);
-        print_board(board);
-        TEST_ASSERT_NOT_NULL(board);
+        printf("\n[TEST %d] %s (Depth: %d)\nFEN: %s\n", i + 1, test->name, test->depth, test->fen);
 
-        printf("\nRunning test %d: Depth %d\n", i + 1, test->depth);
+        if (!loadFEN(&board, test->fen)) {
+            TEST_FAIL_MESSAGE("Failed to load FEN");
+        }
 
-        // measure time
         clock_t start = clock();
-        int total_moves = perft(board, test->depth);
+        int total_moves = perft(&board, test->depth);
         clock_t end = clock();
-        double time_taken = (double)(end - start) / CLOCKS_PER_SEC;
+        double total_time = (double)(end - start) / CLOCKS_PER_SEC;
+        double nodes_per_sec = (total_moves / total_time);
 
-        // validate the result
+        printf("Generated Moves: %d (Expected: %d)\n", total_moves, test->expected_result);
+        printf("Total Time: %.4fs | NPS: %.0f\n", total_time, nodes_per_sec);
+
         TEST_ASSERT_EQUAL_INT_MESSAGE(
             test->expected_result,
             total_moves,
-            "Perft test failed"
+            "Perft test failed!"
         );
-
-        // uutput results
-        printf("Total moves generated: %d (Expected: %d)\n", total_moves, test->expected_result);
-        printf("Time taken: %f seconds\n", time_taken);
-
-        free(board);
     }
 }
 
