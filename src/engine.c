@@ -2,6 +2,7 @@
 #include "eval.h"
 #include "fen.h"
 #include "moves.h"
+#include "search.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -16,12 +17,11 @@ int choose_move(char *fen, char *moves, int timeout) {
     Board board;
     loadFEN(&board, fen);
 
-    MoveList list;
-    list.count = 0;
-    generate_moves(&list, &board);
+    Move best = iterative_deepening_search(&board, 6);
+    apply_move(&board, &best);
+    print_board(&board);
 
-    (void)board;
-
+    
     return 0;
 }
 

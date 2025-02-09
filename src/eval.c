@@ -4,8 +4,8 @@
 int mg_value[6] = { 82, 337, 365, 477, 1025,  0};
 int eg_value[6] = { 94, 281, 297, 512,  936,  0};
 
-/* piece/sq tables */
-/* values from PESTO wiki */
+// piece/sq tables 
+// values from PESTO wiki 
 
 int mg_pawn_table[64] = {
       0,   0,   0,   0,   0,   0,  0,   0,
@@ -204,20 +204,22 @@ int eval(const Board* board) {
         while (whitePiece != 0) {
             int pos = pop_lsb(&whitePiece);
             mg[WHITE] += mg_table_white[piece][pos];
+            eg[WHITE] += eg_table_white[piece][pos];
             gamePhase += gamephaseInc[piece];
         }
         while(blackPiece != 0) {
             int pos = pop_lsb(&blackPiece);
             mg[BLACK] += mg_table_black[piece][pos];
+            eg[BLACK] += eg_table_black[piece][pos];
             gamePhase += gamephaseInc[piece];
         }
     }
 
-    /* get evaluation depending on how deep in the game we are: */
+    // get evaluation depending on how deep in the game we are: 
     int mgScore = mg[WHITE] - mg[BLACK];
     int egScore = eg[WHITE] - eg[BLACK];
     int mgPhase = gamePhase;
-    if (mgPhase > 24) mgPhase = 24; /* in case of early promotion */
+    if (mgPhase > 24) mgPhase = 24; // in case of early promotion 
     int egPhase = 24 - mgPhase;
     return (mgScore * mgPhase + egScore * egPhase) / 24;
 }

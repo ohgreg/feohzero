@@ -87,6 +87,9 @@ typedef struct {
     U8 captured; // captured piece type
     U8 flags;    // special move flags
     U8 ep;       // en passant square (0-63)
+    U8 castleWhite;
+    U8 castleBlack;
+
 } Move;
 
 typedef struct {
@@ -98,6 +101,7 @@ typedef struct {
 void print_board(const Board *board);
 void print_bitboard(const U64 board);
 void apply_move(Board *board, Move *move);
+void undo_move(Board *board, Move *move);
 void update_occupied(Board *board);
 Move *translate_move(const char *moveStr, Board *Board);
 
