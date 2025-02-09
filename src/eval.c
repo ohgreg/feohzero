@@ -204,11 +204,13 @@ int eval(const Board* board) {
         while (whitePiece != 0) {
             int pos = pop_lsb(&whitePiece);
             mg[WHITE] += mg_table_white[piece][pos];
+            eg[WHITE] += eg_table_white[piece][pos];
             gamePhase += gamephaseInc[piece];
         }
         while(blackPiece != 0) {
             int pos = pop_lsb(&blackPiece);
             mg[BLACK] += mg_table_black[piece][pos];
+            eg[BLACK] += eg_table_black[piece][pos];
             gamePhase += gamephaseInc[piece];
         }
     }

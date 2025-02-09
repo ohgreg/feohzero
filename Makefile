@@ -12,7 +12,8 @@ SOURCES = \
   $(SRCDIR)/fen.c \
   $(SRCDIR)/moves.c \
   $(SRCDIR)/board.c \
-  $(SRCDIR)/eval.c
+  $(SRCDIR)/eval.c \
+  $(SRCDIR)/search.c
 
 ## You SHOULD NOT modify the parameters below
 
