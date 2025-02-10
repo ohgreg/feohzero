@@ -3,6 +3,13 @@
 #include "moves.h"
 #include "limits.h"
 #include <stddef.h>
+#include <stdlib.h> 
+
+int sort_moves(const void *a, const void *b) {
+    const Move *move_a = a;
+    const Move *move_b = b;
+    return move_b->score - move_a->score;
+}
 
 int depth_limited_search(Board *board, int depth, int is_root, Move *best_move, int alpha, int beta) { 
     int side = board->turn;
@@ -16,6 +23,7 @@ int depth_limited_search(Board *board, int depth, int is_root, Move *best_move, 
     MoveList list;
     list.count = 0;
     generate_moves(&list, board);
+    qsort(list.moves, list.count, sizeof(Move), sort_moves);
 
     if (list.count == 0)
         return (board->turn ? INT_MAX : INT_MIN);

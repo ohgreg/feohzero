@@ -18,9 +18,10 @@ int choose_move(char *fen, char *moves, int timeout) {
     loadFEN(&board, fen);
 
     Move best = iterative_deepening_search(&board, 6);
+    
     apply_move(&board, &best);
     print_board(&board);
-
+    print_move(&best);
     
     return 0;
 }

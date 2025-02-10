@@ -311,13 +311,13 @@ void generate_castling_moves(MoveList *list, Board *board) {
     if ((rights & CAN_CASTLE_OO) &&
         !((occupied | attacked) & (turn ? BSHORT : WSHORT))) {
         list->moves[list->count++] = (Move){
-            turn ? 60 : 4, turn ? 62 : 6, 0, KING, NONE, CASTLING, board->ep_square, board->castle_white, board->castle_black};
+            turn ? 60 : 4, turn ? 62 : 6, 0, KING, NONE, CASTLING, board->ep_square, board->castle_white, board->castle_black, 2000};
     }
     if ((rights & CAN_CASTLE_OOO) &&
         !(occupied & (turn ? BLONG_OCCUPIED : WLONG_OCCUPIED)) &&
         !(attacked & (turn ? BLONG_ATTACKED : WLONG_ATTACKED))) {
         list->moves[list->count++] = (Move){
-            turn ? 60 : 4, turn ? 58 : 2, 0, KING, NONE, CASTLING, board->ep_square, board->castle_white, board->castle_black};
+            turn ? 60 : 4, turn ? 58 : 2, 0, KING, NONE, CASTLING, board->ep_square, board->castle_white, board->castle_black, 2000};
     }
 }
 
@@ -327,7 +327,7 @@ void generate_en_passant(MoveList *list, Board *board) {
     U8 ep = board->ep_square;
     int dir = (turn ? 1 : -1);
 
-    Move move = {0, ep, 0, PAWN, NONE, CAPTURE_MOVE | EN_PASSANT, ep, board->castle_white, board->castle_black};
+    Move move = {0, ep, 0, PAWN, NONE, CAPTURE_MOVE | EN_PASSANT, ep, board->castle_white, board->castle_black, -1000};
 
     // en passant right capture
     if(is_set_bit(~(turn ? FILE_A : FILE_H) & board->pieces[turn][PAWN], ep + 9 * dir)){
@@ -366,11 +366,15 @@ void generate_moves(MoveList *list, Board *board) {
             U64 moves = generate_piece_moves(board, piece, from);
             while (moves != 0) {
                 int to = pop_lsb(&moves);
-                Move move = {from, to, 0, piece, NONE, NORMAL_MOVE, board->ep_square, board->castle_white, board->castle_black};
+                Move move = {from, to, 0, piece, NONE, NORMAL_MOVE, board->ep_square, board->castle_white, board->castle_black, 0};
                 if (is_illegal_move(board, &move)) continue;
 
                 // check if move is a capture and add flag
-                if ((board->occupied[!turn] & ((U64)1 << to)) != 0) move.flags |= CAPTURE_MOVE;
+                if ((board->occupied[!turn] & ((U64)1 << to)) != 0) {
+                    move.flags |= CAPTURE_MOVE;
+                    move.score += 1000;
+                }
+                    
 
                 // check pawn move flags:
                 if (piece == PAWN) {
@@ -383,6 +387,7 @@ void generate_moves(MoveList *list, Board *board) {
                         for (int promo = KNIGHT; promo <= QUEEN; promo++) {
                             move.promo = promo;
                             move.flags |= PROMOTION;
+                            move.score += promo * 1000;
                             list->moves[list->count++] = move;
                         }
                         continue;

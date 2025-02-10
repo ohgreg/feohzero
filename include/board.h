@@ -89,6 +89,7 @@ typedef struct {
     U8 ep;       // en passant square (0-63)
     U8 castleWhite;
     U8 castleBlack;
+    int score;
 
 } Move;
 
