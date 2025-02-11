@@ -456,7 +456,6 @@ Move translate_move(const char *moveStr, Board *Board) {
 
     Move move = {0, 0, 0, PAWN, NONE, NORMAL_MOVE, Board->ep_square, Board->castle_white, Board->castle_black, 0};
 
-
     for (int i = 0; i < size; i++) {
         switch (moveStr[i]) {
         case 'N':
@@ -495,7 +494,7 @@ Move translate_move(const char *moveStr, Board *Board) {
             } else if (c == 'Q') {
                 move.promo = QUEEN;
             }
-            move.captured |= PROMOTION;
+            move.flags |= PROMOTION;
             move.score += move.promo * 1000;
             break;
         }
@@ -540,8 +539,6 @@ Move translate_move(const char *moveStr, Board *Board) {
         return move;
     }
      
-    
-
     if(move.piece == PAWN && move.to - move.from == (turn ? -16 : 16)) 
         move.flags |= DOUBLE_PAWN_PUSH;
     if(move.piece == PAWN && move.to == Board->ep_square) {
@@ -582,10 +579,6 @@ Move translate_move(const char *moveStr, Board *Board) {
                 move.from = b.from;
         }
     }
-
-    
-
-
 
     (void)turn;
     (void)piece;
