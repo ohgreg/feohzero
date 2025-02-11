@@ -1,6 +1,7 @@
 #include "moves.h"
 #include "board.h"
 #include <stdio.h>
+#include <string.h> 
 
 const U64 bishop_magic[64] = {
     0x010a0a1023020080ULL, 0x0050100083024000ULL, 0x8826083200800802ULL,
@@ -311,7 +312,7 @@ void generate_castling_moves(MoveList *list, Board *board) {
     if ((rights & CAN_CASTLE_OO) &&
         !((occupied | attacked) & (turn ? BSHORT : WSHORT))) {
         list->moves[list->count++] = (Move){
-            turn ? 60 : 4, turn ? 62 : 6, 0, KING, NONE, CASTLING, board->ep_square, board->castle_white, board->castle_black, 2000};
+            turn ? 60 : 4, turn ? 62 : 6, 0, KING, NONE, CASTLING, board->ep_square, board->castle_white, board->castle_black, 2100};
     }
     if ((rights & CAN_CASTLE_OOO) &&
         !(occupied & (turn ? BLONG_OCCUPIED : WLONG_OCCUPIED)) &&
@@ -438,3 +439,161 @@ void print_move_list(MoveList *list) {
         print_move(&list->moves[i]);
     }
 }
+
+Move translate_move(const char *moveStr, Board *Board) {
+
+    int size = strlen(moveStr);
+    Turn turn = Board->turn;
+    PieceType piece = 0;
+    PieceType promote = 0;
+    int is_capture = 0;
+    int start_rank = -1;
+    int start_file = -1;
+    int final_rank = -1;
+    int final_file = -1;
+
+    int castle_count = 0;
+
+    Move move = {0, 0, 0, PAWN, NONE, NORMAL_MOVE, Board->ep_square, Board->castle_white, Board->castle_black, 0};
+
+
+    for (int i = 0; i < size; i++) {
+        switch (moveStr[i]) {
+        case 'N':
+            move.piece = KNIGHT;
+            break;
+        case 'B':
+            move.piece = BISHOP;
+            break;
+        case 'R':
+            move.piece = ROOK;
+            break;
+        case 'Q':
+            move.piece = QUEEN;
+            break;
+        case 'K':
+            move.piece = KING;
+            break;
+        case 'x':
+            is_capture = 1;
+            move.flags |= CAPTURE_MOVE;
+            move.score += 1000;
+            break;
+        case '=': {
+            char c = '0';
+            if (i + 1 <= size) {
+                c = moveStr[i + 1];
+                i++;
+            }
+
+            if (c == 'N') {
+                move.promo = KNIGHT;
+            } else if (c == 'B') {
+                move.promo = BISHOP;
+            } else if (c == 'R') {
+                move.promo = ROOK;
+            } else if (c == 'Q') {
+                move.promo = QUEEN;
+            }
+            move.captured |= PROMOTION;
+            move.score += move.promo * 1000;
+            break;
+        }
+        case '+':
+            //move->flags = 1;
+            // check means good move 
+            move.score += 3000;
+            break;
+        case '#':
+            //move->flags = 2;
+            break;
+        case 'O': 
+            castle_count++;
+            break;
+        default: {
+            char c = moveStr[i];
+            if ('1' <= c && c <= '8') {
+                start_rank = final_rank;
+                final_rank = c - '1';
+            } else if ('a' <= c && c <= 'h') {
+                start_file = final_file;
+                final_file = c - 'a';
+            }
+        }
+        }
+    }
+
+    if(castle_count != 0) {
+        MoveList list;
+        list.count = 0;
+        generate_castling_moves(&list, Board);
+        for(int i = 0; i < list.count; i++) {
+            if(list.moves[i].score == 2100 && castle_count == 2) {
+                move = list.moves[i];
+                break; 
+            }
+            else if(list.moves[i].score == 2000 && castle_count == 3) {
+                move = list.moves[i];
+                break; 
+            }
+        }
+        return move;
+    }
+     
+    
+
+    if(move.piece == PAWN && move.to - move.from == (turn ? -16 : 16)) 
+        move.flags |= DOUBLE_PAWN_PUSH;
+    if(move.piece == PAWN && move.to == Board->ep_square) {
+        move.flags |= EN_PASSANT;
+        move.score = -1000;
+    }
+
+    move.to = (final_rank * 8) + final_file;
+    move.from = (start_rank * 8) + start_file;
+
+    if(start_rank == -1 && start_file == -1) { 
+        MoveList list;
+        list.count = 0;
+        generate_moves(&list, Board);
+        for(int i=0; i<list.count; i++) {
+            Move b = list.moves[i];
+            if((move.to == b.to) && (move.piece == b.piece)) 
+                move.from = b.from;
+        }
+    }
+    else if(start_rank == -1 && start_file != -1) { 
+        MoveList list;
+        list.count = 0;
+        generate_moves(&list, Board);
+        for(int i=0; i<list.count; i++) {
+            Move b = list.moves[i];
+            if((move.to == b.to) && (move.piece == b.piece) && move.from % 8 == start_file) 
+                move.from = b.from;
+        }
+    }
+    else if(start_rank == -1 && start_file != -1) { 
+        MoveList list;
+        list.count = 0;
+        generate_moves(&list, Board);
+        for(int i=0; i<list.count; i++) {
+            Move b = list.moves[i];
+            if((move.to == b.to) && (move.piece == b.piece) && move.from / 8 == start_rank) 
+                move.from = b.from;
+        }
+    }
+
+    
+
+
+
+    (void)turn;
+    (void)piece;
+    (void)promote;
+    (void)is_capture;
+    (void)start_rank;
+    (void)start_file;
+
+    return move;
+}
+

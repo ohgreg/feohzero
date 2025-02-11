@@ -17,12 +17,14 @@ int choose_move(char *fen, char *moves, int timeout) {
     Board board;
     loadFEN(&board, fen);
 
-    Move best = iterative_deepening_search(&board, 6);
+    Move best = iterative_deepening_search(&board, 4);
     
     apply_move(&board, &best);
     print_board(&board);
     print_move(&best);
     
+
+
     return 0;
 }
 
@@ -45,6 +47,10 @@ int main(int argc, char *argv[]) {
 
 
     (void)choose_move(argv[1], argv[2], timeout);
+
+    printf("Pog move is:\n");
+    Move move = translate_move("O-O-O", &start);
+    print_move(&move);
 
     return 0;
 }

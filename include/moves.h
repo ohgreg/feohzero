@@ -70,5 +70,6 @@ void generate_moves(MoveList *list, Board *board);
 
 void print_move(Move *move);
 void print_move_list(MoveList *list);
+Move translate_move(const char *moveStr, Board *Board);
 
 #endif

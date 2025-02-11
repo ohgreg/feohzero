@@ -104,6 +104,6 @@ void print_bitboard(const U64 board);
 void apply_move(Board *board, Move *move);
 void undo_move(Board *board, Move *move);
 void update_occupied(Board *board);
-Move *translate_move(const char *moveStr, Board *Board);
+
 
 #endif
