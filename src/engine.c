@@ -18,6 +18,7 @@ int choose_move(char *fen, char *moves, int timeout) {
     Board board;
     loadFEN(&board, fen);
     MoveList list = first_list(moves, &board);
+    print_move_list(&list);
 
     Move best = iterative_deepening_search(&board, 6, list);
     
@@ -47,8 +48,6 @@ int main(int argc, char *argv[]) {
     loadFEN(&start, argv[1]);
     print_board(&start);
 
-    // diabolical
-    argv[2][strlen(argv[2])] = ' ';
     (void)choose_move(argv[1], argv[2], timeout);
 
     //printf("Pog move is:\n");

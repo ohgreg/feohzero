@@ -595,10 +595,11 @@ MoveList first_list(const char* moveStr, Board *Board) {
     int cnt = 0;
     MoveList list;
     list.count = 0;
+    size_t size = strlen(moveStr);
     char buffer[10];
-    for(size_t i=0; i<strlen(moveStr); i++) {
+    for(size_t i=0; i<size+1; i++) {
         char c = moveStr[i];
-        if(c != ' ') {
+        if(c != ' ' && c != '\0') {
             buffer[cnt] = c;
             cnt++;
         }
