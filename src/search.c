@@ -35,10 +35,10 @@ int depth_limited_search(Board *board, int depth, int is_root, Move *best_move, 
 
     MoveList list;
     list.count = 0;
-    //if(is_root == 0)
+    if(is_root == 0)
         generate_moves(&list, board);
-    //else {
-        //list = startList;
+    else 
+        list = startList;
 
     // after we're done testing, merge the 2 ifs of course
     if(is_root == 1) {
