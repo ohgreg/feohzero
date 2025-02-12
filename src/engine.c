@@ -20,7 +20,7 @@ int choose_move(char *fen, char *moves, int timeout) {
     MoveList list = first_list(moves, &board);
     print_move_list(&list);
 
-    Move best = iterative_deepening_search(&board, 6, list);
+    Move best = iterative_deepening_search(&board, 7, list);
     
     apply_move(&board, &best);
     print_board(&board);
