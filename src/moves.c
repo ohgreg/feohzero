@@ -1,7 +1,7 @@
 #include "moves.h"
 #include "board.h"
 #include <stdio.h>
-#include <string.h> 
+#include <string.h>
 
 const U64 bishop_magic[64] = {
     0x010a0a1023020080ULL, 0x0050100083024000ULL, 0x8826083200800802ULL,
@@ -171,10 +171,6 @@ int init_LUT(void) {
             U64 value = slide(occupied, 0, square, bishop_directions);
             int index =
                 (occupied * bishop_magic[square]) >> bishop_shift[square];
-            U64 prev = lut.bishop[offset + index];
-            if (prev && prev != value) {
-                printf("Invalid bishop LUT\n");
-            }
             lut.bishop[offset + index] = value;
         }
         bishop_offset[square] = offset;
@@ -195,10 +191,6 @@ int init_LUT(void) {
             }
             U64 value = slide(occupied, 0, square, rook_directions);
             int index = (occupied * rook_magic[square]) >> rook_shift[square];
-            U64 prev = lut.rook[offset + index];
-            if (prev && prev != value) {
-                printf("Invalid rook LUT\n");
-            }
             lut.rook[offset + index] = value;
         }
         rook_offset[square] = offset;
@@ -375,7 +367,6 @@ void generate_moves(MoveList *list, Board *board) {
                     move.flags |= CAPTURE_MOVE;
                     move.score += 1000;
                 }
-                    
 
                 // check pawn move flags:
                 if (piece == PAWN) {
@@ -500,13 +491,13 @@ Move translate_move(const char *moveStr, Board *Board) {
         }
         case '+':
             //move->flags = 1;
-            // check means good move 
+            // check means good move
             move.score += 3000;
             break;
         case '#':
             //move->flags = 2;
             break;
-        case 'O': 
+        case 'O':
             castle_count++;
             break;
         default: {
@@ -529,17 +520,17 @@ Move translate_move(const char *moveStr, Board *Board) {
         for(int i = 0; i < list.count; i++) {
             if(list.moves[i].score == 2100 && castle_count == 2) {
                 move = list.moves[i];
-                break; 
+                break;
             }
             else if(list.moves[i].score == 2000 && castle_count == 3) {
                 move = list.moves[i];
-                break; 
+                break;
             }
         }
         return move;
     }
-     
-    if(move.piece == PAWN && move.to - move.from == (turn ? -16 : 16)) 
+
+    if(move.piece == PAWN && move.to - move.from == (turn ? -16 : 16))
         move.flags |= DOUBLE_PAWN_PUSH;
     if(move.piece == PAWN && move.to == Board->ep_square) {
         move.flags |= EN_PASSANT;
@@ -549,33 +540,33 @@ Move translate_move(const char *moveStr, Board *Board) {
     move.to = (final_rank * 8) + final_file;
     move.from = (start_rank * 8) + start_file;
 
-    if(start_rank == -1 && start_file == -1) { 
+    if(start_rank == -1 && start_file == -1) {
         MoveList list;
         list.count = 0;
         generate_moves(&list, Board);
         for(int i=0; i<list.count; i++) {
             Move b = list.moves[i];
-            if((move.to == b.to) && (move.piece == b.piece)) 
+            if((move.to == b.to) && (move.piece == b.piece))
                 move.from = b.from;
         }
     }
-    else if(start_rank == -1 && start_file != -1) { 
+    else if(start_rank == -1 && start_file != -1) {
         MoveList list;
         list.count = 0;
         generate_moves(&list, Board);
         for(int i=0; i<list.count; i++) {
             Move b = list.moves[i];
-            if((move.to == b.to) && (move.piece == b.piece) && move.from % 8 == start_file) 
+            if((move.to == b.to) && (move.piece == b.piece) && move.from % 8 == start_file)
                 move.from = b.from;
         }
     }
-    else if(start_rank == -1 && start_file != -1) { 
+    else if(start_rank == -1 && start_file != -1) {
         MoveList list;
         list.count = 0;
         generate_moves(&list, Board);
         for(int i=0; i<list.count; i++) {
             Move b = list.moves[i];
-            if((move.to == b.to) && (move.piece == b.piece) && move.from / 8 == start_rank) 
+            if((move.to == b.to) && (move.piece == b.piece) && move.from / 8 == start_rank)
                 move.from = b.from;
         }
     }
@@ -590,27 +581,25 @@ Move translate_move(const char *moveStr, Board *Board) {
     return move;
 }
 
-MoveList first_list(const char* moveStr, Board *Board) {
-
+MoveList first_list(const char* moveStr, Board *board) {
     int cnt = 0;
     MoveList list;
     list.count = 0;
     size_t size = strlen(moveStr);
     char buffer[10];
-    for(size_t i=0; i<size+1; i++) {
+    for(size_t i = 0; i < size + 1; i++) {
         char c = moveStr[i];
         if(c != ' ' && c != '\0') {
             buffer[cnt] = c;
             cnt++;
         }
         else {
-            Move temp = translate_move(buffer, Board);
+            Move temp = translate_move(buffer, board);
             list.moves[list.count++] = temp;
             memset(buffer, 0, sizeof(buffer));
             cnt = 0;
         }
     }
-    
 
     return list;
 }

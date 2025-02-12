@@ -1,7 +1,5 @@
 #include "board.h"
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 void print_board(const Board *board) {
     printf("\n");
@@ -137,7 +135,7 @@ void apply_move(Board *board, Move *move) {
         move->captured = PAWN;
     }
 
-    
+
 
     // update en passant square
     if (move->flags & DOUBLE_PAWN_PUSH) {
@@ -199,15 +197,15 @@ void undo_move(Board *board, Move *move) {
 
     //always change this
     enable_bit(&board->pieces[turn][piece], move->from);
-    
+
     if (move->captured != NONE && (move->flags & EN_PASSANT) == 0) {
         enable_bit(&board->pieces[!turn][move->captured], move->to);
         enable_bit(&board->occupied[!turn], move->to);
     } else {
         clear_bit(&board->occupied[2], move->to);
     }
-        
-    
+
+
 
     if (move->flags & EN_PASSANT) {
         int sq = turn ? move->to + 8 : move->to - 8;
@@ -237,7 +235,7 @@ void undo_move(Board *board, Move *move) {
     enable_bit(&board->occupied[2], move->from);
     enable_bit(&board->occupied[turn], move->from);
     clear_bit(&board->occupied[turn], move->to);
-    
+
 
     if (turn) board->full_move--;
     board->half_move--;

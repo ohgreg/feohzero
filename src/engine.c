@@ -5,11 +5,8 @@
 #include "search.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 int choose_move(char *fen, char *moves, int timeout) {
-    (void)fen;
-    (void)moves;
     (void)timeout;
 
     init_LUT();
@@ -17,16 +14,15 @@ int choose_move(char *fen, char *moves, int timeout) {
 
     Board board;
     loadFEN(&board, fen);
+
     MoveList list = first_list(moves, &board);
-    print_move_list(&list);
+    Move best = iterative_deepening_search(&board, 4, list);
 
-    Move best = iterative_deepening_search(&board, 7, list);
-    
-    apply_move(&board, &best);
-    print_board(&board);
-    print_move(&best);
-    
-
+    for (int i = 0; i < list.count; i++) {
+        if (move_equals(&best, &list.moves[i])) {
+            return i;
+        }
+    }
 
     return 0;
 }
@@ -45,18 +41,24 @@ int main(int argc, char *argv[]) {
     }
 
     Board start;
-    loadFEN(&start, argv[1]);
+    loadFEN(&start, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     print_board(&start);
 
     (void)choose_move(argv[1], argv[2], timeout);
 
-    //printf("Pog move is:\n");
-    //Move move = translate_move("c3", &start);
-    //print_move(&move);
+    // MoveList list = first_list("a3 a4 b3 b4 c3 c4 d3 d4 e3 e4 f3 f4 g3 g4 h3 h4 Na3 Nc3 Nf3 Nh3", &start);
+    // print_move_list(&list);
 
-    
-    
-    
+    // Move best = iterative_deepening_search(&start, 5, list);
+
+    // for (int i = 0; i < list.count; i++) {
+    //     if (move_equals(&best, &list.moves[i])) {
+    //         printf("%d\n", i);
+    //     }
+    // }
+
+    // print_move_list(&list);
+    // print_move(&best);
 
     return 0;
 }
