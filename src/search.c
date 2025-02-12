@@ -11,7 +11,7 @@ int sort_moves(const void *a, const void *b) {
     return move_b->score - move_a->score;
 }
 
-int depth_limited_search(Board *board, int depth, int is_root, Move *best_move, int alpha, int beta) { 
+int depth_limited_search(Board *board, int depth, int is_root, Move *best_move, int alpha, int beta, MoveList startList) { 
     int side = board->turn;
     //base case (leaf)
     if(depth == 0)
@@ -22,7 +22,10 @@ int depth_limited_search(Board *board, int depth, int is_root, Move *best_move, 
 
     MoveList list;
     list.count = 0;
-    generate_moves(&list, board);
+    if(is_root == 0)
+        generate_moves(&list, board);
+    else 
+        list = startList;
     qsort(list.moves, list.count, sizeof(Move), sort_moves);
 
     if (list.count == 0)
@@ -30,7 +33,7 @@ int depth_limited_search(Board *board, int depth, int is_root, Move *best_move, 
 
     for(int i=0; i<list.count; i++) {
         apply_move(board, &list.moves[i]);
-        int recScore = depth_limited_search(board, depth-1, 0, NULL, alpha, beta);
+        int recScore = depth_limited_search(board, depth-1, 0, NULL, alpha, beta, startList);
         undo_move(board, &list.moves[i]);
         switch (side) {
             case WHITE: 
@@ -62,11 +65,11 @@ int depth_limited_search(Board *board, int depth, int is_root, Move *best_move, 
     return best_current_score;
 }
 
-Move iterative_deepening_search(Board *board, int max_depth) { 
+Move iterative_deepening_search(Board *board, int max_depth, MoveList startList) { 
     Move best_move = {0};
     for (int depth = 1; depth <= max_depth; depth++) {
         Move curr_move;
-        depth_limited_search(board, depth, 1, &curr_move, INT_MIN, INT_MAX);
+        depth_limited_search(board, depth, 1, &curr_move, INT_MIN, INT_MAX, startList);
         best_move = curr_move;
     }
     return best_move;

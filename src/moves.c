@@ -590,3 +590,26 @@ Move translate_move(const char *moveStr, Board *Board) {
     return move;
 }
 
+MoveList first_list(const char* moveStr, Board *Board) {
+
+    int cnt = 0;
+    MoveList list;
+    list.count = 0;
+    char buffer[10];
+    for(size_t i=0; i<strlen(moveStr); i++) {
+        char c = moveStr[i];
+        if(c != ' ') {
+            buffer[cnt] = c;
+            cnt++;
+        }
+        else {
+            Move temp = translate_move(buffer, Board);
+            list.moves[list.count++] = temp;
+            memset(buffer, 0, sizeof(buffer));
+            cnt = 0;
+        }
+    }
+    
+
+    return list;
+}

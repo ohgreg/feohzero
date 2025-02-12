@@ -5,6 +5,7 @@
 #include "search.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 int choose_move(char *fen, char *moves, int timeout) {
     (void)fen;
@@ -16,8 +17,9 @@ int choose_move(char *fen, char *moves, int timeout) {
 
     Board board;
     loadFEN(&board, fen);
+    MoveList list = first_list(moves, &board);
 
-    Move best = iterative_deepening_search(&board, 4);
+    Move best = iterative_deepening_search(&board, 6, list);
     
     apply_move(&board, &best);
     print_board(&board);
@@ -45,12 +47,17 @@ int main(int argc, char *argv[]) {
     loadFEN(&start, argv[1]);
     print_board(&start);
 
-
+    // diabolical
+    argv[2][strlen(argv[2])] = ' ';
     (void)choose_move(argv[1], argv[2], timeout);
 
-    printf("Pog move is:\n");
-    Move move = translate_move("O-O-O", &start);
-    print_move(&move);
+    //printf("Pog move is:\n");
+    //Move move = translate_move("c3", &start);
+    //print_move(&move);
+
+    
+    
+    
 
     return 0;
 }
