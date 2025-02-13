@@ -42,9 +42,10 @@ int main(int argc, char *argv[]) {
 
     Board start;
     loadFEN(&start, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-    print_board(&start);
+    //print_board(&start);
 
-    (void)choose_move(argv[1], argv[2], timeout);
+    int move = choose_move(argv[1], argv[2], timeout);
+    printf("%d\n", move);
 
     // MoveList list = first_list("a3 a4 b3 b4 c3 c4 d3 d4 e3 e4 f3 f4 g3 g4 h3 h4 Na3 Nc3 Nf3 Nh3", &start);
     // print_move_list(&list);
