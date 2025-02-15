@@ -1,9 +1,9 @@
 #ifndef EVAL_H
 #define EVAL_H
 
-#include "board.h"
+#include "types.h"
 
-// function declarations
+// function prototypes
 void init_tables(void);
 int eval(const Board *board);
 

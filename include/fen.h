@@ -1,8 +1,9 @@
-#ifndef PARSER_H
-#define PARSER_H
+#ifndef FEN_H
+#define FEN_H
 
-#include "board.h"
+#include "types.h"
 
+// function prototypes
 int loadFEN(Board *board, char *fen);
 
 #endif

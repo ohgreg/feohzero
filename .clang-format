@@ -1,6 +1,12 @@
-BasedOnStyle: LLVM
+BasedOnStyle: Google
 IndentWidth: 4
-ColumnLimit: 80
-UseTab: Never
+ColumnLimit: 100
 AllowShortIfStatementsOnASingleLine: true
 AllowShortFunctionsOnASingleLine: false
+BinPackArguments: true
+BinPackParameters: true
+BraceWrapping:
+  AfterStruct: false
+BreakBeforeBinaryOperators: All
+BreakConstructorInitializers: BeforeComma
+BreakBeforeBraces: Custom
