@@ -13,7 +13,8 @@ SOURCES = \
   $(SRCDIR)/moves.c \
   $(SRCDIR)/board.c \
   $(SRCDIR)/eval.c \
-  $(SRCDIR)/search.c
+  $(SRCDIR)/search.c \
+  $(SRCDIR)/zobrist.c
 
 ## You SHOULD NOT modify the parameters below
 

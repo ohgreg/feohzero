@@ -179,7 +179,6 @@ void apply_move(Board *board, Move *move) {
     enable_bit(&board->occupied[turn], move->to);
 
     // update turn
-    ;
     board->turn = !board->turn;
 }
 

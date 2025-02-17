@@ -46,6 +46,7 @@ typedef struct {
 
     U8 ep_square;
     U8 half_move;
+    U64 key;
     U16 full_move;
 } Board;
 

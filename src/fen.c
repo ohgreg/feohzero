@@ -1,4 +1,5 @@
 #include "board.h"
+#include "zobrist.h"
 
 // function to load a chess position in FEN format to a Board
 int loadFEN(Board *board, char *fen) {
@@ -114,6 +115,7 @@ int loadFEN(Board *board, char *fen) {
     }
 
     update_occupied(board);
+    //board->key = update_board_key(board);
 
     return 1;
 }
