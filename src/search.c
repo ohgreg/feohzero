@@ -6,6 +6,7 @@
 #include "constants.h"
 #include "eval.h"
 #include "moves.h"
+#include "transposition.h"
 
 int sort_moves(const void *a, const void *b) {
     const Move *move_a = a;

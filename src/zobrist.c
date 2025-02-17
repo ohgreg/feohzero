@@ -68,7 +68,8 @@ U64 update_board_key(Board *board) {
     }
     key ^= update_castling_key(board);
     key ^= update_side_key();
-    key ^= update_en_passant_key(board);
+    if(board->turn == BLACK)
+        key ^= update_en_passant_key(board);
     return key;
 }
 

@@ -14,7 +14,8 @@ SOURCES = \
   $(SRCDIR)/board.c \
   $(SRCDIR)/eval.c \
   $(SRCDIR)/search.c \
-  $(SRCDIR)/zobrist.c
+  $(SRCDIR)/zobrist.c \
+  $(SRCDIR)/transposition.c
 
 ## You SHOULD NOT modify the parameters below
 

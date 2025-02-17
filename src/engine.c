@@ -9,7 +9,7 @@
 #include "search.h"
 #include "zobrist.h"
 #include "board.h"
-
+#include "transposition.h"
 
 int choose_move(char *fen, char *moves, int timeout) {
     (void)timeout;
@@ -17,30 +17,24 @@ int choose_move(char *fen, char *moves, int timeout) {
     init_LUT();
     init_tables();
     init_zobrist();
+    init_transposition_table(64 * 1024 * 1024 / sizeof(TTentry));
 
     Board board;
     board.key = 0ULL;
     loadFEN(&board, fen);
-    // printf("U64 key of board is: %" PRIu64 "\n", board.key);
-    // print_board(&board);
-    // Move move = {2, 18, 0, KNIGHT, NONE, NORMAL_MOVE, board.ep_square, board.castle_white, board.castle_black, 0};
-    // apply_move(&board, &move);
-    // board.key = update_board_key(&board);
-    // printf("U64 key of board is: %" PRIu64 "\n", board.key);
-    // print_board(&board);
-    // undo_move(&board, &move);
     // board.key = update_board_key(&board);
     // printf("U64 key of board is: %" PRIu64 "\n", board.key);
     // print_board(&board);
     MoveList list = first_list(moves, &board);
     Move best = iterative_deepening_search(&board, 4, list);
-
+    // board.key = update_board_key(&board);
+    // printf("U64 key of board is: %" PRIu64 "\n", board.key);
     for (int i = 0; i < list.count; i++) {
         if (move_equals(&best, &list.moves[i])) {
             return i;
         }
     }
-
+    clear_transposition_table();
     return 0;
 }
 
@@ -56,7 +50,7 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Provide a valid integer!\n");
         return 1;
     }
-    //srand(time(NULL));
+    srand(time(NULL));
 
     printf("%d\n", choose_move(argv[1], argv[2], timeout));
 
