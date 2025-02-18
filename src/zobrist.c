@@ -131,10 +131,7 @@ void fast_board_key(Board *board, const Move *move) {
             if(move->captured != NONE) {
                 board->key ^= update_piece_key(move->captured, move->to, !board->turn);
             }
-
-            Board temp = *board;
-            temp.turn = !temp.turn;
-            board->key ^= update_side_key(temp);
+            board->key ^= update_side_key();
 
     }
 }

@@ -42,7 +42,7 @@ int depth_limited_search(Board *board, int depth, int is_root, Move *best_move, 
             // return at LEAST tt_entry->score basically
             beta = (beta < tt_entry->score) ? beta : tt_entry->score;
         }
-        if (alpha >= beta) return tt_entry->score;
+        if (beta <= alpha) return tt_entry->score;
     }
 
     if (depth == 0) return eval(board);
@@ -64,8 +64,9 @@ int depth_limited_search(Board *board, int depth, int is_root, Move *best_move, 
             }
         }
     } else {
+        // uncomment this in prod code
         //list = startList;
-        //comment this in prod code
+       
         generate_moves(&list, board);
         if (previousBest.score == 20000) {
             for (int j = 0; j < list.count; j++) {
@@ -81,28 +82,62 @@ int depth_limited_search(Board *board, int depth, int is_root, Move *best_move, 
 
     if (list.count == 0) return (board->turn ? INF : -INF);
 
-    for (int i = 0; i < list.count; i++) {
-        apply_move(board, &list.moves[i]);
-        fast_board_key(board, &list.moves[i]);
-        int recScore = depth_limited_search(board, depth - 1, 0, NULL, alpha, beta, startList, previousBest);
-        fast_board_key(board, &list.moves[i]);
-        undo_move(board, &list.moves[i]);
-        if (side == WHITE) {
+    if (side == WHITE) {
+        for (int i = 0; i < list.count; i++) {
+            apply_move(board, &list.moves[i]);
+            fast_board_key(board, &list.moves[i]);
+            int recScore = depth_limited_search(board, depth - 1, 0, NULL, alpha, beta, startList, previousBest);
+            fast_board_key(board, &list.moves[i]);
+            undo_move(board, &list.moves[i]);
+            
             if (recScore > best_current_score) {
                 best_current_move = list.moves[i];
                 best_current_score = recScore;
             }
             if (recScore > alpha) alpha = recScore;
             if (beta <= alpha) break;
-            continue;
+            
         }
-        if (recScore < best_current_score) {
-            best_current_move = list.moves[i];
-            best_current_score = recScore;
-        }
-        if (recScore < beta) beta = recScore;
-        if (beta <= alpha) break;
     }
+    else {
+        for (int i = 0; i < list.count; i++) {
+            apply_move(board, &list.moves[i]);
+            fast_board_key(board, &list.moves[i]);
+            int recScore = depth_limited_search(board, depth - 1, 0, NULL, alpha, beta, startList, previousBest);
+            fast_board_key(board, &list.moves[i]);
+            undo_move(board, &list.moves[i]);
+            
+            if (recScore < best_current_score) {
+                best_current_move = list.moves[i];
+                best_current_score = recScore;
+                if (recScore < beta) beta = recScore;
+                if (beta <= alpha) break;
+            }
+            
+        }
+    }
+    // for (int i = 0; i < list.count; i++) {
+    //     apply_move(board, &list.moves[i]);
+    //     fast_board_key(board, &list.moves[i]);
+    //     int recScore = depth_limited_search(board, depth - 1, 0, NULL, alpha, beta, startList, previousBest);
+    //     fast_board_key(board, &list.moves[i]);
+    //     undo_move(board, &list.moves[i]);
+    //     if (side == WHITE) {
+    //         if (recScore > best_current_score) {
+    //             best_current_move = list.moves[i];
+    //             best_current_score = recScore;
+    //         }
+    //         if (recScore > alpha) alpha = recScore;
+    //         if (beta <= alpha) break;
+    //     }
+    //     else if (recScore < best_current_score) {
+    //         best_current_move = list.moves[i];
+    //         best_current_score = recScore;
+    //         if (recScore < beta) beta = recScore;
+    //         if (beta <= alpha) break;
+    //     }
+        
+    // }
 
     // store in tt table (this is wayback machine copy)
     Node node_type;

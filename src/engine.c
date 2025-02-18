@@ -47,7 +47,7 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Provide a valid integer!\n");
         return 1;
     }
-    srand(time(NULL));
+    srand(2400118+2400141);
 
     printf("%d\n", choose_move(argv[1], argv[2], timeout));
 
