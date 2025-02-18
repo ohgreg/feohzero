@@ -9,8 +9,8 @@ void init_transposition_table(size_t size) {
 }
 
 void tt_store(uint64_t key, int depth, int score, Move best_move, Node node_type) {
-    size_t idx = key % tt_size;
-    TTentry *entry = &transposition_table[idx];
+    size_t index = key % tt_size;
+    TTentry *entry = &transposition_table[index];
     // replace with new info
     if (entry->depth <= depth) {
         entry->key = key;

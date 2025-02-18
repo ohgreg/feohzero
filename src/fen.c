@@ -115,7 +115,7 @@ int loadFEN(Board *board, char *fen) {
     }
 
     update_occupied(board);
-    //board->key = update_board_key(board);
+    board->key = update_board_key(board);
 
     return 1;
 }

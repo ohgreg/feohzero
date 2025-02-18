@@ -23,7 +23,7 @@ SOURCES = \
 CC = gcc
 
 ## Compiler flags
-CFLAGS = -Wall -Wextra -Werror -pedantic -Iinclude
+CFLAGS = -Wall -Wextra -Werror -pedantic -Iinclude -O3
 
 ## Where to put the object files
 BINDIR ?= build

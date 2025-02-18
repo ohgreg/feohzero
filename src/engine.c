@@ -17,18 +17,15 @@ int choose_move(char *fen, char *moves, int timeout) {
     init_LUT();
     init_tables();
     init_zobrist();
-    init_transposition_table(64 * 1024 * 1024 / sizeof(TTentry));
+    init_transposition_table(1024 * 1024 * 1024 / sizeof(TTentry));
 
     Board board;
     board.key = 0ULL;
     loadFEN(&board, fen);
-    // board.key = update_board_key(&board);
-    // printf("U64 key of board is: %" PRIu64 "\n", board.key);
-    // print_board(&board);
+
     MoveList list = first_list(moves, &board);
-    Move best = iterative_deepening_search(&board, 4, list);
-    // board.key = update_board_key(&board);
-    // printf("U64 key of board is: %" PRIu64 "\n", board.key);
+    Move best = iterative_deepening_search(&board, 8, list);
+    print_move(&best);
     for (int i = 0; i < list.count; i++) {
         if (move_equals(&best, &list.moves[i])) {
             return i;
