@@ -26,7 +26,7 @@ static inline int lsb(U64 c) {
 // pop the LSB and return its index
 static inline int pop_lsb(U64 *c) {
     int n = lsb(*c);
-    *c ^= ((U64)1 << n);
+    clear_bit(c, n);
     return n;
 }
 

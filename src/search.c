@@ -33,7 +33,7 @@ int depth_limited_search(Board *board, int depth, int is_root, Move *best_move, 
 
         if (tt_entry->node_type == EXACT) {
             // if exact just return score
-            if (is_root && best_move != NULL) *best_move = tt_entry->best_move;
+            //if (is_root && best_move != NULL) *best_move = tt_entry->best_move;       // i think this is useless?
             return tt_entry->score;
         } else if (tt_entry->node_type == LOWER) {
             // return at MOST tt_entry->score basically
@@ -55,7 +55,7 @@ int depth_limited_search(Board *board, int depth, int is_root, Move *best_move, 
     if (!is_root) {
         generate_moves(&list, board);
         // Prioritize TT best move
-        if (tt_entry != NULL && tt_entry->best_move.from != tt_entry->best_move.to) {
+        if (tt_entry != NULL) {
             for (int j = 0; j < list.count; j++) {
                 if (move_equals(&list.moves[j], &tt_entry->best_move)) {
                     list.moves[j].score = 40000; // Highest priority
@@ -66,7 +66,7 @@ int depth_limited_search(Board *board, int depth, int is_root, Move *best_move, 
     } else {
         // uncomment this in prod code
         //list = startList;
-       
+        // if is_root, we have no transpo moves, so use PV node.
         generate_moves(&list, board);
         if (previousBest.score == 20000) {
             for (int j = 0; j < list.count; j++) {
