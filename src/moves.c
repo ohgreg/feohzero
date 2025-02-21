@@ -418,24 +418,11 @@ void generate_moves(MoveList *list, Board *board) {
     // generate en passant moves
     if (board->ep_square != 64) {
         U8 ep = board->ep_square;
-        int dir = (turn ? 1 : -1);
 
-        move = (Move){0, ep, 0, PAWN, NONE, CAPTURE_MOVE | EN_PASSANT, ep, board->castle_white, board->castle_black, -1000};
+        moves = lut.pawn[!turn][ep] & board->pieces[turn][PAWN] & valid;
 
-        // en passant right capture
-        if (is_set_bit(~(turn ? FILE_A : FILE_H) & board->pieces[turn][PAWN], ep + 9 * dir)) {
-            move.from = ep + 9 * dir;
-            if (is_set_bit(valid, move.to)) {
-                list->moves[list->count++] = move;
-            }
-        }
-
-        // en passant left capture
-        if (is_set_bit(~(turn ? FILE_H : FILE_A) & board->pieces[turn][PAWN], ep + 7 * dir)) {
-            move.from = ep + 7 * dir;
-            if (is_set_bit(valid, move.to)) {
-                list->moves[list->count++] = move;
-            }
+        while (moves) {
+            list->moves[list->count++] = (Move){pop_lsb(&moves), ep, 0, PAWN, NONE, CAPTURE_MOVE | EN_PASSANT, ep, board->castle_white, board->castle_black, -1000};
         }
     }
 

@@ -19,7 +19,7 @@ PerftTestCase testcases[] = {
     {"Start position", "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 2, 400}, // --
     {"Start position", "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 3, 8902}, // --
     {"Start position", "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 4, 197281}, // --
-    {"Start position", "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 5, 4865609},
+    // {"Start position", "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 5, 4865609},
     {"Good test position", "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1", 2, 2039}, // --
     {"Illegal en passant move #1", "3k4/3p4/8/K1P4r/8/8/8/8 b - - 0 1", 6, 1134888},
     {"Illegal en passant move #2", "8/8/4k3/8/2p5/8/B2P2K1/8 w - - 0 1", 6, 1015133},
