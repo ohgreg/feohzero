@@ -78,10 +78,10 @@ void fast_board_key(Board *board, const Move *move) {
     board->key ^= update_en_passant_key(move->ep);
     board->key ^= update_en_passant_key(board->ep_square);
 
-    if(((board->castle_black ^ move->castleBlack) != 0) || ((board->castle_white ^ move->castleWhite) != 0)) {
+    if(((board->castle_black ^ move->castle_black) != 0) || ((board->castle_white ^ move->castle_white) != 0)) {
         Board temp;
-        temp.castle_black = move->castleBlack;
-        temp.castle_white = move->castleWhite;
+        temp.castle_black = move->castle_black;
+        temp.castle_white = move->castle_white;
         board->key ^= update_castling_key(&temp);
         board->key ^= update_castling_key(board);
     }

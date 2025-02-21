@@ -167,6 +167,6 @@ void undo_move(Board *board, Move *move) {
     if (turn) board->full_move--;
     board->half_move--;
     board->ep_square = move->ep;
-    board->castle_white = move->castleWhite;
-    board->castle_black = move->castleBlack;
+    board->castle_white = move->castle_white;
+    board->castle_black = move->castle_black;
 }

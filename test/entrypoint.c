@@ -15,7 +15,7 @@ void tearDown(void) {
 
 void test(void) {
     Board board;
-    if (!loadFEN(&board, "8/8/1n2K3/8/8/1q6/8/5k2 w - - 0 1")) {
+    if (!loadFEN(&board, "8/1P6/4K3/8/2n5/1q6/6k1/8 w - - 0 1")) {
         TEST_FAIL_MESSAGE("Failed to load FEN");
     }
 

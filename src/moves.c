@@ -2,6 +2,7 @@
 
 #include <string.h>
 
+#include "board.h"
 #include "constants.h"
 #include "print.h"
 #include "types.h"
@@ -242,8 +243,6 @@ U64 generate_opponent_attacks(Board *board) {
 U64 generate_pinned(Board *board) {
     Turn turn = board->turn;
     int king_pos = lsb(board->pieces[turn][KING]);
-    Board temp = *board;
-    temp.turn = !turn;
     U64 pinned = 0;
 
     U64 sliding_pieces[2] = {
@@ -260,6 +259,8 @@ U64 generate_pinned(Board *board) {
             int pinner_pos = pop_lsb(&pinners);
             U64 ray = slide_mask[i][pinner_pos];
             if (is_set_bit(ray, king_pos)) {
+                Board temp = *board;
+                temp.turn = !turn;
                 U64 between = generate_sliding_attacks[i](&temp, king_pos) & generate_sliding_attacks[i](&temp, pinner_pos);
                 if (pop_count(between) == 1 && (between & board->occupied[turn])) {
                     enable_bit(&pinned, lsb(between));
@@ -316,6 +317,47 @@ U64 generate_blockmask(Board *board, int pos) {
     }
 
     return blockmask;
+}
+
+void generate_en_passant(MoveList *list, Board *board) {
+    if (board->ep_square == 64) return;
+
+    Turn turn = board->turn;
+    U8 ep = board->ep_square;
+
+    U64 moves = lut.pawn[!turn][ep] & board->pieces[turn][PAWN];
+
+    while (moves) {
+        Move move = {pop_lsb(&moves), ep, 0, PAWN, NONE, CAPTURE_MOVE | EN_PASSANT, ep, board->castle_white, board->castle_black, -1000};
+        Board temp = *board;
+        apply_move(&temp, &move);
+        temp.turn = turn;
+        if ((generate_opponent_attacks(&temp) & board->pieces[turn][KING]) != 0) continue;
+        list->moves[list->count++] = move;
+    }
+}
+
+void generate_castling(MoveList *list, Board *board, U64 opponent_attacks) {
+    Turn turn = board->turn;
+    CastleRights rights = turn ? board->castle_black : board->castle_white;
+
+    if (rights == 0) return;
+
+    U64 occupied = board->occupied[2] & ~board->pieces[turn][KING];
+
+    if ((rights & CAN_CASTLE_OO) && !((occupied | opponent_attacks) & (turn ? BSHORT : WSHORT))) {
+        list->moves[list->count++] = (Move){
+            turn ? 60 : 4, turn ? 62 : 6, 0, KING, NONE,
+            CASTLING, board->ep_square, board->castle_white,
+            board->castle_black, 2100};
+    }
+    if ((rights & CAN_CASTLE_OOO) && !(occupied & (turn ? BLONG_OCCUPIED : WLONG_OCCUPIED))
+        && !(opponent_attacks & (turn ? BLONG_ATTACKED : WLONG_ATTACKED))) {
+        list->moves[list->count++] = (Move){
+            turn ? 60 : 4, turn ? 58 : 2, 0, KING, NONE,
+            CASTLING, board->ep_square, board->castle_white,
+            board->castle_black, 2000};
+    }
 }
 
 void generate_moves(MoveList *list, Board *board) {
@@ -403,7 +445,7 @@ void generate_moves(MoveList *list, Board *board) {
             // check for promotion
             if (is_set_bit(turn ? RANK_1 : RANK_8, to)) {
                 // check all promotions
-                for (int promo = KNIGHT; promo <= QUEEN; promo++) {
+                for (int promo = QUEEN; promo >= KNIGHT; promo--) {
                     move.promo = promo;
                     move.flags |= PROMOTION;
                     move.score += promo * 1000;
@@ -417,37 +459,11 @@ void generate_moves(MoveList *list, Board *board) {
     }
 
     // generate en passant moves
-    if (board->ep_square != 64) {
-        U8 ep = board->ep_square;
-
-        moves = lut.pawn[!turn][ep] & board->pieces[turn][PAWN] & valid;
-
-        while (moves) {
-            list->moves[list->count++] = (Move){pop_lsb(&moves), ep, 0, PAWN, NONE, CAPTURE_MOVE | EN_PASSANT, ep, board->castle_white, board->castle_black, -1000};
-        }
-    }
+    generate_en_passant(list, board);
 
     // generate castling moves
     if (checkers == 0) {
-        CastleRights rights = turn ? board->castle_black : board->castle_white;
-
-        if (rights == 0) return;
-
-        U64 occupied = board->occupied[2] & ~board->pieces[turn][KING];
-
-        if ((rights & CAN_CASTLE_OO) && !((occupied | opponent_attacks) & (turn ? BSHORT : WSHORT))) {
-            list->moves[list->count++] = (Move){
-                turn ? 60 : 4, turn ? 62 : 6, 0, KING, NONE,
-                CASTLING, board->ep_square, board->castle_white,
-                board->castle_black, 2100};
-        }
-        if ((rights & CAN_CASTLE_OOO) && !(occupied & (turn ? BLONG_OCCUPIED : WLONG_OCCUPIED))
-            && !(opponent_attacks & (turn ? BLONG_ATTACKED : WLONG_ATTACKED))) {
-            list->moves[list->count++] = (Move){
-                turn ? 60 : 4, turn ? 58 : 2, 0, KING, NONE,
-                CASTLING, board->ep_square, board->castle_white,
-                board->castle_black, 2000};
-        }
+        generate_castling(list, board, opponent_attacks);
     }
 }
 

@@ -61,8 +61,8 @@ typedef struct {
     U8 captured;  // captured piece type
     U8 flags;     // special move flags
     U8 ep;        // en passant square (0-63)
-    U8 castleWhite;
-    U8 castleBlack;
+    U8 castle_white;
+    U8 castle_black;
     int score;
 
 } Move;
