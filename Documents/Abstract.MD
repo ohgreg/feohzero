@@ -1,4 +1,4 @@
-## Περίληψη ##
+## Abstract ##
 
 The "Documents" folder contains MD (Markdown) files that describe the process followed for the implementation of our chess engine, FeohZero (written in C). It also references sources that were used during the implementation, as well possible improvements that could be made. 
 
