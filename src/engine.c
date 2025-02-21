@@ -10,6 +10,7 @@
 #include "search.h"
 #include "transposition.h"
 #include "zobrist.h"
+#include "print.h"
 
 int choose_move(char *fen, char *moves, int timeout) {
     (void)timeout;
