@@ -15,7 +15,7 @@ static inline void enable_bit(U64 *c, int n) {
 
 // check if a bit at position n is set (returns 1 if set, 0 if not)
 static inline int is_set_bit(U64 c, int n) {
-    return (c & ((U64)1 << n)) != 0;
+    return (c >> n) & 1;
 }
 
 // get the LSB index

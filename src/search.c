@@ -7,6 +7,7 @@
 #include "eval.h"
 #include "moves.h"
 #include "transposition.h"
+#include "zobrist.h"
 
 int sort_moves(const void *a, const void *b) {
     const Move *move_a = a;
@@ -20,22 +21,52 @@ int move_equals(const Move *m1, const Move *m2) {
 
 int depth_limited_search(Board *board, int depth, int is_root, Move *best_move, int alpha, int beta, MoveList startList, Move previousBest) {
     int side = board->turn;
+    // starting alpha and beta for TT
+    int alpha_original = alpha;
+    int beta_original = beta;
 
-    // base case (leaf)
+    // probe tt table for
+    TTentry *tt_entry = tt_probe(board->key);
+    // tt depth has to be bigger depth or there's no point in getting that entry
+    if (tt_entry != NULL && tt_entry->depth >= depth) {
+
+        if (tt_entry->node_type == EXACT) {
+            // if exact just return score
+            //if (is_root && best_move != NULL) *best_move = tt_entry->best_move;       // i think this is useless?
+            return tt_entry->score;
+        } else if (tt_entry->node_type == LOWER) {
+            // return at MOST tt_entry->score basically
+            alpha = (alpha > tt_entry->score) ? alpha : tt_entry->score;
+        } else if (tt_entry->node_type == UPPER) {
+            // return at LEAST tt_entry->score basically
+            beta = (beta < tt_entry->score) ? beta : tt_entry->score;
+        }
+        if (beta <= alpha) return tt_entry->score;
+    }
+
     if (depth == 0) return eval(board);
 
-    int best_current_score = (board->turn ? INF : -INF);
+    int best_current_score = (side == WHITE) ? -INF : INF;
     Move best_current_move = {0};
 
     MoveList list;
     list.count = 0;
-    if (is_root == 0)
+    if (!is_root) {
         generate_moves(&list, board);
-    else
-        list = startList;
-
-    // after we're done testing, merge the 2 ifs of course
-    if (is_root == 1) {
+        // Prioritize TT best move
+        if (tt_entry != NULL) {
+            for (int j = 0; j < list.count; j++) {
+                if (move_equals(&list.moves[j], &tt_entry->best_move)) {
+                    list.moves[j].score = 40000; // Highest priority
+                    break;
+                }
+            }
+        }
+    } else {
+        // uncomment this in prod code
+        //list = startList;
+        // if is_root, we have no transpo moves, so use PV node.
+        generate_moves(&list, board);
         if (previousBest.score == 20000) {
             for (int j = 0; j < list.count; j++) {
                 if (move_equals(&list.moves[j], &previousBest)) {
@@ -50,26 +81,73 @@ int depth_limited_search(Board *board, int depth, int is_root, Move *best_move, 
 
     if (list.count == 0) return (board->turn ? INF : -INF);
 
-    for (int i = 0; i < list.count; i++) {
-        apply_move(board, &list.moves[i]);
-        int recScore = depth_limited_search(board, depth - 1, 0, NULL, alpha, beta, startList, previousBest);
-        undo_move(board, &list.moves[i]);
-        if (side == WHITE) {
+    if (side == WHITE) {
+        for (int i = 0; i < list.count; i++) {
+            apply_move(board, &list.moves[i]);
+            fast_board_key(board, &list.moves[i]);
+            int recScore = depth_limited_search(board, depth - 1, 0, NULL, alpha, beta, startList, previousBest);
+            fast_board_key(board, &list.moves[i]);
+            undo_move(board, &list.moves[i]);
             if (recScore > best_current_score) {
                 best_current_move = list.moves[i];
                 best_current_score = recScore;
             }
             if (recScore > alpha) alpha = recScore;
             if (beta <= alpha) break;
-            continue;
+
         }
-        if (recScore < best_current_score) {
-            best_current_move = list.moves[i];
-            best_current_score = recScore;
-        }
-        if (recScore < beta) beta = recScore;
-        if (beta <= alpha) break;
     }
+    else {
+        for (int i = 0; i < list.count; i++) {
+            apply_move(board, &list.moves[i]);
+            fast_board_key(board, &list.moves[i]);
+            int recScore = depth_limited_search(board, depth - 1, 0, NULL, alpha, beta, startList, previousBest);
+            fast_board_key(board, &list.moves[i]);
+            undo_move(board, &list.moves[i]);
+
+            if (recScore < best_current_score) {
+                best_current_move = list.moves[i];
+                best_current_score = recScore;
+                if (recScore < beta) beta = recScore;
+                if (beta <= alpha) break;
+            }
+
+        }
+    }
+    // for (int i = 0; i < list.count; i++) {
+    //     apply_move(board, &list.moves[i]);
+    //     fast_board_key(board, &list.moves[i]);
+    //     int recScore = depth_limited_search(board, depth - 1, 0, NULL, alpha, beta, startList, previousBest);
+    //     fast_board_key(board, &list.moves[i]);
+    //     undo_move(board, &list.moves[i]);
+    //     if (side == WHITE) {
+    //         if (recScore > best_current_score) {
+    //             best_current_move = list.moves[i];
+    //             best_current_score = recScore;
+    //         }
+    //         if (recScore > alpha) alpha = recScore;
+    //         if (beta <= alpha) break;
+    //     }
+    //     else if (recScore < best_current_score) {
+    //         best_current_move = list.moves[i];
+    //         best_current_score = recScore;
+    //         if (recScore < beta) beta = recScore;
+    //         if (beta <= alpha) break;
+    //     }
+
+    // }
+
+    // store in tt table (this is wayback machine copy)
+    Node node_type;
+    if (best_current_score <= alpha_original) {
+        node_type = UPPER;
+    } else if (best_current_score >= beta_original) {
+        node_type = LOWER;
+    } else {
+        node_type = EXACT;
+    }
+
+    tt_store(board->key, depth, best_current_score, best_current_move, node_type);
 
     if (is_root == 1) *best_move = best_current_move;
 

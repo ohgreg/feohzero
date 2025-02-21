@@ -109,7 +109,6 @@ void apply_move(Board *board, Move *move) {
 
     // update turn
     board->turn = !board->turn;
-    board->key = update_board_key(board);
 }
 
 void undo_move(Board *board, Move *move) {
@@ -170,5 +169,4 @@ void undo_move(Board *board, Move *move) {
     board->ep_square = move->ep;
     board->castle_white = move->castleWhite;
     board->castle_black = move->castleBlack;
-    board->key = update_board_key(board);
 }

@@ -43,9 +43,9 @@ U64 update_side_key(void) {
     return key;
 }
 
-U64 update_en_passant_key(Board *board) {
+U64 update_en_passant_key(int sq) {
     U64 key = 0ULL;
-    key ^= zobrist_enpassant[board->ep_square];
+    key ^= zobrist_enpassant[sq];
     return key;
 }
 
@@ -64,7 +64,71 @@ U64 update_board_key(Board *board) {
         }
     }
     key ^= update_castling_key(board);
-    key ^= update_side_key();
-    if (board->turn == BLACK) key ^= update_en_passant_key(board);
+    key ^= update_en_passant_key(board->ep_square);
+    if(board->turn == BLACK)
+        key ^= update_side_key();
     return key;
+}
+
+void fast_board_key(Board *board, const Move *move) {
+    // Removes the key of the piece's previous position
+    board->key ^= update_piece_key(move->piece, move->from, board->turn);
+
+    // Update en passant key
+    board->key ^= update_en_passant_key(move->ep);
+    board->key ^= update_en_passant_key(board->ep_square);
+
+    if(((board->castle_black ^ move->castleBlack) != 0) || ((board->castle_white ^ move->castleWhite) != 0)) {
+        Board temp;
+        temp.castle_black = move->castleBlack;
+        temp.castle_white = move->castleWhite;
+        board->key ^= update_castling_key(&temp);
+        board->key ^= update_castling_key(board);
+    }
+
+    switch(move->piece) {
+        case PAWN:
+            if(move->flags & EN_PASSANT) {
+                board->key ^= update_piece_key(move->piece, move->to, board->turn);
+                int sq = board->turn ? move->to + 8 : move->to - 8;
+                board->key ^= update_piece_key(move->piece, move->to + sq, !board->turn);
+            }
+            if(move->flags & PROMOTION) {
+                board->key ^= update_piece_key(move->promo, move->to, board->turn);
+            }
+            else {
+                board->key ^= update_piece_key(move->piece, move->to, board->turn);
+            }
+            //could also just use the flag but yeah
+            if(move->captured != NONE) {
+                board->key ^= update_piece_key(move->captured, move->to, !board->turn);
+            }
+        break;
+
+        case KING:
+
+            if (move->flags & CASTLING) {
+                if(move->to == (board->turn ? 62 : 6)) {
+                    board->key ^= update_piece_key(KING, move->to, board->turn);
+                    board->key ^= update_piece_key(ROOK, move->to + 1, board->turn);
+                    board->key ^= update_piece_key(ROOK, move->to - 1, board->turn);
+                }
+                else if(move->to == (board->turn ? 58 : 2)) {
+                    board->key ^= update_piece_key(KING, move->to, board->turn);
+                    board->key ^= update_piece_key(ROOK, move->to + 1, board->turn);
+                    board->key ^= update_piece_key(ROOK, move->to - 2, board->turn);
+                }
+                break;
+            }
+            //no break cause may not be castle
+            // also the comment below is genuinely needed or it fails
+            /* fall through */
+        default:
+            board->key ^= update_piece_key(move->piece, move->to, board->turn);
+            if(move->captured != NONE) {
+                board->key ^= update_piece_key(move->captured, move->to, !board->turn);
+            }
+            board->key ^= update_side_key();
+
+    }
 }
