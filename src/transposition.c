@@ -1,9 +1,11 @@
 #include "transposition.h"
 
+#include <stdlib.h>
+
 TTentry *transposition_table;
 size_t tt_size;
 
-void init_transposition_table(size_t size) { 
+void init_transposition_table(size_t size) {
     tt_size = size;
     transposition_table = calloc(tt_size, sizeof(TTentry));
 }

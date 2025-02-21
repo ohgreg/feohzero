@@ -30,4 +30,9 @@ static inline int pop_lsb(U64 *c) {
     return n;
 }
 
+// pop count
+static inline int pop_count(U64 c) {
+    return __builtin_popcountll(c);
+}
+
 #endif

@@ -11,6 +11,7 @@ SOURCES = \
   $(SRCDIR)/engine.c \
   $(SRCDIR)/fen.c \
   $(SRCDIR)/moves.c \
+  $(SRCDIR)/print.c \
   $(SRCDIR)/board.c \
   $(SRCDIR)/eval.c \
   $(SRCDIR)/search.c \
@@ -23,7 +24,7 @@ SOURCES = \
 CC = gcc
 
 ## Compiler flags
-CFLAGS = -Wall -Wextra -Werror -pedantic -Iinclude
+CFLAGS = -Wall -Wextra -Werror -pedantic -Iinclude -O3
 
 ## Where to put the object files
 BINDIR ?= build
@@ -92,7 +93,7 @@ LIBDIR = libs/unity
 ## List all test files
 TEST_SOURCES = \
   $(TESTDIR)/perft.c
-  # $(TESTDIR)/test1.c
+  # $(TESTDIR)/entrypoint.c
 
 ## Test object filenames
 TEST_OBJECTS = $(TEST_SOURCES:$(TESTDIR)/%.c=$(BINDIR)/%.o)

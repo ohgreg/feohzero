@@ -18,8 +18,7 @@ int move_equals(const Move *m1, const Move *m2) {
     return (m1->from == m2->from) && (m1->to == m2->to) && (m1->promo == m2->promo);
 }
 
-int depth_limited_search(Board *board, int depth, int is_root, Move *best_move, int alpha, int beta,
-                         MoveList startList, Move previousBest) {
+int depth_limited_search(Board *board, int depth, int is_root, Move *best_move, int alpha, int beta, MoveList startList, Move previousBest) {
     int side = board->turn;
 
     // base case (leaf)
@@ -53,8 +52,7 @@ int depth_limited_search(Board *board, int depth, int is_root, Move *best_move, 
 
     for (int i = 0; i < list.count; i++) {
         apply_move(board, &list.moves[i]);
-        int recScore
-            = depth_limited_search(board, depth - 1, 0, NULL, alpha, beta, startList, previousBest);
+        int recScore = depth_limited_search(board, depth - 1, 0, NULL, alpha, beta, startList, previousBest);
         undo_move(board, &list.moves[i]);
         if (side == WHITE) {
             if (recScore > best_current_score) {

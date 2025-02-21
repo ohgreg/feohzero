@@ -1,6 +1,6 @@
 BasedOnStyle: Google
 IndentWidth: 4
-ColumnLimit: 100
+ColumnLimit: 200
 AllowShortIfStatementsOnASingleLine: true
 AllowShortFunctionsOnASingleLine: false
 BinPackArguments: true

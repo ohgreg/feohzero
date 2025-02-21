@@ -90,8 +90,7 @@ int loadFEN(Board *board, char *fen) {
     // STEP 4: parse en passant square
     board->ep_square = 64;
     while (fen[last] == '-') last++;
-    if (fen[last] && fen[last + 1] && 'a' <= fen[last] && fen[last] <= 'h' && '1' <= fen[last + 1]
-        && fen[last + 1] <= '8') {
+    if (fen[last] && fen[last + 1] && 'a' <= fen[last] && fen[last] <= 'h' && '1' <= fen[last + 1] && fen[last + 1] <= '8') {
         file = fen[last] - 'a';
         rank = fen[last + 1] - '1';
         board->ep_square = 8 * rank + file;
@@ -115,7 +114,7 @@ int loadFEN(Board *board, char *fen) {
     }
 
     update_occupied(board);
-    //board->key = update_board_key(board);
+    // board->key = update_board_key(board);
 
     return 1;
 }

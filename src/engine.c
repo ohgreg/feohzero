@@ -1,15 +1,15 @@
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <inttypes.h>
 #include <time.h>
 
+#include "board.h"
 #include "eval.h"
 #include "fen.h"
 #include "moves.h"
 #include "search.h"
-#include "zobrist.h"
-#include "board.h"
 #include "transposition.h"
+#include "zobrist.h"
 
 int choose_move(char *fen, char *moves, int timeout) {
     (void)timeout;
@@ -17,7 +17,7 @@ int choose_move(char *fen, char *moves, int timeout) {
     init_LUT();
     init_tables();
     init_zobrist();
-    init_transposition_table(64 * 1024 * 1024 / sizeof(TTentry));
+    init_transposition_table(1024 / sizeof(TTentry));
 
     Board board;
     board.key = 0ULL;
@@ -26,7 +26,7 @@ int choose_move(char *fen, char *moves, int timeout) {
     // printf("U64 key of board is: %" PRIu64 "\n", board.key);
     // print_board(&board);
     MoveList list = first_list(moves, &board);
-    Move best = iterative_deepening_search(&board, 4, list);
+    Move best = iterative_deepening_search(&board, 6, list);
     // board.key = update_board_key(&board);
     // printf("U64 key of board is: %" PRIu64 "\n", board.key);
     for (int i = 0; i < list.count; i++) {
