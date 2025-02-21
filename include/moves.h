@@ -29,7 +29,11 @@ int square_count(U64 value, int squares[64]);
 
 int init_LUT(void);
 
-U64 generate_pawn_attacks(Board *board, int pos);
+U64 generate_pawn_moves(Board *board, int pos);
+
+static inline U64 generate_pawn_attacks(Board *board, int pos) {
+    return lut.pawn[board->turn][pos];
+}
 
 static inline U64 generate_knight_attacks(Board *board, int pos) {
     return lut.knight[pos] & ~board->occupied[board->turn];

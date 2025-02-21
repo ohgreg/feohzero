@@ -183,23 +183,29 @@ int init_LUT(void) {
         lut.king[square] = moves;
     }
 
+    // pawn LUT
+    for (int square = 0; square < 64; square++) {
+        for (int color = 0; color < 2; color++) {
+            int dir = color ? -1 : 1;
+            lut.pawn[color][square] = 0;
+            if (!is_set_bit(color ? FILE_A : FILE_H, square + 7 * dir)) {
+                enable_bit(&lut.pawn[color][square], square + 7 * dir);
+            }
+            if (!is_set_bit(color ? FILE_H : FILE_A, square + 9 * dir)) {
+                enable_bit(&lut.pawn[color][square], square + 9 * dir);
+            }
+        }
+    }
+
     return 0;
 }
 
-U64 generate_pawn_attacks(Board *board, int pos) {
-    U64 moves = 0;
+U64 (*generate_piece_attacks[6])(Board *, int) = {generate_pawn_attacks, generate_knight_attacks, generate_bishop_attacks, generate_rook_attacks, generate_queen_attacks, generate_king_attacks};
+
+U64 generate_pawn_moves(Board *board, int pos) {
+    U64 moves = generate_piece_attacks[PAWN](board, pos) & board->occupied[!board->turn];
     int turn = board->turn;  // 0 for white, 1 for black
     int dir = turn ? -1 : 1;
-
-    // capture diagonal left
-    if (is_set_bit(~(turn ? FILE_A : FILE_H) & board->occupied[!turn], pos + 7 * dir)) {
-        enable_bit(&moves, pos + 7 * dir);
-    }
-
-    // capture diagonal right
-    if (is_set_bit(~(turn ? FILE_H : FILE_A) & board->occupied[!turn], pos + 9 * dir)) {
-        enable_bit(&moves, pos + 9 * dir);
-    }
 
     // move 1 forward
     if (!is_set_bit(board->occupied[2], pos + 8 * dir)) {
@@ -212,8 +218,6 @@ U64 generate_pawn_attacks(Board *board, int pos) {
 
     return moves;
 }
-
-U64 (*generate_piece_attacks[6])(Board *, int) = {generate_pawn_attacks, generate_knight_attacks, generate_bishop_attacks, generate_rook_attacks, generate_queen_attacks, generate_king_attacks};
 
 U64 generate_opponent_attacks(Board *board) {
     Turn turn = board->turn;
@@ -255,9 +259,8 @@ U64 generate_pinned(Board *board) {
         while (pinners) {
             int pinner_pos = pop_lsb(&pinners);
             U64 ray = slide_mask[i][pinner_pos];
-
             if (is_set_bit(ray, king_pos)) {
-                U64 between = generate_sliding_attacks[i](&temp, king_pos) & generate_sliding_attacks[i](board, pinner_pos);
+                U64 between = generate_sliding_attacks[i](&temp, king_pos) & generate_sliding_attacks[i](&temp, pinner_pos);
                 if (pop_count(between) == 1 && (between & board->occupied[turn])) {
                     enable_bit(&pinned, lsb(between));
                 }
@@ -270,20 +273,11 @@ U64 generate_pinned(Board *board) {
 
 U64 generate_checkers(Board *board) {
     Turn turn = board->turn;
-    int dir = turn ? 1 : -1;
     int king_pos = lsb(board->pieces[turn][KING]);
 
     U64 checkers = 0;
 
-    if (is_set_bit(~(turn ? FILE_H : FILE_A) & board->pieces[!turn][PAWN], king_pos + 7 * dir)) {
-        enable_bit(&checkers, king_pos + 7 * dir);
-    }
-
-    if (is_set_bit(~(turn ? FILE_A : FILE_H) & board->pieces[!turn][PAWN], king_pos + 9 * dir)) {
-        enable_bit(&checkers, king_pos + 9 * dir);
-    }
-
-    for (int piece = KNIGHT; piece <= QUEEN; piece++) {
+    for (int piece = PAWN; piece <= QUEEN; piece++) {
         checkers |= generate_piece_attacks[piece](board, king_pos) & board->pieces[!turn][piece];
     }
 
@@ -315,7 +309,7 @@ U64 generate_blockmask(Board *board, int pos) {
 
     for (int piece = BISHOP; piece <= QUEEN; piece++) {
         if (is_set_bit(board->pieces[!turn][piece], pos)) {
-            blockmask = (generate_piece_attacks[piece](board, pos) & generate_piece_attacks[piece](board, king_pos));
+            blockmask |= (generate_piece_attacks[piece](board, pos) & generate_piece_attacks[piece](board, king_pos));
             clear_bit(&blockmask, king_pos);
             break;
         }
@@ -342,6 +336,7 @@ void generate_moves(MoveList *list, Board *board) {
 
     U64 valid = ~(U64)0;
     U64 checkers = generate_checkers(board);
+    // print_bitboard(checkers);
     if (checkers != 0) {
         if (pop_count(checkers) == 1)  {
             valid = generate_blockmask(board, lsb(checkers));
@@ -351,6 +346,7 @@ void generate_moves(MoveList *list, Board *board) {
     }
 
     U64 pinned = generate_pinned(board);
+    // print_bitboard(pinned);
     for (int piece = KNIGHT; piece <= QUEEN; piece++) {
         pieces = board->pieces[turn][piece];
         while (pieces) {
@@ -378,13 +374,11 @@ void generate_moves(MoveList *list, Board *board) {
         }
     }
 
-    // print_bitboard(pinned);
-
     // generate pawn moves
     pieces = board->pieces[turn][PAWN];
     while (pieces) {
         from = pop_lsb(&pieces);
-        moves = generate_piece_attacks[PAWN](board, from);
+        moves = generate_pawn_moves(board, from);
 
         // logic for pinned pieces
         if (is_set_bit(pinned, from)) {

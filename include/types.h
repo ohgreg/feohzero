@@ -76,6 +76,7 @@ typedef struct {
 typedef struct {
     U64 knight[64];
     U64 king[64];
+    U64 pawn[2][64];
     U64 rook[102400];
     U64 bishop[5248];
 } LUT;
