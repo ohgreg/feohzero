@@ -36,25 +36,26 @@ static inline U64 generate_pawn_attacks(Board *board, int pos) {
 }
 
 static inline U64 generate_knight_attacks(Board *board, int pos) {
-    return lut.knight[pos] & ~board->occupied[board->turn];
+    (void)board;
+    return lut.knight[pos];
 }
 
 static inline U64 generate_bishop_attacks(Board *board, int pos) {
-    return lut.bishop[(((board->occupied[2] & bishop_mask[pos]) * bishop_magic[pos]) >> bishop_shift[pos]) + bishop_offset[pos]] & ~board->occupied[board->turn];
+    return lut.bishop[(((board->occupied[2] & bishop_mask[pos]) * bishop_magic[pos]) >> bishop_shift[pos]) + bishop_offset[pos]];
 }
 
 static inline U64 generate_rook_attacks(Board *board, int pos) {
-    return lut.rook[(((board->occupied[2] & rook_mask[pos]) * rook_magic[pos]) >> rook_shift[pos]) + rook_offset[pos]] & ~board->occupied[board->turn];
+    return lut.rook[(((board->occupied[2] & rook_mask[pos]) * rook_magic[pos]) >> rook_shift[pos]) + rook_offset[pos]];
 }
 
 static inline U64 generate_queen_attacks(Board *board, int pos) {
-    return (lut.bishop[(((board->occupied[2] & bishop_mask[pos]) * bishop_magic[pos]) >> bishop_shift[pos]) + bishop_offset[pos]]
-            | lut.rook[(((board->occupied[2] & rook_mask[pos]) * rook_magic[pos]) >> rook_shift[pos]) + rook_offset[pos]])
-           & ~board->occupied[board->turn];
+    return lut.bishop[(((board->occupied[2] & bishop_mask[pos]) * bishop_magic[pos]) >> bishop_shift[pos]) + bishop_offset[pos]]
+            | lut.rook[(((board->occupied[2] & rook_mask[pos]) * rook_magic[pos]) >> rook_shift[pos]) + rook_offset[pos]];
 }
 
 static inline U64 generate_king_attacks(Board *board, int pos) {
-    return lut.king[pos] & ~board->occupied[board->turn];
+    (void)board;
+    return lut.king[pos];
 }
 
 extern U64 (*generate_piece_attacks[6])(Board *, int);

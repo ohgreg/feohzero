@@ -326,8 +326,9 @@ void generate_moves(MoveList *list, Board *board) {
 
     // generate king moves
     U64 opponent_attacks = generate_opponent_attacks(board);
+    // print_bitboard(opponent_attacks);
     from = lsb(board->pieces[turn][KING]);
-    moves = generate_piece_attacks[KING](board, from) & ~opponent_attacks;
+    moves = generate_piece_attacks[KING](board, from) & ~board->occupied[turn] & ~opponent_attacks;
     while (moves) {
         to = pop_lsb(&moves);
         move = (Move){from, to, 0, KING, NONE, NORMAL_MOVE, board->ep_square, board->castle_white, board->castle_black, 0};
@@ -351,7 +352,7 @@ void generate_moves(MoveList *list, Board *board) {
         pieces = board->pieces[turn][piece];
         while (pieces) {
             from = pop_lsb(&pieces);
-            moves = generate_piece_attacks[piece](board, from);
+            moves = generate_piece_attacks[piece](board, from) & ~board->occupied[turn] ;
 
             // logic for pinned pieces
             if (is_set_bit(pinned, from)) {
