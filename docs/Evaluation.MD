@@ -21,7 +21,7 @@ We actually have 2 of these tables for each piece, an MG (middle game) table and
 [Tapered Eval](https://www.chessprogramming.org/Tapered_Eval#:~:text=a%20technique%20used%20in%20evaluation,of%20captured%20pieces%20so%20far). The Game Phase is calculated by giving a game_phase_value to each piece and adding them.
 For example, a queen is worth 4 game_phase_points, and so it brings the "phase" of the game closer to a middlegame than an endgame. In the end, we will use a simple formula to give more "significance" to either the middle game or endgame table.
 
-The final evaluation of the position is calculated by substracting from the total white "score" the black "score".
+- The final evaluation of the position is calculated by substracting from the total white "score" the black "score".
 
 ## Doubled Pawns / King Safety
 An extra criteria for assigning bonuses and penalties is counting doubled pawns and calculating king's safety. These two are calculated quite naively, but experimentally they seemed to increase the engine's elo by quite a bit. The mechanism is quite simple,
