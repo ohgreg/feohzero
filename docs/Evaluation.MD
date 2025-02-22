@@ -21,5 +21,18 @@ We actually have 2 of these tables for each piece, an MG (middle game) table and
 [Tapered Eval](https://www.chessprogramming.org/Tapered_Eval#:~:text=a%20technique%20used%20in%20evaluation,of%20captured%20pieces%20so%20far). The Game Phase is calculated by giving a game_phase_value to each piece and adding them.
 For example, a queen is worth 4 game_phase_points, and so it brings the "phase" of the game closer to a middlegame than an endgame. In the end, we will use a simple formula to give more "significance" to either the middle game or endgame table.
 
+## Doubled Pawns / King Safety
+A final criteria for assigning bonuses and penalties is counting doubled pawns and calculating king's safety. These two are calculated quite naively, but experimentally they seemed to increase the engine's elo by quite a bit. The mechanism is quite simple,
+simply "loop" through every file on the board and count the amount of pawns in each one. Having multiple pawns on one file makes them doubled, and therefore a penalty is assigned for "bad pawn strucutre". King safety is calculated by looking for pawns in front of
+the king, and checking if the file the king is in is "open" and therefore more vulnerable.
+
+## Closing Thoughts
+The current evaluation function is generally quite simple and could be improved quite a bit, by adding more criteria to the evaluation of a position. Significant improvements can be made through the use of [Texel Tuning](https://www.chessprogramming.org/Texel%27s_Tuning_Method) or much better, [NNUE](https://www.chessprogramming.org/NNUE). That being said, a complex evaluation function means a negative impact on the depth the engine runs at, because of slower computation time.
+Having said that, we decided that a simple evaluation function is better for a simple chess engine, so as to maintain a relatively high depth.
 
 ## Sources
+- [Evaluation](https://www.chessprogramming.org/Evaluation)
+- [PeSTO's evaluation function](https://www.chessprogramming.org/PeSTO%27s_Evaluation_Function)
+- [Piece-Square Tables (from PeSTO)](http://www.talkchess.com/forum3/viewtopic.php?f=2&t=68311&start=19)
+- [Tapered Evaluation](https://www.chessprogramming.org/Tapered_Eval#:~:text=a%20technique%20used%20in%20evaluation,of%20captured%20pieces%20so%20far.)
+
