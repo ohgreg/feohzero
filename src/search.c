@@ -87,23 +87,27 @@ int depth_limited_search(Board *board, int depth, int is_root, Move *best_move, 
     // this is draw or mate. Cooked if stalemate.
     if (list.count == 0) return (board->turn ? INF : -INF);
 
-    
+    // Minimax logic for white and black respectively
     if (side == WHITE) {
         for (int i = 0; i < list.count; i++) {
+            // make and unmake move, while also updating Zobrist key
             apply_move(board, &list.moves[i]);
             fast_board_key(board, &list.moves[i]);
             int recScore = depth_limited_search(board, depth - 1, 0, NULL, alpha, beta, startList, previousBest);
             fast_board_key(board, &list.moves[i]);
             undo_move(board, &list.moves[i]);
+            // Check for better move
             if (recScore > best_current_score) {
                 best_current_move = list.moves[i];
                 best_current_score = recScore;
-            }
+            }    // if better, update alpha
             if (recScore > alpha) alpha = recScore;
+                // check for prune
             if (beta <= alpha) break;
 
         }
     }
+        // same for black
     else {
         for (int i = 0; i < list.count; i++) {
             apply_move(board, &list.moves[i]);
