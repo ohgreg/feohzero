@@ -25,7 +25,7 @@ int choose_move(char *fen, char *moves, int timeout) {
     loadFEN(&board, fen);
 
     MoveList list = first_list(moves, &board);
-    Move best = iterative_deepening_search(&board, 8, list);
+    Move best = iterative_deepening_search(&board, 9, list);
     print_move(&best);
     for (int i = 0; i < list.count; i++) {
         if (move_equals(&best, &list.moves[i])) {

@@ -442,7 +442,7 @@ void generate_moves(MoveList *list, Board *board) {
 
             if (is_set_bit(board->occupied[!turn], to)) {
                 move.flags |= CAPTURE_MOVE;
-                move.score += 1000;
+                move.score += 1000 - 10*move.piece;
             }
 
             // check for double pawn push
