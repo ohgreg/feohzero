@@ -1,7 +1,5 @@
 #include "print.h"
-
 #include <stdio.h>
-
 #include "utils.h"
 
 void print_board(const Board *board) {

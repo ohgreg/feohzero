@@ -8,6 +8,7 @@ int loadFEN(Board *board, char *fen) {
 
     // STEP 1: parse pieces' positions
     char c;
+    // loop through each rank 
     while (rank >= 0) {
         int index = 8 * rank + file;
         c = fen[last];
@@ -113,6 +114,7 @@ int loadFEN(Board *board, char *fen) {
         last++;
     }
 
+    // update occupied and zobrist key
     update_occupied(board);
     board->key = update_board_key(board);
 
