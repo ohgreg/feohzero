@@ -76,6 +76,8 @@ Just from this simple move-ordering, we got a good speed increase through doubli
 Iterative-Deepening Search (IDS) is the algorithm we will use to traverse the chess tree. It is quite simple in nature, as it essentially consists of a depth-limited DFS (depth-first search), that is ran *depth* times, for each depth up to a max depth. While we originally thought this would hinder performance, it is necessary to use in order to satisfy the timeout requirement, and as it turns out, it actually improves the move-ordering, hence more speed. Essentially, since we do not know when the program will exit, it is necessary to start at a low depth, and call the depth limited search for that depth, in order to store a good move, in case the program needs to time out because of the time restrictions, and then gradually increase that depth limit. The neat trick here is that
 we can use the best move from one iteration for the next, because it is very likely to be a good move, which would result in a very good prune. Therefore, we place this move at the "left-most" part of the tree.
 
+## Closing Thoughts
+
 At this point, the engine is pretty much complete and pretty neatly optimized. The engine at this point can probably run at about depth 7 at a reasonable time.
 
 For further performance use, we also use a transposition table (Analysed at a different file). If one wishes to improve upon the search even more, it is advisable that they implement more heuristics, such as the [Killer Heuristic](https://www.chessprogramming.org/Killer_Heuristic), the [History Heuristic](https://www.chessprogramming.org/History_Heuristic), or techniques such as the [Quiescence Search](https://www.chessprogramming.org/Quiescence_Search).
