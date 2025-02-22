@@ -24,7 +24,7 @@ For example, a queen is worth 4 game_phase_points, and so it brings the "phase" 
 The final evaluation of the position is calculated by substracting from the total white "score" the black "score".
 
 ## Doubled Pawns / King Safety
-A final criteria for assigning bonuses and penalties is counting doubled pawns and calculating king's safety. These two are calculated quite naively, but experimentally they seemed to increase the engine's elo by quite a bit. The mechanism is quite simple,
+An extra criteria for assigning bonuses and penalties is counting doubled pawns and calculating king's safety. These two are calculated quite naively, but experimentally they seemed to increase the engine's elo by quite a bit. The mechanism is quite simple,
 simply "loop" through every file on the board and count the amount of pawns in each one. Having multiple pawns on one file makes them doubled, and therefore a penalty is assigned for "bad pawn strucutre". King safety is calculated by looking for pawns in front of
 the king, and checking if the file the king is in is "open" and therefore more vulnerable.
 
