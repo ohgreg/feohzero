@@ -25,4 +25,4 @@ a good result, and therefore more prunes.
 
 The following sources from Bruce Moreland were incredibly useful for implementing the transposition table in FeohZero!
 - [Zobrist Hashing](https://web.archive.org/web/20071031100138/http://www.brucemo.com/compchess/programming/zobrist.htm)
-- [Transposition Table)(https://web.archive.org/web/20071031100051/http://www.brucemo.com/compchess/programming/hashing.htm)
+- [Transposition Table](https://web.archive.org/web/20071031100051/http://www.brucemo.com/compchess/programming/hashing.htm)
