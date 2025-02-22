@@ -78,7 +78,7 @@ we can use the best move from one iteration for the next, because it is very lik
 
 At this point, the engine is pretty much complete and pretty neatly optimized. The engine at this point can probably run at about depth 7 at a reasonable time.
 
-For further performance use, we also use a transposition table (Analysed at a different file)
+For further performance use, we also use a transposition table (Analysed at a different file). If one wishes to improve upon the search even more, it is advisable that they implement more heuristics, such as the [Killer Heuristic](https://www.chessprogramming.org/Killer_Heuristic), the [History Heuristic](https://www.chessprogramming.org/History_Heuristic), or techniques such as the [Quiescence Search](https://www.chessprogramming.org/Quiescence_Search).
 
 
 
