@@ -76,6 +76,6 @@ Iterative-Deepening Search (IDS) is the algorithm we will use to traverse the ch
 ## Sources 
 - [Minimax](https://www.chessprogramming.org/Minimax)
 - [Minimax Visualized](https://www.youtube.com/watch?v=l-hh51ncgDI)
-- [AB-Prune](https://www.chessprogramming.org/Alpha-Beta#:~:text=The%20Alpha%2DBeta%20algorithm%20(Alpha,of%20overlooking%20a%20better%20move.)
+- [AB-Prune](https://www.chessprogramming.org/Alpha-Beta#:~:text=The%20Alpha%2DBeta%20algorithm%20Alpha,of%20overlooking%20a%20better%20move.)
 - [Move-Ordering](https://www.chessprogramming.org/Move_Ordering)
 - [Iterative Deepening Search](https://www.chessprogramming.org/Iterative_Deepening)
