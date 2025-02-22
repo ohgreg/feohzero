@@ -44,10 +44,10 @@ typedef struct {
     CastleRights castle_white : 2;  // 2 bits
     CastleRights castle_black : 2;  // 2 bits
 
-    U8 ep_square;
-    U8 half_move;
-    U64 key;
-    U16 full_move;
+    U8 ep_square;   // store en_passant square
+    U8 half_move;   // half move counter
+    U64 key;        // Zobrist key
+    U16 full_move;  // Full move counter
 } Board;
 
 typedef struct {
@@ -61,9 +61,9 @@ typedef struct {
     U8 captured;  // captured piece type
     U8 flags;     // special move flags
     U8 ep;        // en passant square (0-63)
-    U8 castle_white;
+    U8 castle_white;    // store old castling rights
     U8 castle_black;
-    int score;
+    int score;    // Heuristic score of a move
 
 } Move;
 

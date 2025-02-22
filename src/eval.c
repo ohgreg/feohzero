@@ -1,21 +1,23 @@
 #include "eval.h"
-
 #include <stdio.h>
-
 #include "utils.h"
 
+// piece values (from PeSTO)
 int mg_value[6] = {82, 337, 365, 477, 1025, 0};
 int eg_value[6] = {94, 281, 297, 512, 936, 0};
 
-// Evaluation parameters
+// Evaluation bonuses and penalties (king safety and pawn structure)
 #define DOUBLED_PAWN_MG_PENALTY 10
 #define DOUBLED_PAWN_EG_PENALTY 20
 #define KING_SAFETY_BONUS_MG 20
 #define KING_SAFETY_BONUS_EG 15
 #define OPEN_FILE_KING_MG_PENALTY 25
 #define OPEN_FILE_KING_EG_PENALTY 40
+
 // piece/sq tables
 // values from PESTO wiki
+
+// these essentially act as bonuses/penalites for each piece's position on the board
 
 int mg_pawn_table[64] = {
     0,   0,  0,   0,   0,   0,  0,  0,   98,  134, 61, 95,  68, 126, 34, -11,
@@ -112,6 +114,8 @@ int *mg_pesto_table[6] = {mg_pawn_table, mg_knight_table, mg_bishop_table,
 int *eg_pesto_table[6] = {eg_pawn_table, eg_knight_table, eg_bishop_table,
                           eg_rook_table, eg_queen_table,  eg_king_table};
 
+                    
+// game phase counter to see how close we are to middlegame/endgame
 int gamephaseInc[6] = {0, 1, 1, 2, 4, 0};
 int mg_table_white[6][64];
 int mg_table_black[6][64];
@@ -127,6 +131,7 @@ void print_tables(int table[6][64]) {
     return;
 }
 
+// simple function for counting pieces. Should probably be moved to utils
 int count_pieces(U64 bb) {
     int count = 0;
     while (bb) {
@@ -137,10 +142,12 @@ int count_pieces(U64 bb) {
 }
 
 // we can probably skip this function and just hardcode the constants above
+// this combines values + PST to get the final "LUT" tables for the evaluation below
 void init_tables(void) {
     PieceType piece;
     for (int sq = 0; sq < 64; sq++) {
         for (piece = PAWN; piece <= KING; piece++) {
+            // note that we "flip" the values for black by XORing with 56. This is really weird, it may be wrong, you may have to flip White.
             mg_table_black[piece][sq] = mg_value[piece] + mg_pesto_table[piece][sq ^ 56];
             eg_table_black[piece][sq] = eg_value[piece] + eg_pesto_table[piece][sq ^ 56];
             mg_table_white[piece][sq] = mg_value[piece] + mg_pesto_table[piece][sq];
@@ -149,30 +156,31 @@ void init_tables(void) {
     }
 }
 
-// Pawn structure evaluation
+// Small function to count pawns in a file, and return how many doubled pawns we have
 int count_doubled_pawns(U64 pawns) {
+    // init files
     int files[8] = {0};
     int count = 0;
     while(pawns != 0) {
         int sq = pop_lsb(&pawns);
+        // sq % 8 gives us the file
         files[sq%8]++;
     }
     for(int i=0; i<8; i++) {
-        if(files[i]>1) 
-            count += files[i] - 1;
+        if(files[i]>1)      
+            count += files[i] - 1;      // this is -1 because just one doesnt count as doubled. 
     }
     return count;
 }
 
-
+// main evaluation function 
 int eval(const Board *board) {
-    // Board temp = *board;
+    // mg and eg scores for black and white
     int mg[2] = {0};
     int eg[2] = {0};
     int gamePhase = 0;
     PieceType piece;
-    // print_tables(mg_table_white);
-
+    
     // evaluate each piece
     for (piece = PAWN; piece <= KING; piece++) {
         U64 whitePiece = board->pieces[WHITE][piece];
@@ -182,8 +190,10 @@ int eval(const Board *board) {
             int pos = pop_lsb(&whitePiece);
             mg[WHITE] += mg_table_white[piece][pos];
             eg[WHITE] += eg_table_white[piece][pos];
+            // increment game phase depending on the significance of the piece 
             gamePhase += gamephaseInc[piece];
         }
+        // same process for black
         while (blackPiece != 0) {
             int pos = pop_lsb(&blackPiece);
             mg[BLACK] += mg_table_black[piece][pos];
@@ -191,7 +201,7 @@ int eval(const Board *board) {
             gamePhase += gamephaseInc[piece];
         }
     }
-
+    // get cou nt of doubled pawns for black and white and assign appropriate penalties 
     int white_doubled = count_doubled_pawns(board->pieces[WHITE][PAWN]);
     int black_doubled = count_doubled_pawns(board->pieces[BLACK][PAWN]);
     mg[WHITE] -= white_doubled * DOUBLED_PAWN_MG_PENALTY;
@@ -199,20 +209,23 @@ int eval(const Board *board) {
     mg[BLACK] -= black_doubled * DOUBLED_PAWN_MG_PENALTY;
     eg[BLACK] -= black_doubled * DOUBLED_PAWN_EG_PENALTY;
 
-    // King safety
+    // King safety 
     int w_king = lsb(board->pieces[WHITE][KING]);
     int b_king = lsb(board->pieces[BLACK][KING]);
-    // WHITE:
 
+    // WHITE:
     int w_king_file = w_king % 8;
     int w_king_rank = w_king / 8;
     U64 shield = 0;
-    if(w_king_rank<7) {
+    // we are going to check for pawns above, above left and above right from the king to check if it's safe
+    if(w_king_rank<7) { 
+        // Make sure everything here is in bounds
         for (int near_file = w_king_file-1; near_file <= w_king_file+1; near_file++) {
             if (near_file >= 0 && near_file < 8)
                 shield |= 1ULL << (near_file + (w_king_rank+1)*8);
         }
     }
+    // get total amount of "good pawns" that contribute to king safety (the adjacent ones)
     int shield_count = count_pieces(shield & board->pieces[WHITE][PAWN]);
     mg[WHITE] += shield_count * KING_SAFETY_BONUS_MG;
     eg[WHITE] += shield_count * KING_SAFETY_BONUS_EG;
@@ -226,8 +239,9 @@ int eval(const Board *board) {
         eg[WHITE] -= OPEN_FILE_KING_EG_PENALTY;
     }
 
-    // BLACK:
-    
+    // BLACK: 
+
+    //exact same process as white, slightly mirrored numbers
     int b_king_file = b_king % 8;
     int b_king_rank = b_king / 8;
     shield = 0;

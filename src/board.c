@@ -6,16 +6,18 @@
 // update which squares are occupied in the board and by what color
 void update_occupied(Board *board) {
     for (int i = 0; i < 6; i++) {
-        board->occupied[0] |= board->pieces[0][i];
-        board->occupied[1] |= board->pieces[1][i];
-        board->occupied[2] |= board->pieces[0][i] | board->pieces[1][i];
+        board->occupied[WHITE] |= board->pieces[WHITE][i];
+        board->occupied[BLACK] |= board->pieces[BLACK][i];
+        board->occupied[2] |= board->pieces[WHITE][i] | board->pieces[BLACK][i];
     }
 }
 
+// Function to apply a move, changing the chess position
 void apply_move(Board *board, Move *move) {
-    // update the full move and half move counters
+
     Turn turn = board->turn;
 
+    // Update full move and half move counters
     if (turn) board->full_move++;
     board->half_move++;
 
@@ -32,6 +34,7 @@ void apply_move(Board *board, Move *move) {
 
     // handle normal capture at move->to
     if (is_set_bit(board->occupied[!turn], move->to)) {
+        // loop through each piece type to find what piece was captured
         for (int i = PAWN; i <= QUEEN; i++) {
             if (is_set_bit(board->pieces[!turn][i], move->to)) {
                 clear_bit(&board->pieces[!turn][i], move->to);
@@ -42,6 +45,7 @@ void apply_move(Board *board, Move *move) {
         // handle rook move in castling
     } else if (move->flags & CASTLING) {
         if (move->to == (turn ? 62 : 6)) {  // short castling
+            // update relevant info
             clear_bit(&board->pieces[turn][ROOK], move->to + 1);
             enable_bit(&board->pieces[turn][ROOK], move->to - 1);
             clear_bit(&board->occupied[turn], move->to + 1);
@@ -49,6 +53,7 @@ void apply_move(Board *board, Move *move) {
             enable_bit(&board->occupied[turn], move->to - 1);
             enable_bit(&board->occupied[2], move->to - 1);
         } else if (move->to == (turn ? 58 : 2)) {  // long castling
+            // update relevant info
             clear_bit(&board->pieces[turn][ROOK], move->to - 2);
             enable_bit(&board->pieces[turn][ROOK], move->to + 1);
             clear_bit(&board->occupied[turn], move->to - 2);
@@ -59,6 +64,7 @@ void apply_move(Board *board, Move *move) {
     }
     // handle en passant capture
     else if (move->flags & EN_PASSANT) {
+        // move->to differents from the square the captured pawn is in!
         int sq = turn ? move->to + 8 : move->to - 8;
         clear_bit(&board->pieces[!turn][PAWN], sq);
         clear_bit(&board->occupied[!turn], sq);
@@ -111,13 +117,19 @@ void apply_move(Board *board, Move *move) {
     board->turn = !board->turn;
 }
 
-void undo_move(Board *board, Move *move) {
-    board->turn = !board->turn;
 
+// Function to revert a move (Mirrors apply_move())
+void undo_move(Board *board, Move *move) {
+    // reverse turn
+    board->turn = !board->turn;
     Turn turn = board->turn;
+
     PieceType piece = move->piece;
+
+    // revert en passant square
     board->ep_square = move->ep;
 
+    // revert promotion
     if (move->promo == 0) {
         clear_bit(&board->pieces[turn][piece], move->to);
     } else {
@@ -135,6 +147,7 @@ void undo_move(Board *board, Move *move) {
         clear_bit(&board->occupied[2], move->to);
     }
 
+    // revert en passant
     if (move->flags & EN_PASSANT) {
         int sq = turn ? move->to + 8 : move->to - 8;
         if (sq >= 0 && sq < 64) {
@@ -142,6 +155,7 @@ void undo_move(Board *board, Move *move) {
             enable_bit(&board->occupied[!turn], sq);
             clear_bit(&board->occupied[2], move->to);
         }
+        // revert castling
     } else if (move->flags & CASTLING) {
         if (move->to == (turn ? 62 : 6)) {
             enable_bit(&board->pieces[turn][ROOK], move->to + 1);
@@ -159,14 +173,14 @@ void undo_move(Board *board, Move *move) {
             enable_bit(&board->occupied[turn], move->to - 2);
         }
     }
-
+    // revert occupied bitboard
     enable_bit(&board->occupied[2], move->from);
     enable_bit(&board->occupied[turn], move->from);
     clear_bit(&board->occupied[turn], move->to);
 
+    // revert misc info
     if (turn) board->full_move--;
     board->half_move--;
-    board->ep_square = move->ep;
     board->castle_white = move->castle_white;
     board->castle_black = move->castle_black;
 }
