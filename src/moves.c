@@ -308,13 +308,17 @@ U64 generate_blockmask(Board *board, int pos) {
     U64 blockmask = 0;
     enable_bit(&blockmask, pos);
 
-    for (int piece = BISHOP; piece <= QUEEN; piece++) {
-        if (is_set_bit(board->pieces[!turn][piece], pos)) {
-            blockmask |= (generate_piece_attacks[piece](board, pos) & generate_piece_attacks[piece](board, king_pos));
-            clear_bit(&blockmask, king_pos);
-            break;
+    U64 *slide_mask[2] = {rook_tmask, bishop_tmask};
+    U64 (*generate_sliding_attacks[2])(Board *, int) = {generate_rook_attacks, generate_bishop_attacks};
+
+    for (int i = 0; i < 2; i++) {
+        U64 ray = slide_mask[i][pos];
+        if (is_set_bit(ray, king_pos)) {
+            blockmask |= generate_sliding_attacks[i](board, pos) & generate_sliding_attacks[i](board, king_pos);
         }
     }
+
+    clear_bit(&blockmask, king_pos);
 
     return blockmask;
 }
@@ -388,6 +392,8 @@ void generate_moves(MoveList *list, Board *board) {
         }
     }
 
+    // print_bitboard(valid);
+
     U64 pinned = generate_pinned(board);
     // print_bitboard(pinned);
     for (int piece = KNIGHT; piece <= QUEEN; piece++) {
@@ -458,13 +464,13 @@ void generate_moves(MoveList *list, Board *board) {
         }
     }
 
-    // generate en passant moves
-    generate_en_passant(list, board);
-
     // generate castling moves
     if (checkers == 0) {
         generate_castling(list, board, opponent_attacks);
     }
+
+    // generate en passant moves
+    generate_en_passant(list, board);
 }
 
 Move translate_move(const char *moveStr, Board *Board) {
