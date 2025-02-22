@@ -29,6 +29,8 @@ function minimax(node, depth, maximizingPlayer) is
 Where the maximizing player is white, and the miniminzg player is black. Each recursive call decrements the depth by one, and when depth 0 is reached, we call our evaluation function to give us the static evaluation of the chess position. 
 (Of course, slight modification to this pseudocode is done in order to save the actual move as well)
 
+At this point, FeohZero is now a functional chess engine that can consistently run at about depth 4 at a sub-5 second runtime.
+
 ## AB-Prune
 
 A very significant optimization for minimax can be made through the use of [Alpha-Beta Pruning](https://en.wikipedia.org/wiki/Alpha%E2%80%93beta_pruning). The idea of the AB-Prune is that not all sub-trees of a chess position need to be searched.
@@ -67,9 +69,16 @@ will lead to more prunes, and therefore a way more efficient search. This brings
 
 A most vital aspect for an efficient AB-Prune search is correct move ordering. That being said, it is difficult to judge a move as "good" or "bad", without actually searching them. Therefore, the move ordering is done using heuristics. FeohZero relies on a couple of smart heuristics in order to maximize pruning. Each move has a score assigned to it upon generation. Capture moves and castling are considered "likely to be good moves", whereas en passant is much worse in comparison. The best move-ordering trick though is undoubtedly through the use of [Iterative-Deepening Search](https://en.wikipedia.org/wiki/Iterative_deepening_depth-first_search).
 
+Just from this simple move-ordering, we got a good speed increase through doubling of the prunes.
+
 ## Iterative-Deepening Search
 
-Iterative-Deepening Search (IDS) is the algorithm we will use to traverse the chess tree. It is quite simple in nature, as it essentially consists of a depth-limited DFS (depth-first search), that is ran *depth* times. 
+Iterative-Deepening Search (IDS) is the algorithm we will use to traverse the chess tree. It is quite simple in nature, as it essentially consists of a depth-limited DFS (depth-first search), that is ran *depth* times, for each depth up to a max depth. While we originally thought this would hinder performance, it is necessary to use in order to satisfy the timeout requirement, and as it turns out, it actually improves the move-ordering, hence more speed. Essentially, since we do not know when the program will exit, it is necessary to start at a low depth, and call the depth limited search for that depth, in order to store a good move, in case the program needs to time out because of the time restrictions, and then gradually increase that depth limit. The neat trick here is that
+we can use the best move from one iteration for the next, because it is very likely to be a good move, which would result in a very good prune. Therefore, we place this move at the "left-most" part of the tree.
+
+At this point, the engine is pretty much complete and pretty neatly optimized. The engine at this point can probably run at about depth 7 at a reasonable time.
+
+For further performance use, we also use a transposition table (Analysed at a different file)
 
 
 
