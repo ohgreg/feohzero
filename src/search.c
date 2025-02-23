@@ -50,8 +50,7 @@ int depth_limited_search(Board *board, int depth, int is_root, Move *best_move, 
     // base case: Return static evaluation of position
     if (depth == 0) return eval(board);
 
-    int best_current_score = (side == WHITE) ? -INF : INF;
-    Move best_current_move = {0};
+    
 
     MoveList list;
     list.count = 0;
@@ -85,7 +84,11 @@ int depth_limited_search(Board *board, int depth, int is_root, Move *best_move, 
     qsort(list.moves, list.count, sizeof(Move), sort_moves);
 
     // this is draw or mate. Cooked if stalemate.
-    if (list.count == 0) return (board->turn ? INF : -INF);
+    if (list.count == 0 && (generate_opponent_attacks(board) & board->pieces[board->turn][KING]) != 0) return (board->turn ? INF : -INF);
+    else if (list.count == 0 && (generate_opponent_attacks(board) & board->pieces[board->turn][KING]) == 0) return 0;
+
+    int best_current_score = (side == WHITE) ? -INF : INF;
+    Move best_current_move = list.moves[0];
 
     // Minimax logic for white and black respectively
     if (side == WHITE) {
