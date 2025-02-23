@@ -4,7 +4,6 @@
 
 #include "board.h"
 #include "constants.h"
-#include "print.h"
 #include "types.h"
 #include "utils.h"
 
@@ -85,7 +84,7 @@ int square_count(U64 value, int squares[64]) {
     return i;
 }
 
-int init_LUT(void) {
+void init_LUT(void) {
     int bishop_directions[4][2] = {{-1, -1}, {-1, 1}, {1, -1}, {1, 1}};
     int bishop_ldirections[4][2] = {{-1, -1}, {0, 0}, {0, 0}, {1, 1}};
     int bishop_rdirections[4][2] = {{0, 0}, {-1, 1}, {1, -1}, {0, 0}};
@@ -117,7 +116,7 @@ int init_LUT(void) {
             U64 occupied = 0;
             for (int j = 0; j < count; j++) {
                 if (i & (1 << j)) {
-                    occupied |= ((U64)1 << squares[j]);
+                    enable_bit(&occupied, squares[j]);
                 }
             }
             U64 value = slide(occupied, 0, square, bishop_directions);
@@ -137,7 +136,7 @@ int init_LUT(void) {
             U64 occupied = 0;
             for (int j = 0; j < count; j++) {
                 if (i & (1 << j)) {
-                    occupied |= ((U64)1 << squares[j]);
+                    enable_bit(&occupied, squares[j]);
                 }
             }
             U64 value = slide(occupied, 0, square, rook_directions);
@@ -150,8 +149,8 @@ int init_LUT(void) {
 
     // knight LUT
     for (int square = 0; square < 64; square++) {
-        uint64_t pos = (U64)1 << square;
-        uint64_t moves = 0;
+        U64 pos = (U64)1 << square;
+        U64 moves = 0;
 
         // calculate all possible knight moves
         moves |= (pos << 17) & ~FILE_A;   // up 2, left 1
@@ -197,16 +196,15 @@ int init_LUT(void) {
             }
         }
     }
-
-    return 0;
 }
 
 U64 (*generate_piece_attacks[6])(Board *, int) = {generate_pawn_attacks, generate_knight_attacks, generate_bishop_attacks, generate_rook_attacks, generate_queen_attacks, generate_king_attacks};
+U64 (*generate_sliding_attacks[2])(Board *, int) = {generate_rook_attacks, generate_bishop_attacks};
 
 U64 generate_pawn_moves(Board *board, int pos) {
-    U64 moves = generate_piece_attacks[PAWN](board, pos) & board->occupied[!board->turn];
-    int turn = board->turn;  // 0 for white, 1 for black
+    Turn turn = board->turn;
     int dir = turn ? -1 : 1;
+    U64 moves = generate_piece_attacks[PAWN](board, pos) & board->occupied[!board->turn];
 
     // move 1 forward
     if (!is_set_bit(board->occupied[2], pos + 8 * dir)) {
@@ -223,13 +221,14 @@ U64 generate_pawn_moves(Board *board, int pos) {
 U64 generate_opponent_attacks(Board *board) {
     Turn turn = board->turn;
     int king_pos = lsb(board->pieces[turn][KING]);
+    U64 attacks = 0;
+
     Board temp = *board;
     temp.turn = !turn;
     temp.pieces[turn][KING] = 0;
     clear_bit(&temp.occupied[turn], king_pos);
     clear_bit(&temp.occupied[2], king_pos);
 
-    U64 attacks = 0;
     for (int piece = PAWN; piece <= KING; piece++) {
         U64 pieces = temp.pieces[!turn][piece];
         while (pieces) {
@@ -238,6 +237,39 @@ U64 generate_opponent_attacks(Board *board) {
     }
 
     return attacks;
+}
+
+U64 generate_checkers(Board *board) {
+    Turn turn = board->turn;
+    int king_pos = lsb(board->pieces[turn][KING]);
+    U64 checkers = 0;
+
+    for (int piece = PAWN; piece <= QUEEN; piece++) {
+        checkers |= generate_piece_attacks[piece](board, king_pos) & board->pieces[!turn][piece];
+    }
+
+    return checkers;
+}
+
+U64 generate_blockmask(Board *board, int pos) {
+    Turn turn = board->turn;
+    int king_pos = lsb(board->pieces[turn][KING]);
+    U64 blockmask = 0;
+
+    enable_bit(&blockmask, pos);
+
+    U64 *slide_mask[2] = {rook_tmask, bishop_tmask};
+
+    for (int i = 0; i < 2; i++) {
+        U64 ray = slide_mask[i][pos];
+        if (is_set_bit(ray, king_pos)) {
+            blockmask |= generate_sliding_attacks[i](board, pos) & generate_sliding_attacks[i](board, king_pos);
+        }
+    }
+
+    clear_bit(&blockmask, king_pos);
+
+    return blockmask;
 }
 
 U64 generate_pinned(Board *board) {
@@ -251,7 +283,6 @@ U64 generate_pinned(Board *board) {
     };
 
     U64 *slide_mask[2] = {rook_tmask, bishop_tmask};
-    U64 (*generate_sliding_attacks[2])(Board *, int) = {generate_rook_attacks, generate_bishop_attacks};
 
     for (int i = 0; i < 2; i++) {
         U64 pinners = sliding_pieces[i];
@@ -272,25 +303,13 @@ U64 generate_pinned(Board *board) {
     return pinned;
 }
 
-U64 generate_checkers(Board *board) {
-    Turn turn = board->turn;
-    int king_pos = lsb(board->pieces[turn][KING]);
-
-    U64 checkers = 0;
-
-    for (int piece = PAWN; piece <= QUEEN; piece++) {
-        checkers |= generate_piece_attacks[piece](board, king_pos) & board->pieces[!turn][piece];
-    }
-
-    return checkers;
-}
-
 U64 generate_pinmask(Board *board, int pos) {
     Turn turn = board->turn;
     int king_pos = lsb(board->pieces[turn][KING]);
-
     U64 pinmask = 0;
+
     U64 *slide_mask[4] = {bishop_lmask, bishop_rmask, rook_lmask, rook_rmask};
+
     for (int i = 0; i < 4; i++) {
         if (is_set_bit(slide_mask[i][king_pos], pos)) {
             pinmask = slide_mask[i][king_pos];
@@ -301,47 +320,9 @@ U64 generate_pinmask(Board *board, int pos) {
     return pinmask;
 }
 
-U64 generate_blockmask(Board *board, int pos) {
-    Turn turn = board->turn;
-    int king_pos = lsb(board->pieces[turn][KING]);
+void generate_castling(MoveList *list, Board *board, U64 checkers, U64 opponent_attacks) {
+    if (checkers != 0) return;
 
-    U64 blockmask = 0;
-    enable_bit(&blockmask, pos);
-
-    U64 *slide_mask[2] = {rook_tmask, bishop_tmask};
-    U64 (*generate_sliding_attacks[2])(Board *, int) = {generate_rook_attacks, generate_bishop_attacks};
-
-    for (int i = 0; i < 2; i++) {
-        U64 ray = slide_mask[i][pos];
-        if (is_set_bit(ray, king_pos)) {
-            blockmask |= generate_sliding_attacks[i](board, pos) & generate_sliding_attacks[i](board, king_pos);
-        }
-    }
-
-    clear_bit(&blockmask, king_pos);
-
-    return blockmask;
-}
-
-void generate_en_passant(MoveList *list, Board *board) {
-    if (board->ep_square == 64) return;
-
-    Turn turn = board->turn;
-    U8 ep = board->ep_square;
-
-    U64 moves = lut.pawn[!turn][ep] & board->pieces[turn][PAWN];
-
-    while (moves) {
-        Move move = {pop_lsb(&moves), ep, 0, PAWN, NONE, CAPTURE_MOVE | EN_PASSANT, ep, board->castle_white, board->castle_black, -1000};
-        Board temp = *board;
-        apply_move(&temp, &move);
-        temp.turn = turn;
-        if ((generate_opponent_attacks(&temp) & board->pieces[turn][KING]) != 0) continue;
-        list->moves[list->count++] = move;
-    }
-}
-
-void generate_castling(MoveList *list, Board *board, U64 opponent_attacks) {
     Turn turn = board->turn;
     CastleRights rights = turn ? board->castle_black : board->castle_white;
 
@@ -364,6 +345,24 @@ void generate_castling(MoveList *list, Board *board, U64 opponent_attacks) {
     }
 }
 
+void generate_en_passant(MoveList *list, Board *board) {
+    if (board->ep_square == 64) return;
+
+    Turn turn = board->turn;
+    U8 ep = board->ep_square;
+
+    U64 moves = lut.pawn[!turn][ep] & board->pieces[turn][PAWN];
+
+    while (moves) {
+        Move move = {pop_lsb(&moves), ep, 0, PAWN, NONE, CAPTURE_MOVE | EN_PASSANT, ep, board->castle_white, board->castle_black, -1000};
+        Board temp = *board;
+        apply_move(&temp, &move);
+        temp.turn = turn;
+        if ((generate_opponent_attacks(&temp) & board->pieces[turn][KING]) != 0) continue;
+        list->moves[list->count++] = move;
+    }
+}
+
 void generate_moves(MoveList *list, Board *board) {
     Turn turn = board->turn;
     U64 moves = 0, pieces = 0;
@@ -372,7 +371,6 @@ void generate_moves(MoveList *list, Board *board) {
 
     // generate king moves
     U64 opponent_attacks = generate_opponent_attacks(board);
-    // print_bitboard(opponent_attacks);
     from = lsb(board->pieces[turn][KING]);
     moves = generate_piece_attacks[KING](board, from) & ~board->occupied[turn] & ~opponent_attacks;
     while (moves) {
@@ -383,7 +381,6 @@ void generate_moves(MoveList *list, Board *board) {
 
     U64 valid = ~(U64)0;
     U64 checkers = generate_checkers(board);
-    // print_bitboard(checkers);
     if (checkers != 0) {
         if (pop_count(checkers) == 1)  {
             valid = generate_blockmask(board, lsb(checkers));
@@ -392,15 +389,12 @@ void generate_moves(MoveList *list, Board *board) {
         }
     }
 
-    // print_bitboard(valid);
-
     U64 pinned = generate_pinned(board);
-    // print_bitboard(pinned);
     for (int piece = KNIGHT; piece <= QUEEN; piece++) {
         pieces = board->pieces[turn][piece];
         while (pieces) {
             from = pop_lsb(&pieces);
-            moves = generate_piece_attacks[piece](board, from) & ~board->occupied[turn] ;
+            moves = generate_piece_attacks[piece](board, from) & ~board->occupied[turn];
 
             // logic for pinned pieces
             if (is_set_bit(pinned, from)) {
@@ -442,7 +436,7 @@ void generate_moves(MoveList *list, Board *board) {
 
             if (is_set_bit(board->occupied[!turn], to)) {
                 move.flags |= CAPTURE_MOVE;
-                move.score += 1000 - 10*move.piece;
+                move.score += 1000 - 10 * move.piece;
             }
 
             // check for double pawn push
@@ -465,17 +459,15 @@ void generate_moves(MoveList *list, Board *board) {
     }
 
     // generate castling moves
-    if (checkers == 0) {
-        generate_castling(list, board, opponent_attacks);
-    }
+    generate_castling(list, board, checkers, opponent_attacks);
 
     // generate en passant moves
     generate_en_passant(list, board);
 }
 
-Move translate_move(const char *moveStr, Board *Board) {
+Move translate_move(const char *moveStr, Board *board) {
     int size = strlen(moveStr);
-    Turn turn = Board->turn;
+    Turn turn = board->turn;
     int start_rank = -1;
     int start_file = -1;
     int final_rank = -1;
@@ -483,7 +475,7 @@ Move translate_move(const char *moveStr, Board *Board) {
 
     int castle_count = 0;
 
-    Move move = {0, 0, 0, PAWN, NONE, NORMAL_MOVE, Board->ep_square, Board->castle_white, Board->castle_black, 0};
+    Move move = {0, 0, 0, PAWN, NONE, NORMAL_MOVE, board->ep_square, board->castle_white, board->castle_black, 0};
 
     for (int i = 0; i < size; i++) {
         switch (moveStr[i]) {
@@ -553,7 +545,7 @@ Move translate_move(const char *moveStr, Board *Board) {
     if (castle_count != 0) {
         MoveList list;
         list.count = 0;
-        // generate_castling_moves(&list, Board);
+        generate_castling(&list, board, generate_checkers(board), generate_opponent_attacks(board));
         for (int i = 0; i < list.count; i++) {
             if (list.moves[i].score == 2100 && castle_count == 2) {
                 move = list.moves[i];
@@ -567,18 +559,18 @@ Move translate_move(const char *moveStr, Board *Board) {
     }
 
     if (move.piece == PAWN && move.to - move.from == (turn ? -16 : 16)) move.flags |= DOUBLE_PAWN_PUSH;
-    if (move.piece == PAWN && move.to == Board->ep_square) {
+    if (move.piece == PAWN && move.to == board->ep_square) {
         move.flags |= EN_PASSANT;
         move.score = -1000;
     }
 
-    move.to = (final_rank * 8) + final_file;
-    move.from = (start_rank * 8) + start_file;
+    move.to = 8 * final_rank + final_file;
+    move.from = 8 * start_rank + start_file;
 
     if (start_rank == -1 && start_file == -1) {
         MoveList list;
         list.count = 0;
-        generate_moves(&list, Board);
+        generate_moves(&list, board);
         for (int i = 0; i < list.count; i++) {
             Move b = list.moves[i];
             if ((move.to == b.to) && (move.piece == b.piece)) move.from = b.from;
@@ -586,7 +578,7 @@ Move translate_move(const char *moveStr, Board *Board) {
     } else if (start_rank == -1 && start_file != -1) {
         MoveList list;
         list.count = 0;
-        generate_moves(&list, Board);
+        generate_moves(&list, board);
         for (int i = 0; i < list.count; i++) {
             Move b = list.moves[i];
             if ((move.to == b.to) && (move.piece == b.piece) && move.from % 8 == start_file) move.from = b.from;
@@ -594,7 +586,7 @@ Move translate_move(const char *moveStr, Board *Board) {
     } else if (start_rank == -1 && start_file != -1) {
         MoveList list;
         list.count = 0;
-        generate_moves(&list, Board);
+        generate_moves(&list, board);
         for (int i = 0; i < list.count; i++) {
             Move b = list.moves[i];
             if ((move.to == b.to) && (move.piece == b.piece) && move.from / 8 == start_rank) move.from = b.from;

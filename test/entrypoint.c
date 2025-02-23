@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include "fen.h"
 #include "unity.h"
 #include "unity_internals.h"
