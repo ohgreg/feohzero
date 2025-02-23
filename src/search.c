@@ -50,8 +50,7 @@ int depth_limited_search(Board *board, int depth, int is_root, Move *best_move, 
     // base case: Return static evaluation of position
     if (depth == 0) return eval(board);
 
-    int best_current_score = (side == WHITE) ? -INF : INF;
-    Move best_current_move = {0};
+    
 
     MoveList list;
     list.count = 0;
@@ -87,6 +86,9 @@ int depth_limited_search(Board *board, int depth, int is_root, Move *best_move, 
     // this is draw or mate. Cooked if stalemate.
     if (list.count == 0) return (board->turn ? INF : -INF);
 
+    int best_current_score = (side == WHITE) ? -INF : INF;
+    Move best_current_move = list.moves[0];
+
     // Minimax logic for white and black respectively
     if (side == WHITE) {
         for (int i = 0; i < list.count; i++) {
@@ -97,11 +99,11 @@ int depth_limited_search(Board *board, int depth, int is_root, Move *best_move, 
             fast_board_key(board, &list.moves[i]);
             undo_move(board, &list.moves[i]);
             // Check for better move
-            if (recScore >= best_current_score) {
+            if (recScore > best_current_score) {
                 best_current_move = list.moves[i];
                 best_current_score = recScore;
             }    // if better, update alpha
-            if (recScore >= alpha) alpha = recScore;
+            if (recScore > alpha) alpha = recScore;
                 // check for prune
             if (beta <= alpha) break;
 
@@ -116,10 +118,10 @@ int depth_limited_search(Board *board, int depth, int is_root, Move *best_move, 
             fast_board_key(board, &list.moves[i]);
             undo_move(board, &list.moves[i]);
 
-            if (recScore <= best_current_score) {
+            if (recScore < best_current_score) {
                 best_current_move = list.moves[i];
                 best_current_score = recScore;
-                if (recScore <= beta) beta = recScore;
+                if (recScore < beta) beta = recScore;
                 if (beta <= alpha) break;
             }
 
