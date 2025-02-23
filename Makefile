@@ -42,7 +42,7 @@ WEB_TARGET ?= web/engine.wasm
 EMCC = emcc
 
 ## Emscripten flags
-EMCC_FLAGS = -s WASM=1 -s EXPORTED_FUNCTIONS='["_choose_move"]' --no-entry -O3 -Iinclude
+EMCC_FLAGS = -s WASM=1 -s EXPORTED_FUNCTIONS='["_choose_move"]' -s STACK_SIZE=8388608 --no-entry -O3 -Iinclude
 
 ## Create the build directory if it doesn't exist
 $(BINDIR):

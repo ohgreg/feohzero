@@ -50,8 +50,6 @@ int depth_limited_search(Board *board, int depth, int is_root, Move *best_move, 
     // base case: Return static evaluation of position
     if (depth == 0) return eval(board);
 
-    
-
     MoveList list;
     list.count = 0;
     // check if it's root of position (starting position) to get the movelist from second argument or not
@@ -68,7 +66,7 @@ int depth_limited_search(Board *board, int depth, int is_root, Move *best_move, 
         }
     } else {
         // uncomment this in prod code
-        //list = startList;
+        list = startList;
         // if is_root, we have no transpo moves, so use PV node. (much better)
         generate_moves(&list, board);
         if (previousBest.score == 20000) {
@@ -128,7 +126,7 @@ int depth_limited_search(Board *board, int depth, int is_root, Move *best_move, 
 
         }
     }
-   
+
     // store in tt table (this is wayback machine copy)
     Node node_type;
     if (best_current_score <= alpha_original) {
@@ -147,7 +145,7 @@ int depth_limited_search(Board *board, int depth, int is_root, Move *best_move, 
     return best_current_score;
 }
 
-// IDS 
+// IDS
 Move iterative_deepening_search(Board *board, int max_depth, MoveList startList) {
     Move best_move = {0};
     Move previousBest = {0};
