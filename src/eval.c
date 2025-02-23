@@ -1,6 +1,7 @@
 #include "eval.h"
 
 #include "constants.h"
+#include "types.h"
 #include "utils.h"
 
 // piece values (from PeSTO)
@@ -161,15 +162,6 @@ int mg_table_black[6][64];
 int eg_table_white[6][64];
 int eg_table_black[6][64];
 
-// simple function for counting pieces. Should probably be moved to utils
-int count_pieces(U64 bb) {
-    int count = 0;
-    while (bb) {
-        pop_lsb(&bb);
-        count++;
-    }
-    return count;
-}
 
 // we can probably skip this function and just hardcode the constants above
 // this combines values + PST to get the final "LUT" tables for the evaluation below
@@ -186,123 +178,78 @@ void init_tables(void) {
     }
 }
 
-// Small function to count pawns in a file, and return how many doubled pawns we have
+// counts doubled pawns in a given bitboard
 int count_doubled_pawns(U64 pawns) {
-    // init files
-    int files[8] = {0};
     int count = 0;
-    while(pawns != 0) {
-        int sq = pop_lsb(&pawns);
-        // sq % 8 gives us the file
-        files[sq%8]++;
+
+    // iterate through each file and count pawns
+    for (int file = 0; file < 8; file++) {
+        int pawns_in_file = pop_count(pawns & (FILE_A << file));
+        count += (pawns_in_file > 1) ? pawns_in_file - 1 : 0;
     }
-    for(int i=0; i<8; i++) {
-        if(files[i]>1)
-            count += files[i] - 1; // this is -1 because just one doesn't count as doubled.
-    }
+
     return count;
 }
 
-// main evaluation function
+// evaluates a board position
 int eval(const Board *board) {
     // mg and eg scores for black and white
-    int mg[2] = {0};
-    int eg[2] = {0};
-    int game_phase = 0;
-    PieceType piece;
+    int mg[2] = {0}, eg[2] = {0}, game_phase = 0;
 
-    // evaluate each piece
-    for (piece = PAWN; piece <= KING; piece++) {
-        U64 white_piece = board->pieces[WHITE][piece];
-        U64 black_piece = board->pieces[BLACK][piece];
-        // find all white pieces and add their value
-        while (white_piece != 0) {
-            int pos = pop_lsb(&white_piece);
-            mg[WHITE] += mg_table_white[piece][pos];
-            eg[WHITE] += eg_table_white[piece][pos];
-            // increment game phase depending on the significance of the piece
-            game_phase += gamephase_inc[piece];
-        }
-        // same process for black
-        while (black_piece != 0) {
-            int pos = pop_lsb(&black_piece);
-            mg[BLACK] += mg_table_black[piece][pos];
-            eg[BLACK] += eg_table_black[piece][pos];
-            game_phase += gamephase_inc[piece];
-        }
-    }
+    // STEP 1: evaluate material by each piece position
+    for (int piece = PAWN; piece <= KING; piece++) {
+        U64 pieces[2] = {
+            board->pieces[WHITE][piece],
+            board->pieces[BLACK][piece]
+        };
 
-    // get count of doubled pawns for black and white and assign appropriate penalties
-    int white_doubled = count_doubled_pawns(board->pieces[WHITE][PAWN]);
-    int black_doubled = count_doubled_pawns(board->pieces[BLACK][PAWN]);
-    mg[WHITE] -= white_doubled * DOUBLED_PAWN_MG_PENALTY;
-    eg[WHITE] -= white_doubled * DOUBLED_PAWN_EG_PENALTY;
-    mg[BLACK] -= black_doubled * DOUBLED_PAWN_MG_PENALTY;
-    eg[BLACK] -= black_doubled * DOUBLED_PAWN_EG_PENALTY;
-
-    // King safety
-    int w_king = lsb(board->pieces[WHITE][KING]);
-    int b_king = lsb(board->pieces[BLACK][KING]);
-
-    // WHITE:
-    int w_king_file = w_king % 8;
-    int w_king_rank = w_king / 8;
-    U64 shield = 0;
-    // we are going to check for pawns above, above left and above right from the king to check if it's safe
-    if (w_king_rank < 7) {
-        // Make sure everything here is in bounds
-        for (int near_file = w_king_file - 1; near_file <= w_king_file + 1; near_file++) {
-            if (near_file >= 0 && near_file < 8) {
-                enable_bit(&shield, near_file + 8 * (w_king_rank + 1));
+        for (int color = WHITE; color <= BLACK; color++) {
+            while (pieces[color]) {
+                int pos = pop_lsb(&pieces[color]);
+                mg[color] += mg_table_white[piece][pos];
+                eg[color] += eg_table_white[piece][pos];
+                game_phase += gamephase_inc[piece];
             }
         }
     }
-    // get total amount of "good pawns" that contribute to king safety (the adjacent ones)
-    int shield_count = count_pieces(shield & board->pieces[WHITE][PAWN]);
-    mg[WHITE] += shield_count * KING_SAFETY_BONUS_MG;
-    eg[WHITE] += shield_count * KING_SAFETY_BONUS_EG;
 
-    // Open file
-    // this thing is a mask for the file the king is in. Could just define all of them for speed maybe?
-    U64 file = FILE_A << w_king_file;
-    // this checks if there's any pawns (either side) in the king's file
-    if (!(file & (board->pieces[WHITE][PAWN] | board->pieces[BLACK][PAWN]))) {
-        mg[WHITE] -= OPEN_FILE_KING_MG_PENALTY;
-        eg[WHITE] -= OPEN_FILE_KING_EG_PENALTY;
+    // STEP 2: penalize doubled pawns
+    for (int color = WHITE; color <= BLACK; color++) {
+        int doubled = count_doubled_pawns(board->pieces[color][PAWN]);
+        mg[color] -= doubled * DOUBLED_PAWN_MG_PENALTY;
+        eg[color] -= doubled * DOUBLED_PAWN_EG_PENALTY;
     }
 
-    // BLACK:
+    // STEP 3: evaluate king safety for both colors
+    for (int color = WHITE; color <= BLACK; color++) {
+        int king_pos = lsb(board->pieces[WHITE][KING]);
+        int file = king_pos % 8, rank = king_pos / 8;
+        U64 shield = 0;
 
-    //exact same process as white, slightly mirrored numbers
-    int b_king_file = b_king % 8;
-    int b_king_rank = b_king / 8;
-    shield = 0;
-    if(b_king_rank>0) {
-        for (int near_file = b_king_file - 1; near_file <= b_king_file + 1; near_file++) {
-            if (near_file >= 0 && near_file < 8) {
-                enable_bit(&shield, near_file + 8 * (b_king_rank - 1));
+        if ((color == WHITE && rank < 7) || (color == BLACK && rank > 0)) {
+            for (int near_file = file - 1; near_file <= file + 1; near_file++) {
+                if (0 <= near_file && near_file < 8) {
+                    enable_bit(&shield, near_file + 8 * (rank + (color == WHITE ? 1 : -1)));
+                }
             }
         }
-    }
-    shield_count = count_pieces(shield & board->pieces[BLACK][PAWN]);
-    mg[BLACK] += shield_count * KING_SAFETY_BONUS_MG;
-    eg[BLACK] += shield_count * KING_SAFETY_BONUS_EG;
 
-    // Open file
-    // this thing is a mask for the file the king is in. Could just define all of them for speed maybe?
-    file = FILE_A << b_king_file;
+        int shield_count = pop_count(shield & board->pieces[color][PAWN]);
+        mg[color] += shield_count * KING_SAFETY_BONUS_MG;
+        eg[color] += shield_count * KING_SAFETY_BONUS_EG;
 
-    // this checks if there's any pawns (either side) in the king's file
-    if (!(file & (board->pieces[WHITE][PAWN] | board->pieces[BLACK][PAWN]))) {
-        mg[BLACK] -= OPEN_FILE_KING_MG_PENALTY;
-        eg[BLACK] -= OPEN_FILE_KING_EG_PENALTY;
+        // open file penalty
+        U64 file_mask = FILE_A << file;
+        if (!(file_mask & (board->pieces[WHITE][PAWN] | board->pieces[BLACK][PAWN]))) {
+            mg[color] -= OPEN_FILE_KING_MG_PENALTY;
+            eg[color] -= OPEN_FILE_KING_EG_PENALTY;
+        }
     }
 
-    // get evaluation depending on how deep in the game we are:
+    // STEP 4: compute final evaluation
     int mg_score = mg[WHITE] - mg[BLACK];
     int eg_score = eg[WHITE] - eg[BLACK];
-    int mg_phase = game_phase;
-    if (mg_phase > 24) mg_phase = 24;  // in case of early promotion
+    int mg_phase = (game_phase <= 24) ? game_phase : 24; // in case of early promotion
     int eg_phase = 24 - mg_phase;
 
     return (mg_score * mg_phase + eg_score * eg_phase) / 24;
