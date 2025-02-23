@@ -184,23 +184,19 @@ void init_eval(void) {
     }
 
     // calculate king shield masks
-    for (int color = WHITE; color <= BLACK; color++) {
-        for (int square = 0; square < 64; square++) {
-            U64 pos = (U64)1 << square;
-            U64 shield = 0;
+    for (int square = 0; square < 64; square++) {
+        U64 pos = (U64)1 << square;
+        U64 shields[2] = {0};
 
-            if (color == WHITE) {
-                shield |= (pos << 8);            // up
-                shield |= (pos << 9) & ~FILE_A;  // up - right
-                shield |= (pos << 7) & ~FILE_H;  // up - left
-            } else {
-                shield |= (pos >> 8);            // down
-                shield |= (pos >> 9) & ~FILE_H;  // down - left
-                shield |= (pos >> 7) & ~FILE_A;  // down - right
-            }
+        shields[WHITE] |= (pos << 8);            // up
+        shields[WHITE] |= (pos << 9) & ~FILE_A;  // up - right
+        shields[WHITE] |= (pos << 7) & ~FILE_H;  // up - left
+        king_shield[WHITE][square] = shields[WHITE];
 
-            king_shield[color][square] = shield;
-        }
+        shields[BLACK] |= (pos >> 8);            // down
+        shields[BLACK] |= (pos >> 9) & ~FILE_H;  // down - left
+        shields[BLACK] |= (pos >> 7) & ~FILE_A;  // down - right
+        king_shield[BLACK][square] = shields[BLACK];
     }
 }
 

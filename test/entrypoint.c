@@ -8,7 +8,7 @@
 #include "utils.h"
 
 void setUp(void) {
-    init_LUT();
+    init_moves();
 }
 
 void tearDown(void) {

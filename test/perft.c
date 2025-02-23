@@ -186,7 +186,7 @@ PerftTestCase testcases[] = {
 const int len = sizeof(testcases) / sizeof(testcases[0]);
 
 void setUp(void) {
-    init_LUT();
+    init_moves();
 }
 
 void tearDown(void) { }
