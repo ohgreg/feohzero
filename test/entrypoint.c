@@ -51,7 +51,7 @@ int perft(Board *board, int depth) {
 
 void test(void) {
     Board board;
-    if (!loadFEN(&board, "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1")) {
+    if (!loadFEN(&board, "3r3k/6p1/7p/6P1/8/2nPPP2/r1p2K1P/2q5 w - - 0 42")) {
         TEST_FAIL_MESSAGE("Failed to load FEN");
     }
 
@@ -62,24 +62,26 @@ void test(void) {
 
     generate_moves(&list, &board);
 
-    int depth = 3;
-    int total = 0;
+    print_move_list(&list);
 
-    for (int i = 0; i < list.count; i++) {
-        Move *move = &list.moves[i];
+    // int depth = 3;
+    // int total = 0;
 
-        apply_move(&board, move);
+    // for (int i = 0; i < list.count; i++) {
+    //     Move *move = &list.moves[i];
 
-        // print_move(move);
+    //     apply_move(&board, move);
 
-        int nodes = perft(&board, depth - 1);
-        // printf("Moves: %d\n", nodes);
-        total += nodes;
+    //     // print_move(move);
 
-        undo_move(&board, move);
-    }
+    //     int nodes = perft(&board, depth - 1);
+    //     // printf("Moves: %d\n", nodes);
+    //     total += nodes;
 
-    printf("Total nodes: %d\n", total); // 97862
+    //     undo_move(&board, move);
+    // }
+
+    // printf("Total nodes: %d\n", total); // 97862
 }
 
 // not needed when using generate_test_runner.rb
