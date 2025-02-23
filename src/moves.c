@@ -100,7 +100,7 @@ int square_count(U64 value, int squares[64]) {
     return i;
 }
 
-void init_LUT(void) {
+void init_moves(void) {
     int bishop_directions[4][2] = {{-1, -1}, {-1, 1}, {1, -1}, {1, 1}};
     int bishop_ldirections[4][2] = {{-1, -1}, {0, 0}, {0, 0}, {1, 1}};
     int bishop_rdirections[4][2] = {{0, 0}, {-1, 1}, {1, -1}, {0, 0}};

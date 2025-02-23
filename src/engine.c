@@ -15,8 +15,8 @@ int choose_move(char *fen, char *moves, int timeout) {
     srand(2400118 + 2400141);
 
     // initialize important tables
-    init_LUT();
-    init_tables();
+    init_moves();
+    init_eval();
     init_zobrist();
     init_transposition_table(16 * 1024 * 1024 / sizeof(TTentry));     // 16 MB
 
@@ -37,7 +37,7 @@ int choose_move(char *fen, char *moves, int timeout) {
         }
     }
 
-    
+
 
     return 0;
 }

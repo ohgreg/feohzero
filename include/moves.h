@@ -27,7 +27,7 @@ extern LUT lut;
 U64 slide(U64 occupied, int truncate, int pos, int directions[4][2]);
 int square_count(U64 value, int squares[64]);
 
-void init_LUT(void);
+void init_moves(void);
 
 static inline U64 generate_pawn_attacks(Board *board, int pos) {
     return lut.pawn[board->turn][pos];

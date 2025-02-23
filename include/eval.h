@@ -3,6 +3,9 @@
 
 #include "types.h"
 
+extern const int mg_value[6];
+extern const int eg_value[6];
+
 extern const int mg_pawn_table[64];
 extern const int eg_pawn_table[64];
 
@@ -30,9 +33,10 @@ extern int mg_table_black[6][64];
 extern int eg_table_white[6][64];
 extern int eg_table_black[6][64];
 
+extern int king_shield[2][64];
+
 // function prototypes
-void init_tables(void);
-int count_doubled_pawns(U64 pawns);
+void init_eval(void);
 int eval(const Board *board);
 
 #endif
