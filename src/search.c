@@ -68,7 +68,8 @@ int depth_limited_search(Board *board, int depth, int is_root, Move *best_move, 
         // uncomment this in prod code
         list = startList;
         // if is_root, we have no transpo moves, so use PV node. (much better)
-        generate_moves(&list, board);
+        // comment this in prod code
+        //generate_moves(&list, board);
         if (previousBest.score == 20000) {
             for (int j = 0; j < list.count; j++) {
                 if (move_equals(&list.moves[j], &previousBest)) {

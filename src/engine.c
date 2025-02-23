@@ -18,7 +18,7 @@ int choose_move(char *fen, char *moves, int timeout) {
     init_LUT();
     init_tables();
     init_zobrist();
-    init_transposition_table(16 * 1024 * 1024 / sizeof(TTentry));     // 1 GB
+    init_transposition_table(16 * 1024 * 1024 / sizeof(TTentry));     // 16 MB
 
     Board board;
     board.key = (U64)0;
@@ -37,7 +37,7 @@ int choose_move(char *fen, char *moves, int timeout) {
         }
     }
 
-    clear_transposition_table();
+    
 
     return 0;
 }
@@ -56,6 +56,6 @@ int main(int argc, char *argv[]) {
     }
 
     printf("%d\n", choose_move(argv[1], argv[2], timeout));
-
+    clear_transposition_table();
     return 0;
 }
