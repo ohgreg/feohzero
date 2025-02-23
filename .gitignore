@@ -1,6 +1,6 @@
 build
 engine
-engine.*
+engine.exe
 *.wasm
 compile_commands.json
 .cache/
