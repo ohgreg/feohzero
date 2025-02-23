@@ -102,3 +102,11 @@ void print_move_list(MoveList *list) {
         print_move(&list->moves[i]);
     }
 }
+
+void print_pesto_tables(int table[6][64]) {
+    for (int i = 0; i < 1; i++) {
+        for (int j = 0; j < 64; j++) printf("%d ", table[i][j]);
+        printf("\n");
+    }
+    return;
+}

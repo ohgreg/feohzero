@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 
 #include "eval.h"
 #include "fen.h"
@@ -8,12 +7,12 @@
 #include "search.h"
 #include "transposition.h"
 #include "zobrist.h"
-#include "print.h"
+// #include "print.h"
 
 int choose_move(char *fen, char *moves, int timeout) {
     (void)timeout;
 
-    srand(2400118+2400141);
+    srand(2400118 + 2400141);
 
     // initialize important tables
     init_LUT();

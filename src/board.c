@@ -1,7 +1,6 @@
 #include "board.h"
 
 #include "utils.h"
-#include "zobrist.h"
 
 // update which squares are occupied in the board and by what color
 void update_occupied(Board *board) {
@@ -12,7 +11,7 @@ void update_occupied(Board *board) {
     }
 }
 
-// Function to apply a move, changing the chess position
+// function to apply a move, changing the chess position
 void apply_move(Board *board, Move *move) {
 
     Turn turn = board->turn;
@@ -118,7 +117,7 @@ void apply_move(Board *board, Move *move) {
 }
 
 
-// Function to revert a move (Mirrors apply_move())
+// function to revert a move (Mirrors apply_move())
 void undo_move(Board *board, Move *move) {
     // reverse turn
     board->turn = !board->turn;

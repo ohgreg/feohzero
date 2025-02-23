@@ -30,4 +30,12 @@
 // define eval constants
 #define INF INT_MAX
 
+// define evaluation bonuses and penalties (king safety and pawn structure)
+#define DOUBLED_PAWN_MG_PENALTY 10
+#define DOUBLED_PAWN_EG_PENALTY 20
+#define KING_SAFETY_BONUS_MG 20
+#define KING_SAFETY_BONUS_EG 15
+#define OPEN_FILE_KING_MG_PENALTY 25
+#define OPEN_FILE_KING_EG_PENALTY 40
+
 #endif
