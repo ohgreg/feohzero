@@ -37,8 +37,6 @@ int choose_move(char *fen, char *moves, int timeout) {
         }
     }
 
-
-
     return 0;
 }
 

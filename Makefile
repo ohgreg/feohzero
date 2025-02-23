@@ -73,17 +73,6 @@ run: $(WEB_TARGET)
 clean:
 	rm -rf $(BINDIR) $(TARGET) $(WEB_TARGET)
 
-## Format the source code using clang-format
-CLANG_FORMAT = clang-format
-CLANG_FORMAT_OPTS = -i
-
-.PHONY: format
-format:
-	@echo "Running clang-format on source files..."
-	@which $(CLANG_FORMAT) > /dev/null || (echo "clang-format is not installed. Please install it first." && exit 1)
-	@find $(SRCDIR) include -type f \( -name "*.c" -o -name "*.cpp" -o -name "*.h" \) -exec $(CLANG_FORMAT) $(CLANG_FORMAT_OPTS) {} +
-
-
 ## Unit Testing Configuration
 
 ## Test directory and Unity library location

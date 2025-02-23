@@ -8,3 +8,4 @@ test_runner
 libs
 scripts/unity
 .github
+.DS_Store
