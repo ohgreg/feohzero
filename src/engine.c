@@ -25,7 +25,7 @@ int choose_move(char *fen, char *moves, int timeout) {
     // print_board(&board);
 
     MoveList list = first_list(moves, &board);
-    Move best = ids_search(&board, 6, list, timeout);
+    Move best = ids_search(&board, 50, list, timeout);
 
     // print_move(&best);
 
