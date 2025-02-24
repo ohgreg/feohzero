@@ -363,7 +363,7 @@ void generate_en_passant(Board *board, MoveList *list) {
     U64 moves = lut.pawn[!turn][ep] & board->pieces[turn][PAWN];
 
     while (moves) {
-        Move move = {pop_lsb(&moves), ep, 0, PAWN, NONE, CAPTURE_MOVE | EN_PASSANT, ep, board->castle_white, board->castle_black, -1000};
+        Move move = {pop_lsb(&moves), ep, 0, PAWN, NONE, EN_PASSANT, ep, board->castle_white, board->castle_black, -1000};
         Board temp = *board;
         apply_move(&temp, &move);
         temp.turn = turn;
@@ -566,12 +566,16 @@ Move translate_move(Board *board, const char *move_str) {
     if (start_rank != -1) start_mask &= RANK_1 << (8 * start_rank);
     if (start_file != -1) start_mask &= FILE_A << start_file;
 
-    if (move.piece == PAWN) {
-        if (move.to == board->ep_square) {
-            move.flags |= EN_PASSANT;
-            move.score = -1000;
-        }
+    if (move.to == board->ep_square && move.piece == PAWN) {
+        move.flags |= EN_PASSANT;
+        move.score = -1000;
 
+        move.from = lsb(lut.pawn[!turn][move.to] & board->pieces[turn][PAWN] & start_mask);
+
+        return move;
+    }
+
+    if (move.piece == PAWN) {
         U64 pieces = board->pieces[turn][move.piece] & start_mask;
         while (pieces) {
             int piece_pos = pop_lsb(&pieces);
@@ -590,15 +594,7 @@ Move translate_move(Board *board, const char *move_str) {
         return move;
     }
 
-    U64 pieces = board->pieces[turn][move.piece] & start_mask;
-    while (pieces) {
-        int piece_pos = pop_lsb(&pieces);
-        U64 moves = generate_piece_attacks[move.piece](board, piece_pos);
-        if (is_set_bit(moves, move.to)) {
-            move.from = piece_pos;
-            break;
-        }
-    }
+    move.from = lsb(generate_piece_attacks[move.piece](board, move.to) & board->pieces[turn][move.piece] & start_mask);
 
     return move;
 }
