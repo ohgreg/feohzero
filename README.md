@@ -16,6 +16,8 @@ Some basic features of the engine are:
 - Move Ordering & PV-Node
 - Transposition Table
 
+Note: Details on the implementation of the engine are included in the Docs folder in an organized manner.
+
 # Demo
 
 ```sh
@@ -30,12 +32,6 @@ gcc -Wall -Wextra -Werror -pedantic -Iinclude -O3 -Ilibs/unity build/engine.o bu
 $ ./engine "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" "a3 a4 b3 b4 c3 c4 d3 d4 e3 e4 f3 f4 g3 g4 h3 h4 Na3 Nc3 Nf3 Nh3" 3     
 16
 ```
-
-
-
-Note: Details on the implementation of the engine are included in the Docs folder in an organized manner.
-
-
 
 [![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/KoToqcBN)
 
