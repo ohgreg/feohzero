@@ -10,15 +10,13 @@
 // #include "print.h"
 
 int choose_move(char *fen, char *moves, int timeout) {
-    (void)timeout;
-
     srand(2400118 + 2400141);
 
     // initialize important tables
     init_moves();
     init_eval();
     init_zobrist();
-    init_transposition_table(16 * 1024 * 1024 / sizeof(TTentry));     // 16 MB
+    init_tt(16 * 1024 * 1024 / sizeof(TTentry)); // 16 MB
 
     Board board;
     board.key = (U64)0;
@@ -27,12 +25,14 @@ int choose_move(char *fen, char *moves, int timeout) {
     // print_board(&board);
 
     MoveList list = first_list(moves, &board);
-    Move best = iterative_deepening_search(&board, 6, list);
+    Move best = ids_search(&board, 6, list, timeout);
 
     // print_move(&best);
 
+    clear_tt();
+
     for (int i = 0; i < list.count; i++) {
-        if (move_equals(&best, &list.moves[i])) {
+        if (equal_moves(&best, &list.moves[i])) {
             return i;
         }
     }
@@ -54,6 +54,6 @@ int main(int argc, char *argv[]) {
     }
 
     printf("%d\n", choose_move(argv[1], argv[2], timeout));
-    clear_transposition_table();
+
     return 0;
 }

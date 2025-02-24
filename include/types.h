@@ -81,4 +81,14 @@ typedef struct {
     U64 bishop[5248];
 } LUT;
 
+typedef enum { EXACT, LOWER, UPPER } Node;
+
+typedef struct {
+    U64 key;
+    int depth;
+    int score;
+    Move best_move;
+    Node node_type;
+} TTentry;
+
 #endif

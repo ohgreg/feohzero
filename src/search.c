@@ -1,6 +1,7 @@
 #include "search.h"
 
 #include <stdlib.h>
+#include <time.h>
 
 #include "board.h"
 #include "constants.h"
@@ -10,26 +11,26 @@
 #include "zobrist.h"
 
 // small helper function to be used in qsort(). Returns move with highest score.
-int sort_moves(const void *a, const void *b) {
+int compare_moves(const void *a, const void *b) {
     const Move *move_a = a;
     const Move *move_b = b;
     return move_b->score - move_a->score;
 }
 
 // helper function to compare two moves (no need to check all struct members though)
-int move_equals(const Move *m1, const Move *m2) {
+int equal_moves(const Move *m1, const Move *m2) {
     return (m1->from == m2->from) && (m1->to == m2->to) && (m1->promo == m2->promo);
 }
 
 // DFS but with depth limit
-int depth_limited_search(Board *board, int depth, int is_root, Move *best_move, int alpha, int beta, MoveList startList, Move previousBest) {
+int dls_search(Board *board, int depth, int is_root, Move *best_move, int alpha, int beta, MoveList startList, Move previous_best) {
     int side = board->turn;
     // starting alpha and beta for TT
-    int alpha_original = alpha;
-    int beta_original = beta;
+    int initial_alpha = alpha;
+    int initial_beta = beta;
 
     // probe tt table for
-    TTentry *tt_entry = tt_probe(board->key);
+    TTentry *tt_entry = probe_tt(board->key);
     // tt depth has to be bigger depth or there's no point in getting that entry
 
     if (tt_entry != NULL && tt_entry->depth >= depth) {
@@ -58,7 +59,7 @@ int depth_limited_search(Board *board, int depth, int is_root, Move *best_move, 
         // Prioritize TT best move
         if (tt_entry != NULL) {
             for (int j = 0; j < list.count; j++) {
-                if (move_equals(&list.moves[j], &tt_entry->best_move)) {
+                if (equal_moves(&list.moves[j], &tt_entry->best_move)) {
                     list.moves[j].score = 40000; // Highest priority
                     break;
                 }
@@ -69,22 +70,23 @@ int depth_limited_search(Board *board, int depth, int is_root, Move *best_move, 
         list = startList;
         // if is_root, we have no transpo moves, so use PV node. (much better)
         // comment this in prod code
-        //generate_moves(&list, board);
-        if (previousBest.score == 20000) {
+        // generate_moves(&list, board);
+        if (previous_best.score == 20000) {
             for (int j = 0; j < list.count; j++) {
-                if (move_equals(&list.moves[j], &previousBest)) {
+                if (equal_moves(&list.moves[j], &previous_best)) {
                     list.moves[j].score = 20000;  // Boost its score
                     break;
                 }
             }
         }
     }
+
     // sort moves based on heuristic score
-    qsort(list.moves, list.count, sizeof(Move), sort_moves);
+    qsort(list.moves, list.count, sizeof(Move), compare_moves);
 
     // this is draw or mate. Cooked if stalemate.
-    if (list.count == 0 && (generate_opponent_attacks(board) & board->pieces[board->turn][KING]) != 0) return (board->turn ? INF : -INF);
-    else if (list.count == 0 && (generate_opponent_attacks(board) & board->pieces[board->turn][KING]) == 0) return 0;
+    if (list.count == 0 && generate_checkers(board) != 0) return (board->turn ? INF : -INF);
+    else if (list.count == 0) return 0;
 
     int best_current_score = (side == WHITE) ? -INF : INF;
     Move best_current_move = list.moves[0];
@@ -95,7 +97,7 @@ int depth_limited_search(Board *board, int depth, int is_root, Move *best_move, 
             // make and unmake move, while also updating Zobrist key
             apply_move(board, &list.moves[i]);
             fast_board_key(board, &list.moves[i]);
-            int recScore = depth_limited_search(board, depth - 1, 0, NULL, alpha, beta, startList, previousBest);
+            int recScore = dls_search(board, depth - 1, 0, NULL, alpha, beta, startList, previous_best);
             fast_board_key(board, &list.moves[i]);
             undo_move(board, &list.moves[i]);
             // Check for better move
@@ -114,7 +116,7 @@ int depth_limited_search(Board *board, int depth, int is_root, Move *best_move, 
         for (int i = 0; i < list.count; i++) {
             apply_move(board, &list.moves[i]);
             fast_board_key(board, &list.moves[i]);
-            int recScore = depth_limited_search(board, depth - 1, 0, NULL, alpha, beta, startList, previousBest);
+            int recScore = dls_search(board, depth - 1, 0, NULL, alpha, beta, startList, previous_best);
             fast_board_key(board, &list.moves[i]);
             undo_move(board, &list.moves[i]);
 
@@ -124,21 +126,20 @@ int depth_limited_search(Board *board, int depth, int is_root, Move *best_move, 
                 if (recScore < beta) beta = recScore;
                 if (beta <= alpha) break;
             }
-
         }
     }
 
     // store in tt table (this is wayback machine copy)
     Node node_type;
-    if (best_current_score <= alpha_original) {
+    if (best_current_score <= initial_alpha) {
         node_type = UPPER;
-    } else if (best_current_score >= beta_original) {
+    } else if (best_current_score >= initial_beta) {
         node_type = LOWER;
     } else {
         node_type = EXACT;
     }
 
-    tt_store(board->key, depth, best_current_score, best_current_move, node_type);
+    store_tt(board->key, depth, best_current_score, best_current_move, node_type);
 
     // only change move if root of moves (doesnt even work otherwise)
     if (is_root == 1) *best_move = best_current_move;
@@ -147,17 +148,21 @@ int depth_limited_search(Board *board, int depth, int is_root, Move *best_move, 
 }
 
 // IDS
-Move iterative_deepening_search(Board *board, int max_depth, MoveList startList) {
+Move ids_search(Board *board, int max_depth, MoveList startList, int timeout) {
+    (void)timeout;
     Move best_move = {0};
-    Move previousBest = {0};
+    Move previous_best = {0};
+
     // call depth limited for each depth
     for (int depth = 1; depth <= max_depth; depth++) {
+
         Move curr_move;
-        depth_limited_search(board, depth, 1, &curr_move, -INF, INF, startList, previousBest);
+        dls_search(board, depth, 1, &curr_move, -INF, INF, startList, previous_best);
         best_move = curr_move;
-        previousBest = curr_move;
+        previous_best = curr_move;
+
         // give bonus to last best move
-        previousBest.score = 20000;
+        previous_best.score = 20000;
     }
     return best_move;
 }

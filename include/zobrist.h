@@ -3,6 +3,12 @@
 
 #include "types.h"
 
+extern U64 zobrist_pieces[2][6][64];
+extern U64 zobrist_castling[16];
+extern U64 zobrist_enpassant[65];
+extern U64 zobrist_side;
+
+// function prototypes
 U64 rand64(void);
 void init_zobrist(void);
 U64 update_piece_key(PieceType piece, int sq, Turn turn);
