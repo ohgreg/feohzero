@@ -1,9 +1,11 @@
 #include "moves.h"
 
 #include <string.h>
+#include <stdio.h>
 
 #include "board.h"
 #include "constants.h"
+#include "print.h"
 #include "types.h"
 #include "utils.h"
 
@@ -331,7 +333,7 @@ U64 generate_pinmask(Board *board, int pos) {
     return pinmask;
 }
 
-void generate_castling(MoveList *list, Board *board, U64 checkers, U64 opponent_attacks) {
+void generate_castling(Board *board, MoveList *list, U64 checkers, U64 opponent_attacks) {
     if (checkers != 0) return;
 
     Turn turn = board->turn;
@@ -342,21 +344,17 @@ void generate_castling(MoveList *list, Board *board, U64 checkers, U64 opponent_
     U64 occupied = board->occupied[2] & ~board->pieces[turn][KING];
 
     if ((rights & CAN_CASTLE_OO) && !((occupied | opponent_attacks) & (turn ? BSHORT : WSHORT))) {
-        list->moves[list->count++] = (Move){
-            turn ? 60 : 4, turn ? 62 : 6, 0, KING, NONE,
-            CASTLING, board->ep_square, board->castle_white,
-            board->castle_black, 2100};
+        list->moves[list->count++] = (Move){turn ? 60 : 4, turn ? 62 : 6, 0, KING, NONE,
+            CASTLING, board->ep_square, board->castle_white, board->castle_black, 2100};
     }
     if ((rights & CAN_CASTLE_OOO) && !(occupied & (turn ? BLONG_OCCUPIED : WLONG_OCCUPIED))
         && !(opponent_attacks & (turn ? BLONG_ATTACKED : WLONG_ATTACKED))) {
-        list->moves[list->count++] = (Move){
-            turn ? 60 : 4, turn ? 58 : 2, 0, KING, NONE,
-            CASTLING, board->ep_square, board->castle_white,
-            board->castle_black, 2000};
+        list->moves[list->count++] = (Move){turn ? 60 : 4, turn ? 58 : 2, 0, KING, NONE,
+            CASTLING, board->ep_square, board->castle_white, board->castle_black, 2000};
     }
 }
 
-void generate_en_passant(MoveList *list, Board *board) {
+void generate_en_passant(Board *board, MoveList *list) {
     if (board->ep_square == 64) return;
 
     Turn turn = board->turn;
@@ -374,7 +372,7 @@ void generate_en_passant(MoveList *list, Board *board) {
     }
 }
 
-void generate_moves(MoveList *list, Board *board) {
+void generate_moves(Board *board, MoveList *list) {
     Turn turn = board->turn;
     U64 moves = 0, pieces = 0;
     int from = 0, to = 0;
@@ -470,26 +468,27 @@ void generate_moves(MoveList *list, Board *board) {
     }
 
     // generate castling moves
-    generate_castling(list, board, checkers, opponent_attacks);
+    generate_castling(board, list, checkers, opponent_attacks);
 
     // generate en passant moves
-    generate_en_passant(list, board);
+    generate_en_passant(board, list);
 }
 
-Move translate_move(const char *moveStr, Board *board) {
-    int size = strlen(moveStr);
+
+Move translate_move(Board *board, const char *move_str) {
+    int size = strlen(move_str);
     Turn turn = board->turn;
     int start_rank = -1;
     int start_file = -1;
     int final_rank = -1;
     int final_file = -1;
 
-    int castle_count = 0;
+    int castle = 0;
 
     Move move = {0, 0, 0, PAWN, NONE, NORMAL_MOVE, board->ep_square, board->castle_white, board->castle_black, 0};
 
     for (int i = 0; i < size; i++) {
-        switch (moveStr[i]) {
+        switch (move_str[i]) {
             case 'N':
                 move.piece = KNIGHT;
                 break;
@@ -512,7 +511,7 @@ Move translate_move(const char *moveStr, Board *board) {
             case '=': {
                 char c = '0';
                 if (i + 1 <= size) {
-                    c = moveStr[i + 1];
+                    c = move_str[i + 1];
                     i++;
                 }
 
@@ -531,17 +530,17 @@ Move translate_move(const char *moveStr, Board *board) {
             }
             case '+':
                 // move->flags = 1;
-                //  check means good move
+                // check means good move
                 move.score += 3000;
                 break;
             case '#':
                 // move->flags = 2;
                 break;
             case 'O':
-                castle_count++;
+                castle++;
                 break;
             default: {
-                char c = moveStr[i];
+                char c = move_str[i];
                 if ('1' <= c && c <= '8') {
                     start_rank = final_rank;
                     final_rank = c - '1';
@@ -553,77 +552,69 @@ Move translate_move(const char *moveStr, Board *board) {
         }
     }
 
-    if (castle_count != 0) {
-        MoveList list;
-        list.count = 0;
-        generate_castling(&list, board, generate_checkers(board), generate_opponent_attacks(board));
-        for (int i = 0; i < list.count; i++) {
-            if (list.moves[i].score == 2100 && castle_count == 2) {
-                move = list.moves[i];
-                break;
-            } else if (list.moves[i].score == 2000 && castle_count == 3) {
-                move = list.moves[i];
-                break;
-            }
-        }
-        return move;
-    }
-
-    if (move.piece == PAWN && move.to - move.from == (turn ? -16 : 16)) move.flags |= DOUBLE_PAWN_PUSH;
-    if (move.piece == PAWN && move.to == board->ep_square) {
-        move.flags |= EN_PASSANT;
-        move.score = -1000;
+    if (castle == 2) {
+        return (Move){turn ? 60 : 4, turn ? 62 : 6, 0, KING, NONE, CASTLING,
+            board->ep_square, board->castle_white, board->castle_black, 2100};
+    } else if (castle == 3) {
+        return (Move){turn ? 60 : 4, turn ? 58 : 2, 0, KING, NONE, CASTLING,
+            board->ep_square, board->castle_white, board->castle_black, 2000};
     }
 
     move.to = 8 * final_rank + final_file;
-    move.from = 8 * start_rank + start_file;
 
-    if (start_rank == -1 && start_file == -1) {
-        MoveList list;
-        list.count = 0;
-        generate_moves(&list, board);
-        for (int i = 0; i < list.count; i++) {
-            Move b = list.moves[i];
-            if ((move.to == b.to) && (move.piece == b.piece)) move.from = b.from;
+    U64 start_mask = ~(U64)0;
+    if (start_rank != -1) start_mask &= RANK_1 << (8 * start_rank);
+    if (start_file != -1) start_mask &= FILE_A << start_file;
+
+    if (move.piece == PAWN) {
+        if (move.to == board->ep_square) {
+            move.flags |= EN_PASSANT;
+            move.score = -1000;
         }
-    } else if (start_rank == -1 && start_file != -1) {
-        MoveList list;
-        list.count = 0;
-        generate_moves(&list, board);
-        for (int i = 0; i < list.count; i++) {
-            Move b = list.moves[i];
-            if ((move.to == b.to) && (move.piece == b.piece) && move.from % 8 == start_file) move.from = b.from;
+
+        U64 pieces = board->pieces[turn][move.piece] & start_mask;
+        while (pieces) {
+            int piece_pos = pop_lsb(&pieces);
+            U64 moves = generate_pawn_moves(board, piece_pos);
+            if (move.flags & CAPTURE_MOVE) moves &= ~generate_pawn_attacks(board, piece_pos);
+            if (is_set_bit(moves, move.to)) {
+                move.from = piece_pos;
+                break;
+            }
         }
-    } else if (start_rank == -1 && start_file != -1) {
-        MoveList list;
-        list.count = 0;
-        generate_moves(&list, board);
-        for (int i = 0; i < list.count; i++) {
-            Move b = list.moves[i];
-            if ((move.to == b.to) && (move.piece == b.piece) && move.from / 8 == start_rank) move.from = b.from;
+
+        if (move.to - move.from == (turn ? -16 : 16)) {
+            move.flags |= DOUBLE_PAWN_PUSH;
+        }
+
+        return move;
+    }
+
+    U64 pieces = board->pieces[turn][move.piece] & start_mask;
+    while (pieces) {
+        int piece_pos = pop_lsb(&pieces);
+        U64 moves = generate_piece_attacks[move.piece](board, piece_pos);
+        if (is_set_bit(moves, move.to)) {
+            move.from = piece_pos;
+            break;
         }
     }
 
     return move;
 }
 
-MoveList first_list(const char *moveStr, Board *board) {
-    int cnt = 0;
+MoveList initial_list(Board *board, const char *moves_str) {
     MoveList list;
     list.count = 0;
-    size_t size = strlen(moveStr);
-    char buffer[10];
-    for (size_t i = 0; i < size + 1; i++) {
-        char c = moveStr[i];
-        if (c != ' ' && c != '\0') {
-            buffer[cnt] = c;
-            cnt++;
-        } else {
-            Move temp = translate_move(buffer, board);
-            list.moves[list.count++] = temp;
-            memset(buffer, 0, sizeof(buffer));
-            cnt = 0;
-        }
+
+    char temp[strlen(moves_str) + 1];
+    strcpy(temp, moves_str);
+
+    char *token = strtok(temp, " ");
+    while (token != NULL) {
+        Move temp = translate_move(board, token);
+        list.moves[list.count++] = temp;
+        token = strtok(NULL, " ");
     }
 
     return list;

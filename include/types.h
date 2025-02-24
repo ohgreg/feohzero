@@ -63,7 +63,7 @@ typedef struct {
     U8 ep;        // en passant square (0-63)
     U8 castle_white;    // store old castling rights
     U8 castle_black;
-    int score;    // Heuristic score of a move
+    int score;    // heuristic score of a move
 
 } Move;
 

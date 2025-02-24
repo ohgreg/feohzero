@@ -66,12 +66,12 @@ U64 generate_blockmask(Board *board, int pos);
 U64 generate_pinned(Board *board);
 U64 generate_pinmask(Board *board, int pos);
 
-void generate_castling(MoveList *list, Board *board, U64 checkers, U64 opponent_attacks);
-void generate_en_passant(MoveList *list, Board *board);
+void generate_castling(Board *board, MoveList *list, U64 checkers, U64 opponent_attacks);
+void generate_en_passant(Board *board, MoveList *list);
 
-void generate_moves(MoveList *list, Board *board);
+void generate_moves(Board *board, MoveList *list);
 
-Move translate_move(const char *moveStr, Board *Board);
-MoveList first_list(const char *moveStr, Board *Board);
+Move translate_move(Board *board, const char *move_str);
+MoveList initial_list(Board *board, const char *move_str);
 
 #endif

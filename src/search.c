@@ -54,13 +54,13 @@ int dls_search(Board *board, int depth, int is_root, Move *best_move, int alpha,
     // base case: Return static evaluation of position (or timeout)
     if (depth == 0 || count > 3500000*timeout) return eval(board);
 
-    
+
 
     MoveList list;
     list.count = 0;
     // check if it's root of position (starting position) to get the movelist from second argument or not
     if (!is_root) {
-        generate_moves(&list, board);
+        generate_moves(board, &list);
         // Prioritize TT best move
         if (tt_entry != NULL) {
             for (int j = 0; j < list.count; j++) {
@@ -161,7 +161,7 @@ Move ids_search(Board *board, int max_depth, MoveList startList, int timeout) {
 
     // call depth limited for each depth
     for (int depth = 1; depth <= max_depth; depth++) {
-        
+
         Move curr_move;
         dls_search(board, depth, 1, &curr_move, -INF, INF, startList, previous_best, timeout);
         // fall back to previous iteration if fail
@@ -169,7 +169,7 @@ Move ids_search(Board *board, int max_depth, MoveList startList, int timeout) {
             break;
         best_move = curr_move;
         previous_best = curr_move;
-        
+
         // give bonus to last best move
         previous_best.score = 20000;
     }

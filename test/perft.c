@@ -197,7 +197,7 @@ int perft(Board *board, int depth) {
 
     MoveList list;
     list.count = 0;
-    generate_moves(&list, board);
+    generate_moves(board, &list);
 
     int nodes = 0;
     for (int i = 0; i < list.count; i++) {

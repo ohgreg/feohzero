@@ -1,5 +1,6 @@
 #include "print.h"
 #include <stdio.h>
+#include "types.h"
 #include "utils.h"
 
 void print_board(const Board *board) {
@@ -77,22 +78,32 @@ void print_move(Move *move) {
     // print move details
     printf(" %c%d -> %c%d", 'a' + (move->from % 8), 1 + move->from / 8, 'a' + (move->to % 8), 1 + move->to / 8);
 
-    // handle promotion
-    if (move->promo != 0) {
-        printf(" Promo: %s", pieces[move->promo]);
+    // handle capture
+    if (move->flags & CAPTURE_MOVE) {
+        printf(" | Castling");
     }
 
     // handle castling
     if (move->flags & CASTLING) {
-        printf(" Castling");
+        printf(" | Castling");
     }
 
     // handle en passant
     if (move->flags & EN_PASSANT) {
-        printf(" En Passant");
+        printf(" | En passant");
     }
 
-    printf("\n");
+    // handle promotion
+    if (move->promo != 0) {
+        printf(" | Promotion: %s", pieces[move->promo]);
+    }
+
+    // handle double pawn push
+    if (move->flags & DOUBLE_PAWN_PUSH) {
+        printf(" | Double pawn push");
+    }
+
+    printf(" |\n");
 }
 
 void print_move_list(MoveList *list) {
