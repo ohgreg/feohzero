@@ -54,13 +54,10 @@ const int rook_shift[64] = {
 int bishop_offset[64];
 int rook_offset[64];
 
-U64 bishop_lmask[64];
-U64 bishop_rmask[64];
 U64 bishop_tmask[64];
-U64 bishop_mask[64];
-U64 rook_lmask[64];
-U64 rook_rmask[64];
 U64 rook_tmask[64];
+
+U64 bishop_mask[64];
 U64 rook_mask[64];
 
 LUT lut;
@@ -69,6 +66,7 @@ U64 slide(U64 occupied, int truncate, int pos, int directions[4][2]) {
     U64 mask = 0;
     int rank = pos / 8;
     int file = pos % 8;
+
     for (int i = 0; i < 4; i++) {
         if (directions[i][0] == 0 && directions[i][1] == 0) continue;
         U64 prev = 0;
@@ -89,6 +87,7 @@ U64 slide(U64 occupied, int truncate, int pos, int directions[4][2]) {
             prev = bit;
         }
     }
+
     return mask;
 }
 
@@ -102,21 +101,12 @@ int square_count(U64 value, int squares[64]) {
 
 void init_moves(void) {
     int bishop_directions[4][2] = {{-1, -1}, {-1, 1}, {1, -1}, {1, 1}};
-    int bishop_ldirections[4][2] = {{-1, -1}, {0, 0}, {0, 0}, {1, 1}};
-    int bishop_rdirections[4][2] = {{0, 0}, {-1, 1}, {1, -1}, {0, 0}};
-
     int rook_directions[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
-    int rook_ldirections[4][2] = {{-1, 0}, {1, 0}, {0, 0}, {0, 0}};
-    int rook_rdirections[4][2] = {{0, 0}, {0, 0}, {0, -1}, {0, 1}};
 
     for (int i = 0; i < 64; i++) {
-        bishop_lmask[i] = slide((U64)0, 0, i, bishop_ldirections);
-        bishop_rmask[i] = slide((U64)0, 0, i, bishop_rdirections);
-        bishop_tmask[i] = bishop_lmask[i] | bishop_rmask[i];
+        bishop_tmask[i] = slide((U64)0, 0, i, bishop_directions);
         bishop_mask[i] = slide((U64)0, 1, i, bishop_directions);
-        rook_lmask[i] = slide((U64)0, 0, i, rook_ldirections);
-        rook_rmask[i] = slide((U64)0, 0, i, rook_rdirections);
-        rook_tmask[i] = rook_lmask[i] | rook_rmask[i];
+        rook_tmask[i] = slide((U64)0, 0, i, rook_directions);
         rook_mask[i] = slide((U64)0, 1, i, rook_directions);
     }
 
@@ -220,7 +210,11 @@ U64 (*generate_piece_attacks[6])(Board *, int) = {
 };
 
 U64 (*generate_sliding_attacks[2])(Board *, int) = {
-    generate_rook_attacks, generate_bishop_attacks
+    generate_bishop_attacks, generate_rook_attacks
+};
+
+U64 *slide_mask[2] = {
+    bishop_tmask, rook_tmask
 };
 
 U64 generate_pawn_moves(Board *board, int pos) {
@@ -280,13 +274,9 @@ U64 generate_blockmask(Board *board, int pos) {
 
     enable_bit(&blockmask, pos);
 
-    U64 *slide_mask[2] = {
-        rook_tmask, bishop_tmask
-    };
-
     for (int i = 0; i < 2; i++) {
-        U64 ray = slide_mask[i][pos];
-        if (is_set_bit(ray, king_pos)) {
+        U64 slide = slide_mask[i][pos];
+        if (is_set_bit(slide, king_pos)) {
             blockmask |= generate_sliding_attacks[i](board, pos) & generate_sliding_attacks[i](board, king_pos);
         }
     }
@@ -302,24 +292,18 @@ U64 generate_pinned(Board *board) {
     U64 pinned = 0;
 
     U64 sliding_pieces[2] = {
-        board->pieces[!turn][ROOK] | board->pieces[!turn][QUEEN],
-        board->pieces[!turn][BISHOP] | board->pieces[!turn][QUEEN]
-    };
-
-    U64 *slide_mask[2] = {
-        rook_tmask, bishop_tmask
+        board->pieces[!turn][BISHOP] | board->pieces[!turn][QUEEN],
+        board->pieces[!turn][ROOK] | board->pieces[!turn][QUEEN]
     };
 
     for (int i = 0; i < 2; i++) {
         U64 pinners = sliding_pieces[i];
         while (pinners) {
             int pinner_pos = pop_lsb(&pinners);
-            U64 ray = slide_mask[i][pinner_pos];
-            if (is_set_bit(ray, king_pos)) {
-                Board temp = *board;
-                temp.turn = !turn;
-                U64 between = generate_sliding_attacks[i](&temp, king_pos) & generate_sliding_attacks[i](&temp, pinner_pos);
-                if (pop_count(between) == 1 && (between & board->occupied[turn])) {
+            U64 slide = slide_mask[i][pinner_pos];
+            if (is_set_bit(slide, king_pos)) {
+                U64 between = generate_sliding_attacks[i](board, king_pos) & generate_sliding_attacks[i](board, pinner_pos);
+                if (pop_count(between) && (between & board->occupied[turn])) {
                     enable_bit(&pinned, lsb(between));
                 }
             }
@@ -334,16 +318,15 @@ U64 generate_pinmask(Board *board, int pos) {
     int king_pos = lsb(board->pieces[turn][KING]);
     U64 pinmask = 0;
 
-    U64 *slide_mask[4] = {
-        bishop_lmask, bishop_rmask, rook_lmask, rook_rmask
-    };
-
-    for (int i = 0; i < 4; i++) {
-        if (is_set_bit(slide_mask[i][king_pos], pos)) {
-            pinmask = slide_mask[i][king_pos];
+    for (int i = 0; i < 2; i++) {
+        U64 slide = slide_mask[i][pos];
+        if (is_set_bit(slide, king_pos)) {
+            pinmask |= slide & slide_mask[i][king_pos] & generate_sliding_attacks[i](board, pos);
             break;
         }
     }
+
+    clear_bit(&pinmask, king_pos);
 
     return pinmask;
 }
@@ -437,7 +420,7 @@ void generate_moves(MoveList *list, Board *board) {
 
                 if (is_set_bit(board->occupied[!turn], to)) {
                     move.flags |= CAPTURE_MOVE;
-                    move.score += 1000;
+                    move.score += 1000 - 10 * move.piece;
                 }
 
                 list->moves[list->count++] = move;

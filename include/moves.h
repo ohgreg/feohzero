@@ -12,13 +12,10 @@ extern const int rook_shift[64];
 extern int bishop_offset[64];
 extern int rook_offset[64];
 
-extern U64 bishop_lmask[64];
-extern U64 bishop_rmask[64];
 extern U64 bishop_tmask[64];
-extern U64 bishop_mask[64];
-extern U64 rook_lmask[64];
-extern U64 rook_rmask[64];
 extern U64 rook_tmask[64];
+
+extern U64 bishop_mask[64];
 extern U64 rook_mask[64];
 
 extern LUT lut;
@@ -58,6 +55,8 @@ static inline U64 generate_king_attacks(Board *board, int pos) {
 
 extern U64 (*generate_piece_attacks[6])(Board *, int);
 extern U64 (*generate_sliding_attacks[2])(Board *, int);
+
+extern U64 *slide_mask[2];
 
 U64 generate_pawn_moves(Board *board, int pos);
 
