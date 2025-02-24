@@ -5,6 +5,17 @@ that describes the chess position, a list of the moves that the engine is allowe
 corresponds to the move the engine chose out of the list (Indexing starts at 0) and it will terminate with exit code `0`. If the correct arguments arent given, instructions for its usage is given, and it returns with exit code `1`. Should it fail for any other reason,
 it will again exit with exit code `1`.
 
+# Features
+
+Some basic features of the engine are: 
+- Bitboards & Magic Bitboards
+- Material & Piece-Square Table Evaluation
+- King Safety & Pawn structure evaluation
+- Iterative Deepening Search
+- AB-Pruning
+- Move Ordering & PV-Node
+- Transposition Table
+
 # Demo
 
 ```sh
