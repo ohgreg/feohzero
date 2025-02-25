@@ -2,11 +2,11 @@
 
 #include "utils.h"
 
-// function to apply a move, changing the chess position
+// applies a move, changing the chess position
 void apply_move(Board *board, Move *move) {
     Turn turn = board->turn;
 
-    // Update full move and half move counters
+    // update full move and half move counters
     if (turn) board->full_move++;
     board->half_move++;
 
@@ -31,10 +31,9 @@ void apply_move(Board *board, Move *move) {
                 break;
             }
         }
-        // handle rook move in castling
+    // handle rook move in castling
     } else if (move->flags & CASTLING) {
         if (move->to == (turn ? 62 : 6)) {  // short castling
-            // update relevant info
             clear_bit(&board->pieces[turn][ROOK], move->to + 1);
             enable_bit(&board->pieces[turn][ROOK], move->to - 1);
             clear_bit(&board->occupied[turn], move->to + 1);
@@ -42,7 +41,6 @@ void apply_move(Board *board, Move *move) {
             enable_bit(&board->occupied[turn], move->to - 1);
             enable_bit(&board->occupied[2], move->to - 1);
         } else if (move->to == (turn ? 58 : 2)) {  // long castling
-            // update relevant info
             clear_bit(&board->pieces[turn][ROOK], move->to - 2);
             enable_bit(&board->pieces[turn][ROOK], move->to + 1);
             clear_bit(&board->occupied[turn], move->to - 2);
@@ -106,13 +104,12 @@ void apply_move(Board *board, Move *move) {
     board->turn = !board->turn;
 }
 
-
-// function to revert a move (Mirrors apply_move())
+// reverts a move, apply_move() mirror
 void undo_move(Board *board, Move *move) {
-    // reverse turn
+    // revert turn
     board->turn = !board->turn;
-    Turn turn = board->turn;
 
+    Turn turn = board->turn;
     PieceType piece = move->piece;
 
     // revert en passant square
@@ -123,12 +120,12 @@ void undo_move(Board *board, Move *move) {
         clear_bit(&board->pieces[turn][piece], move->to);
     } else {
         clear_bit(&board->pieces[turn][move->promo], move->to);
-        // enable_bit(&board->pieces[turn][piece], move->from);
     }
 
     // always change this
     enable_bit(&board->pieces[turn][piece], move->from);
 
+    // revert captured piece
     if (move->captured != NONE && (move->flags & EN_PASSANT) == 0) {
         enable_bit(&board->pieces[!turn][move->captured], move->to);
         enable_bit(&board->occupied[!turn], move->to);
@@ -144,7 +141,7 @@ void undo_move(Board *board, Move *move) {
             enable_bit(&board->occupied[!turn], sq);
             clear_bit(&board->occupied[2], move->to);
         }
-        // revert castling
+    // revert castling
     } else if (move->flags & CASTLING) {
         if (move->to == (turn ? 62 : 6)) {
             enable_bit(&board->pieces[turn][ROOK], move->to + 1);
@@ -162,6 +159,7 @@ void undo_move(Board *board, Move *move) {
             enable_bit(&board->occupied[turn], move->to - 2);
         }
     }
+
     // revert occupied bitboard
     enable_bit(&board->occupied[2], move->from);
     enable_bit(&board->occupied[turn], move->from);
