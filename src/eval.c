@@ -3,7 +3,7 @@
 #include "constants.h"
 #include "utils.h"
 
-// NOTE: Piece-Square tables are from PeSTO wiki: https://www.chessprogramming.org/PeSTO%27s_Evaluation_Function
+// NOTE: piece-square tables are from PeSTO wiki: https://www.chessprogramming.org/PeSTO%27s_Evaluation_Function
 
 // material values
 const int mg_value[6] = {
