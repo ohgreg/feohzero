@@ -3,6 +3,7 @@
 
 #include "types.h"
 
+// move generation precomputed attack masks and LUTs
 extern const U64 bishop_magic[64];
 extern const U64 rook_magic[64];
 

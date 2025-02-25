@@ -1,16 +1,16 @@
 ## Basic Idea
 
 First, it should be established that a chess game can be represented as a massive tree of a very large number of nodes, where each node represents a chess position, and all the legal moves at that position lead to the children nodes, which are new chess positions.
-Searching for the "sub-tree" of moves that lead to the most beneficial outcome for the current player is the core of every chess engine, and at the heart of this search algorithm is [Minimax](https://en.wikipedia.org/wiki/Minimax). 
+Searching for the "sub-tree" of moves that lead to the most beneficial outcome for the current player is the core of every chess engine, and at the heart of this search algorithm is [Minimax](https://en.wikipedia.org/wiki/Minimax).
 
 ## Minimax
 
-Minimax is a recursive algorithm which calculates the best possible outcome for one player by looking through all the possible sub-trees of moves and returning the one that leads to a chess position with the most beneficial static evaluation, at a given max depth. 
+Minimax is a recursive algorithm which calculates the best possible outcome for one player by looking through all the possible sub-trees of moves and returning the one that leads to a chess position with the most beneficial static evaluation, at a given max depth.
 As one can deduce from the Evaluation function that is used, white is always trying to maximize the evaluation of the position, while black is trying to minimize it (hence the name Minimax). It should of course be mentioned that minimax is called up to a certain
-depth, since the tree is very large. Therefore, a higher depth means that the engine is looking "further" into the future of the chess position, and therefore more accurate, but more computationally expensive. 
+depth, since the tree is very large. Therefore, a higher depth means that the engine is looking "further" into the future of the chess position, and therefore more accurate, but more computationally expensive.
 
 The pseudocode for minimax (from wikipedia), looks something like this:
-```sh
+```
 function minimax(node, depth, maximizingPlayer) is
     if depth = 0 or node is a terminal node then
         return the heuristic value of node
@@ -26,7 +26,7 @@ function minimax(node, depth, maximizingPlayer) is
         return value
 ```
 
-Where the maximizing player is white, and the miniminzg player is black. Each recursive call decrements the depth by one, and when depth 0 is reached, we call our evaluation function to give us the static evaluation of the chess position. 
+Where the maximizing player is white, and the miniminzg player is black. Each recursive call decrements the depth by one, and when depth 0 is reached, we call our evaluation function to give us the static evaluation of the chess position.
 (Of course, slight modification to this pseudocode is done in order to save the actual move as well)
 
 At this point, FeohZero is now a functional chess engine that can consistently run at about depth 4 at a sub-5 second runtime.
@@ -38,7 +38,7 @@ This is true because as one can see, from a tree such as [this](https://prnt.sc/
 which are guaranteed to give a less favourable evaluation. (In the example shown, White has a move where the evaluation is atleast 6, and in the right-most sub-tree, black has an evaluation of at most 5, therefore white would always choose the middle move).
 
 The pseudocode of AB-Prune is the following (wiki), which results from simply storing an upper/lower bound of the score.
-```sh
+```
 function alphabeta(node, depth, α, β, maximizingPlayer) is
     if depth == 0 or node is terminal then
         return the heuristic value of node
@@ -83,8 +83,7 @@ At this point, the engine is pretty much complete and pretty neatly optimized. T
 For further performance use, we also use a transposition table (Analysed at a different file). If one wishes to improve upon the search even more, it is advisable that they implement more heuristics, such as the [Killer Heuristic](https://www.chessprogramming.org/Killer_Heuristic), the [History Heuristic](https://www.chessprogramming.org/History_Heuristic), or techniques such as the [Quiescence Search](https://www.chessprogramming.org/Quiescence_Search).
 
 
-
-## Sources 
+## Sources
 - [Minimax](https://www.chessprogramming.org/Minimax)
 - [Minimax Visualized](https://www.youtube.com/watch?v=l-hh51ncgDI)
 - [AB-Prune](https://www.chessprogramming.org/Alpha-Beta#:~:text=The%20Alpha%2DBeta%20algorithm%20Alpha,of%20overlooking%20a%20better%20move.)

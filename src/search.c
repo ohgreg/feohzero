@@ -2,6 +2,7 @@
 
 #include <stdlib.h>
 #include <time.h>
+
 #include "board.h"
 #include "constants.h"
 #include "eval.h"
@@ -14,9 +15,7 @@ int count;
 
 // small helper function to be used in qsort(). Returns move with highest score.
 int compare_moves(const void *a, const void *b) {
-    const Move *move_a = a;
-    const Move *move_b = b;
-    return move_b->score - move_a->score;
+    return ((const Move *)b)->score - ((const Move *)a)->score;
 }
 
 // helper function to compare two moves (no need to check all struct members though)
@@ -25,9 +24,10 @@ int equal_moves(const Move *m1, const Move *m2) {
 }
 
 // DFS but with depth limit
-int dls_search(Board *board, int depth, int is_root, Move *best_move, int alpha, int beta, MoveList startList, Move previous_best, int timeout) {
+int dls_search(Board *board, int depth, int is_root, Move *best_move, int alpha, int beta, MoveList start_list, Move previous_best, int timeout) {
     count++;
     int side = board->turn;
+
     // starting alpha and beta for TT
     int initial_alpha = alpha;
     int initial_beta = beta;
@@ -51,10 +51,9 @@ int dls_search(Board *board, int depth, int is_root, Move *best_move, int alpha,
         }   // check for prune
         if (beta <= alpha) return tt_entry->score;
     }
+
     // base case: Return static evaluation of position (or timeout)
     if (depth == 0 || count > 3500000*timeout) return eval(board);
-
-
 
     MoveList list;
     list.count = 0;
@@ -72,7 +71,7 @@ int dls_search(Board *board, int depth, int is_root, Move *best_move, int alpha,
         }
     } else {
         // uncomment this in prod code
-        list = startList;
+        list = start_list;
         // if is_root, we have no transpo moves, so use PV node. (much better)
         // comment this in prod code
         // generate_moves(&list, board);
@@ -102,7 +101,7 @@ int dls_search(Board *board, int depth, int is_root, Move *best_move, int alpha,
             // make and unmake move, while also updating Zobrist key
             apply_move(board, &list.moves[i]);
             fast_board_key(board, &list.moves[i]);
-            int recScore = dls_search(board, depth - 1, 0, NULL, alpha, beta, startList, previous_best, timeout);
+            int recScore = dls_search(board, depth - 1, 0, NULL, alpha, beta, start_list, previous_best, timeout);
             fast_board_key(board, &list.moves[i]);
             undo_move(board, &list.moves[i]);
             // Check for better move
@@ -121,7 +120,7 @@ int dls_search(Board *board, int depth, int is_root, Move *best_move, int alpha,
         for (int i = 0; i < list.count; i++) {
             apply_move(board, &list.moves[i]);
             fast_board_key(board, &list.moves[i]);
-            int recScore = dls_search(board, depth - 1, 0, NULL, alpha, beta, startList, previous_best, timeout);
+            int recScore = dls_search(board, depth - 1, 0, NULL, alpha, beta, start_list, previous_best, timeout);
             fast_board_key(board, &list.moves[i]);
             undo_move(board, &list.moves[i]);
 
@@ -153,8 +152,7 @@ int dls_search(Board *board, int depth, int is_root, Move *best_move, int alpha,
 }
 
 // IDS
-Move ids_search(Board *board, int max_depth, MoveList startList, int timeout) {
-    (void)timeout;
+Move ids_search(Board *board, int max_depth, MoveList start_list, int timeout){
     count = 0;
     Move best_move = {0};
     Move previous_best = {0};
@@ -163,15 +161,17 @@ Move ids_search(Board *board, int max_depth, MoveList startList, int timeout) {
     for (int depth = 1; depth <= max_depth; depth++) {
 
         Move curr_move;
-        dls_search(board, depth, 1, &curr_move, -INF, INF, startList, previous_best, timeout);
+        dls_search(board, depth, 1, &curr_move, -INF, INF, start_list, previous_best, timeout);
+
         // fall back to previous iteration if fail
-        if(count > 3500000*timeout)
-            break;
+        if (count > 3500000 * timeout) break;
+
         best_move = curr_move;
         previous_best = curr_move;
 
         // give bonus to last best move
         previous_best.score = 20000;
     }
+
     return best_move;
 }

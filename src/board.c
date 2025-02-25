@@ -2,18 +2,8 @@
 
 #include "utils.h"
 
-// update which squares are occupied in the board and by what color
-void update_occupied(Board *board) {
-    for (int i = 0; i < 6; i++) {
-        board->occupied[WHITE] |= board->pieces[WHITE][i];
-        board->occupied[BLACK] |= board->pieces[BLACK][i];
-        board->occupied[2] |= board->pieces[WHITE][i] | board->pieces[BLACK][i];
-    }
-}
-
 // function to apply a move, changing the chess position
 void apply_move(Board *board, Move *move) {
-
     Turn turn = board->turn;
 
     // Update full move and half move counters

@@ -17,11 +17,11 @@ void tearDown(void) {
 
 void test(void) {
     Board board;
-    if (!loadFEN(&board, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")) {
+    if (!loadFEN(&board, "rnbqkbnr/ppppp1p1/1N5p/2N2p2/4P3/2P5/PP1P1PPP/R1BQKB1R w KQkq - 0 1")) {
         TEST_FAIL_MESSAGE("Failed to load FEN");
     }
 
-    MoveList list = initial_list(&board, "a3 a4 b3 b4 c3 c4 d3 d4 e3 e4 f3 f4 g3 g4 h3 h4 Na3 Nc3 Nf3 Nh3");
+    MoveList list = initial_list(&board, "Nba4");
     print_move_list(&list);
 }
 

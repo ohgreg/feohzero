@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 
+// typedefs for integer types
 typedef uint64_t U64;
 typedef uint32_t U32;
 typedef uint16_t U16;
@@ -19,10 +20,10 @@ typedef enum {
     CAN_CASTLE = 3       // 11 (both sides)
 } CastleRights;
 
-// enum for move type (1 bit in total)
+// enum for which to move
 typedef enum { WHITE = 0, BLACK = 1 } Turn;
 
-// enum for move flags
+// enum for move flags (One-hot)
 typedef enum {
     NORMAL_MOVE = 0,       // 00000
     CAPTURE_MOVE = 1,      // 00001
@@ -32,9 +33,9 @@ typedef enum {
     DOUBLE_PAWN_PUSH = 16  // 10000
 } MoveFlags;
 
-// define structure for representing the board state
+// structure for representing the board state
 typedef struct {
-    // use 2 arrays of 6 for black(1) and white(0)
+    // use 2 arrays of 6 piece types for black (1) and white (0)
     U64 pieces[2][6];
 
     // 0 for white, 1 for black, 2 for both
@@ -44,12 +45,13 @@ typedef struct {
     CastleRights castle_white : 2;  // 2 bits
     CastleRights castle_black : 2;  // 2 bits
 
-    U8 ep_square;   // store en_passant square
+    U8 ep_square;   // store en passant square (64 for none)
     U8 half_move;   // half move counter
-    U64 key;        // Zobrist key
-    U16 full_move;  // Full move counter
+    U64 key;        // zobrist key
+    U16 full_move;  // full move counter
 } Board;
 
+// structure for representing a move
 typedef struct {
     // do move
     U8 from;   // start square (0-63)
@@ -57,22 +59,22 @@ typedef struct {
     U8 promo;  // promotion piece type
 
     // undo move
-    U8 piece;     // moved piece type
-    U8 captured;  // captured piece type
-    U8 flags;     // special move flags
-    U8 ep;        // en passant square (0-63)
-    U8 castle_white;    // store old castling rights
-    U8 castle_black;
-    int score;    // heuristic score of a move
-
+    U8 piece;         // moved piece type
+    U8 captured;      // captured piece type
+    U8 flags;         // special move flags (One-hot)
+    U8 ep;            // en passant square (if any)
+    U8 castle_white;  // previous white castling rights
+    U8 castle_black;  // previous black castling rights
+    int score;        // heuristic score of a move
 } Move;
 
+// structure for generated moves
 typedef struct {
     Move moves[256];  // array of moves
     int count;        // number of moves stored
 } MoveList;
 
-// struct for LUTs
+// struct for attack mask tables
 typedef struct {
     U64 knight[64];
     U64 king[64];
@@ -81,14 +83,16 @@ typedef struct {
     U64 bishop[5248];
 } LUT;
 
+// node types for transposition table entries
 typedef enum { EXACT, LOWER, UPPER } Node;
 
+// entry for the transposition table
 typedef struct {
-    U64 key;
-    int depth;
-    int score;
-    Move best_move;
-    Node node_type;
+    U64 key;         // zobrist hashing key
+    int depth;       // depth of position
+    int score;       // evaluation score
+    Move best_move;  // best move found
+    Node node_type;  // type of position
 } TTentry;
 
 #endif

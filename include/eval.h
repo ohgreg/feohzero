@@ -3,6 +3,7 @@
 
 #include "types.h"
 
+// evaluation tables
 extern const int mg_value[6];
 extern const int eg_value[6];
 

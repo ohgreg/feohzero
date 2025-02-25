@@ -27,10 +27,8 @@
 #define BLONG_OCCUPIED 0x1E00000000000000ULL
 #define BLONG_ATTACKED 0x1C00000000000000ULL
 
-// define eval constants
+// define evaluation bonuses and penalties
 #define INF INT_MAX
-
-// define evaluation bonuses and penalties (king safety and pawn structure)
 #define DOUBLED_PAWN_MG_PENALTY 10
 #define DOUBLED_PAWN_EG_PENALTY 20
 #define KING_SAFETY_BONUS_MG 20

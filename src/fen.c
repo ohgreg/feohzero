@@ -1,4 +1,5 @@
-#include "board.h"
+#include "fen.h"
+
 #include "zobrist.h"
 
 // function to load a chess position in FEN format to a Board
@@ -8,7 +9,7 @@ int loadFEN(Board *board, char *fen) {
 
     // STEP 1: parse pieces' positions
     char c;
-    // loop through each rank 
+    // loop through each rank
     while (rank >= 0) {
         int index = 8 * rank + file;
         c = fen[last];
@@ -114,8 +115,12 @@ int loadFEN(Board *board, char *fen) {
         last++;
     }
 
-    // update occupied and zobrist key
-    update_occupied(board);
+    // STEP 7: update occupied and zobrist key
+    for (int i = 0; i < 6; i++) {
+        board->occupied[WHITE] |= board->pieces[WHITE][i];
+        board->occupied[BLACK] |= board->pieces[BLACK][i];
+        board->occupied[2] |= board->pieces[WHITE][i] | board->pieces[BLACK][i];
+    }
     board->key = update_board_key(board);
 
     return 1;
