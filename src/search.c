@@ -8,7 +8,7 @@
 #include "moves.h"
 #include "transposition.h"
 #include "zobrist.h"
-
+#include <stdio.h>
 // recursion calls count for timeout
 int count;
 
@@ -176,7 +176,7 @@ Move ids_search(Board *board, int max_depth, MoveList start_list, int timeout){
 
         best_move = curr_move; // update best move
         previous_best = curr_move; // update previous best move
-
+        printf("Running at depth: %d\n", depth);
         previous_best.score = PREVIOUS_BEST_BOOST; // boost last best move
     }
 
