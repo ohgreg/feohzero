@@ -7,7 +7,7 @@
 
 // material values
 const int mg_value[6] = {
-    82, 337, 365, 502, 1025, 0
+    82, 337, 365, 477, 1025, 0
 };
 
 const int eg_value[6] = {
