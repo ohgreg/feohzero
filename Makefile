@@ -24,7 +24,7 @@ SOURCES = \
 CC = gcc
 
 ## Compiler flags
-CFLAGS = -Wall -Wextra -Werror -pedantic -Iinclude -O3
+CFLAGS = -Wall -Wextra -Werror -pedantic -O3
 
 ## Where to put the object files
 BINDIR ?= build
@@ -42,7 +42,7 @@ WEB_TARGET ?= web/engine.wasm
 EMCC = emcc
 
 ## Emscripten flags
-EMCC_FLAGS = -s WASM=1 -s EXPORTED_FUNCTIONS='["_choose_move"]' -s STACK_SIZE=8388608 --no-entry -O3 -Iinclude
+EMCC_FLAGS = -s WASM=1 -s EXPORTED_FUNCTIONS='["_choose_move"]' -s STACK_SIZE=8388608 --no-entry -O3
 
 ## Create the build directory if it doesn't exist
 $(BINDIR):
