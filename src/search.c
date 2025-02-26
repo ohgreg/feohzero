@@ -8,6 +8,7 @@
 #include "moves.h"
 #include "transposition.h"
 #include "zobrist.h"
+#include <stdio.h>
 // recursion calls count for timeout
 int count;
 
@@ -47,7 +48,7 @@ int dls_search(Board *board, int depth, int is_root, Move *best_move, int alpha,
     }
 
     // STEP 3: return evaluation in case of recursion base case or timeout
-    if (depth == 0 || count > HEURISTIC_THRESHOLD * timeout) {
+    if (depth == 0 || count > HEURISTIC_THRESHOLD * timeout - 500000) {
         return eval(board);
     }
 
@@ -171,8 +172,8 @@ Move ids_search(Board *board, int max_depth, MoveList start_list, int timeout){
         Move curr_move;
         dls_search(board, depth, 1, &curr_move, -INF, INF, start_list, previous_best, timeout); // call dls
 
-        if (count > HEURISTIC_THRESHOLD * timeout) break; // timeout check
-
+        if (count > HEURISTIC_THRESHOLD * timeout - 500000) break; // timeout check
+        printf("Running at depth: %d...\n", depth);
         best_move = curr_move; // update best move
         previous_best = curr_move; // update previous best move
         previous_best.score = PREVIOUS_BEST_BOOST; // boost last best move

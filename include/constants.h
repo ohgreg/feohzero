@@ -5,7 +5,7 @@
 
 // set DEBUG to 1 to enable debug mode, which includes additional logging and diagnostics,
 // or set DEBUG to 0 to disable debug mode, which removes debug related code
-#define DEBUG 0
+#define DEBUG 1
 
 // define bitboards for A, B, G, H file
 #define FILE_A 0x0101010101010101ULL
