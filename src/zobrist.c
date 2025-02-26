@@ -24,7 +24,7 @@ void init_zobrist(void) {
             }
         }
     }
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 16; i++) {
         zobrist_castling[i] = rand64(); // randomize castling keys
     }
     for (int i = 0; i < 65; i++) {
@@ -59,7 +59,7 @@ void fast_board_key(Board *board, const Move *move) {
             if (move->flags & EN_PASSANT) {
                 //board->key ^= zobrist_pieces[board->turn][move->piece][move->to];
                 int sq = board->turn ? move->to + 8 : move->to - 8;
-                board->key ^= zobrist_pieces[!board->turn][move->piece][move->to + sq];
+                board->key ^= zobrist_pieces[!board->turn][move->piece][sq];
             }
             if (move->flags & PROMOTION) {
                 board->key ^= zobrist_pieces[board->turn][move->promo][move->to];
@@ -95,6 +95,6 @@ void fast_board_key(Board *board, const Move *move) {
             if (move->captured != NONE) {
                 board->key ^= zobrist_pieces[!board->turn][move->captured][move->to];
             }
-            board->key ^= zobrist_side;
     }
+    board->key ^= zobrist_side;
 }
