@@ -76,13 +76,12 @@ clean:
 ## Unit Testing Configuration
 
 ## Test directory and Unity library location
-TESTDIR = test
+TESTDIR = tests
 LIBDIR = libs/unity
 
 ## List all test files
 TEST_SOURCES = \
-  $(TESTDIR)/entrypoint.c
-  # $(TESTDIR)/perft.c
+  $(TESTDIR)/perft.c
 
 ## Test object filenames
 TEST_OBJECTS = $(TEST_SOURCES:$(TESTDIR)/%.c=$(BINDIR)/%.o)
