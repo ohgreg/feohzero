@@ -121,7 +121,6 @@ int dls_search(Board *board, int depth, int is_root, Move *best_move, int alpha,
             if (rec_score > alpha) alpha = rec_score; // update alpha
 
             if (beta <= alpha) break; // prune the search
-
         }
     } else {
         for (int i = 0; i < list.count; i++) {
