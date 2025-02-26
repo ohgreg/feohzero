@@ -34,8 +34,6 @@ int choose_move(char *fen, char *moves, int timeout) {
 
     // print board, moves, and best move in debug mode
     #if DEBUG == 1
-        printf("Timeout: %d ms\n", timeout);
-        printf("Legal moves: %d\n", list.count);
         print_board(&board);
         print_move_list(&list);
         print_move(&best);
