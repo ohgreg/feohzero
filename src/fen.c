@@ -1,5 +1,6 @@
 #include "fen.h"
 
+#include "utils.h"
 #include "zobrist.h"
 
 // loads a chess position in FEN format to a board
@@ -121,7 +122,26 @@ int loadFEN(Board *board, char *fen) {
         board->occupied[BLACK] |= board->pieces[BLACK][i];
         board->occupied[2] |= board->pieces[WHITE][i] | board->pieces[BLACK][i];
     }
-    board->key = update_board_key(board);
+
+    // STEP 8: update zobrist key
+    board->key = (U64)0;
+    for (int piece = PAWN; piece <= KING; piece++) {
+        U64 pieces = board->pieces[WHITE][piece];
+        while (pieces) {
+            int sq = pop_lsb(&pieces);
+            board->key ^= zobrist_pieces[WHITE][piece][sq];
+        }
+        pieces = board->pieces[BLACK][piece];
+        while (pieces) {
+            int sq = pop_lsb(&pieces);
+            board->key ^= zobrist_pieces[BLACK][piece][sq];
+        }
+    }
+    board->key ^= zobrist_castling[((int)board->castle_white << 2) | (int)board->castle_black];
+    board->key ^= zobrist_enpassant[board->ep_square];
+    if (board->turn == BLACK) {
+        board->key ^= zobrist_side;
+    }
 
     return 1;
 }
