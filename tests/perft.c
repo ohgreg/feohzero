@@ -1,10 +1,12 @@
-#include "board.h"
-#include "moves.h"
-#include "fen.h"
-#include "unity.h"
-#include "unity_internals.h"
-#include <time.h>
+#include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <time.h>
+
+#include "board.h"
+#include "fen.h"
+#include "moves.h"
 
 typedef struct {
     char *name;
@@ -185,12 +187,6 @@ PerftTestCase testcases[] = {
 
 const int len = sizeof(testcases) / sizeof(testcases[0]);
 
-void setUp(void) {
-    init_moves();
-}
-
-void tearDown(void) { }
-
 int perft(Board *board, int depth) {
     if (depth == 0)
         return 1;
@@ -220,7 +216,8 @@ void perft_tests(void) {
 
         printf("\n[TEST %d] \nTest name: %s\nFEN: %s\n", i + 1, test->name, test->fen);
         if (!loadFEN(&board, test->fen)) {
-            TEST_FAIL_MESSAGE("Failed to load FEN");
+            fprintf(stderr, "Failed to load FEN\n");
+            exit(1);
         }
 
         printf("|----------------------------------------------------------------------|\n");
@@ -234,7 +231,8 @@ void perft_tests(void) {
         while (token) {
             int depth, expected;
             if (sscanf(token, "D%d %d", &depth, &expected) != 2) {
-                TEST_FAIL_MESSAGE("Failed to parse depth and expected result");
+                fprintf(stderr, "Failed to parse depth and expected result\n");
+                exit(1);
             }
 
             clock_t start = clock();
@@ -248,7 +246,7 @@ void perft_tests(void) {
                                depth, moves, expected, time, nps);
             printf("|----------------------------------------------------------------------|\n");
 
-            TEST_ASSERT_EQUAL_INT_MESSAGE(expected, moves, "Perft test failed!");
+            assert(moves == expected);
             token = strtok(NULL, ";");
         }
 
@@ -264,7 +262,8 @@ void perft_tests(void) {
 }
 
 int main(void) {
-    UNITY_BEGIN();
-    RUN_TEST(perft_tests);
-    return UNITY_END();
+    init_moves();
+    perft_tests();
+
+    return 0;
 }

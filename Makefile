@@ -90,14 +90,14 @@ TEST_OBJECTS = $(TEST_SOURCES:$(TESTDIR)/%.c=$(BINDIR)/%.o)
 TEST_BIN = test_runner
 
 ## Ensure Unity is included in the compilation
-CFLAGS += -I$(LIBDIR)
+CFLAGS += -I$(LIBDIR) -I$(SRCDIR)
 
 ## Compile each test object file
 $(BINDIR)/%.o: $(TESTDIR)/%.c $(BINDIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 ## Build the test executable separately
-$(TEST_BIN): $(TEST_OBJECTS) $(filter-out $(BINDIR)/engine.o, $(OBJECTS)) $(LIBDIR)/unity.c
+$(TEST_BIN): $(TEST_OBJECTS) $(filter-out $(BINDIR)/engine.o, $(OBJECTS))
 	$(CC) $(CFLAGS) $^ -o $@
 
 ## Run the tests

@@ -70,23 +70,12 @@ RUN git clone https://github.com/emscripten-core/emsdk.git . && \
     chmod +x /emsdk/emsdk_env.sh && \
     /emsdk/emsdk_env.sh > /etc/profile.d/emsdk_env.sh
 
-## Unity Stage: Install Unity separately
-FROM base AS unity
-
-WORKDIR /unity
-
-## Clone Unity test framework repository
-RUN git clone https://github.com/ThrowTheSwitch/Unity.git .
-
 ## Final Stage: Copy dependencies & application files
 FROM base AS final
 
 ## Copy Emscripten from the emscripten stage
 COPY --from=emscripten /emsdk /emsdk
 ENV PATH="/emsdk:/emsdk/upstream/emscripten:${PATH}"
-
-## Copy Unity from the unity stage
-COPY --from=unity /unity /unity
 
 ## Copy project files
 COPY . /engine
@@ -95,4 +84,4 @@ COPY . /engine
 EXPOSE 8000
 
 ## Build and run the project
-# CMD ["make", "run"]
+CMD ["make", "run"]

@@ -1,7 +1,7 @@
 services:
   server:
     build: .
-    command: /bin/bash /engine/scripts/entrypoint.sh
+    command: make run
     volumes:
       - .:/engine
       - ~/.ssh:/root/.ssh
