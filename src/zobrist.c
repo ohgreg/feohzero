@@ -57,7 +57,7 @@ void fast_board_key(Board *board, const Move *move) {
     switch (move->piece) {
         case PAWN:
             if (move->flags & EN_PASSANT) {
-                board->key ^= zobrist_pieces[board->turn][move->piece][move->from];
+                //board->key ^= zobrist_pieces[board->turn][move->piece][move->to];
                 int sq = board->turn ? move->to + 8 : move->to - 8;
                 board->key ^= zobrist_pieces[!board->turn][move->piece][move->to + sq];
             }
@@ -65,7 +65,7 @@ void fast_board_key(Board *board, const Move *move) {
                 board->key ^= zobrist_pieces[board->turn][move->promo][move->to];
             }
             else {
-                board->key ^= zobrist_pieces[board->turn][move->piece][move->from];
+                board->key ^= zobrist_pieces[board->turn][move->piece][move->to];
             }
             if (move->captured != NONE) {
                 board->key ^= zobrist_pieces[!board->turn][move->captured][move->to];
@@ -91,7 +91,7 @@ void fast_board_key(Board *board, const Move *move) {
             // NOTE: don't remove the comment below, it is genuinely needed or it fails
             /* fall through */
         default:
-            board->key ^= zobrist_pieces[board->turn][move->piece][move->from];
+            board->key ^= zobrist_pieces[board->turn][move->piece][move->to];
             if (move->captured != NONE) {
                 board->key ^= zobrist_pieces[!board->turn][move->captured][move->to];
             }
