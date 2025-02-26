@@ -48,7 +48,7 @@ void print_board(const Board *board) {
                     printf("\tEn passant: %c%d", 'a' + (board->ep_square % 8), 1 + board->ep_square / 8);
                     break;
                 }
-                printf("-");
+                printf("\tEn passant: -");
                 break;
             case 4:
                 printf("\tHalfmove clock: %d", board->half_move);
