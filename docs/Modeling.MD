@@ -23,4 +23,4 @@ The process of making-unmaking moves is straight-forward. In an appropriate func
 Unmaking moves mirrors this logic.
 
 ## Sources
-- [Bitboards](https://www.chessprogramming.org/Bitboards)
+1. [Bitboards](https://www.chessprogramming.org/Bitboards)

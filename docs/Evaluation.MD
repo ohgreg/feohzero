@@ -3,7 +3,7 @@
 In order to finally search through all of the possible legal moves, we need to be able to judge how beneficial a move is for the player. In order to do so, we're going to need to evaluate a chess position to figure out which player is winning.
 Evaluating a chess position can be really complex. In real analysis of a position, one must take into account a plethora of factors, such as total material, development of pieces, king safety, and much more.
 
-FeohZero analyses a position based on:
+**FeohZero** analyses a position based on:
 - Material count
 - Quality of each piece
 - Game Phase (Tapered eval)

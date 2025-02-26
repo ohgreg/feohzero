@@ -29,7 +29,7 @@ function minimax(node, depth, maximizingPlayer) is
 Where the maximizing player is white, and the miniminzg player is black. Each recursive call decrements the depth by one, and when depth 0 is reached, we call our evaluation function to give us the static evaluation of the chess position.
 (Of course, slight modification to this pseudocode is done in order to save the actual move as well)
 
-At this point, FeohZero is now a functional chess engine that can consistently run at about depth 4 at a sub-5 second runtime.
+At this point, **FeohZero** is now a functional chess engine that can consistently run at about depth 4 at a sub-5 second runtime.
 
 ## AB-Prune
 
@@ -60,14 +60,14 @@ function alphabeta(node, depth, α, β, maximizingPlayer) is
         return value
 ```
 
-For reference, the use of AB-Prune instead of minimax gave FeohZero a depth increase of 2 (for the same runtime), which is very significant.
+For reference, the use of AB-Prune instead of minimax gave **FeohZero** a depth increase of 2 (for the same runtime), which is very significant.
 
 One important thing to note here is that, in the above example, had the nodes containing 8 and 5 in the right-most sub-tree been inverted, pruning would not have been possible. From this, we can deduce that the correct ordering of the moves, from best to worse,
 will lead to more prunes, and therefore a way more efficient search. This brings us to our next chapter:
 
 ## Move Ordering
 
-A most vital aspect for an efficient AB-Prune search is correct move ordering. That being said, it is difficult to judge a move as "good" or "bad", without actually searching them. Therefore, the move ordering is done using heuristics. FeohZero relies on a couple of smart heuristics in order to maximize pruning. Each move has a score assigned to it upon generation. Capture moves and castling are considered "likely to be good moves", whereas en passant is much worse in comparison. The best move-ordering trick though is undoubtedly through the use of [Iterative-Deepening Search](https://en.wikipedia.org/wiki/Iterative_deepening_depth-first_search).
+A most vital aspect for an efficient AB-Prune search is correct move ordering. That being said, it is difficult to judge a move as "good" or "bad", without actually searching them. Therefore, the move ordering is done using heuristics. **FeohZero** relies on a couple of smart heuristics in order to maximize pruning. Each move has a score assigned to it upon generation. Capture moves and castling are considered "likely to be good moves", whereas en passant is much worse in comparison. The best move-ordering trick though is undoubtedly through the use of [Iterative-Deepening Search](https://en.wikipedia.org/wiki/Iterative_deepening_depth-first_search).
 
 Just from this simple move-ordering, we got a good speed increase through doubling of the prunes.
 
@@ -84,8 +84,8 @@ For further performance use, we also use a transposition table (Analysed at a di
 
 
 ## Sources
-- [Minimax](https://www.chessprogramming.org/Minimax)
-- [Minimax Visualized](https://www.youtube.com/watch?v=l-hh51ncgDI)
-- [AB-Prune](https://www.chessprogramming.org/Alpha-Beta#:~:text=The%20Alpha%2DBeta%20algorithm%20Alpha,of%20overlooking%20a%20better%20move.)
-- [Move-Ordering](https://www.chessprogramming.org/Move_Ordering)
-- [Iterative Deepening Search](https://www.chessprogramming.org/Iterative_Deepening)
+1. [Minimax](https://www.chessprogramming.org/Minimax)
+2. [Minimax Visualized](https://www.youtube.com/watch?v=l-hh51ncgDI)
+3. [AB-Prune](https://www.chessprogramming.org/Alpha-Beta#:~:text=The%20Alpha%2DBeta%20algorithm%20Alpha,of%20overlooking%20a%20better%20move.)
+4. [Move-Ordering](https://www.chessprogramming.org/Move_Ordering)
+5. [Iterative Deepening Search](https://www.chessprogramming.org/Iterative_Deepening)
