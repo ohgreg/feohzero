@@ -90,7 +90,7 @@ void print_move(Move *move) {
 
     // handle capture
     if (move->flags & CAPTURE_MOVE) {
-        printf(" | Castling");
+        printf(" | Capture");
     }
 
     // handle castling
