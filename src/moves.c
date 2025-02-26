@@ -1,7 +1,7 @@
 #include "moves.h"
 
+#include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 
 #include "board.h"
 #include "constants.h"
@@ -602,15 +602,20 @@ MoveList initial_list(Board *board, const char *moves_str) {
     MoveList list;
     list.count = 0;
 
-    char temp[strlen(moves_str) + 1];
+    // allocate memory dynamically
+    char *temp = malloc(strlen(moves_str) + 1);
+    if (temp == NULL) return list;
+
     strcpy(temp, moves_str);
 
     char *token = strtok(temp, " ");
     while (token != NULL) {
-        Move temp = translate_move(board, token);
-        list.moves[list.count++] = temp;
+        Move move = translate_move(board, token);
+        list.moves[list.count++] = move;
         token = strtok(NULL, " ");
     }
+
+    free(temp);
 
     return list;
 }
