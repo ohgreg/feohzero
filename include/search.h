@@ -3,7 +3,7 @@
 
 #include "types.h"
 
-// recursion calls count for timeout
+// recursion calls counter for timeout
 extern int count;
 
 // function prototypes

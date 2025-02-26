@@ -1,13 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "constants.h"
 #include "eval.h"
 #include "fen.h"
 #include "moves.h"
 #include "search.h"
 #include "transposition.h"
 #include "zobrist.h"
-// #include "print.h"
+
+#if DEBUG == 1
+    #include "print.h"
+#endif
 
 int choose_move(char *fen, char *moves, int timeout) {
     srand(2400118 + 2400141);
@@ -22,12 +26,13 @@ int choose_move(char *fen, char *moves, int timeout) {
     board.key = (U64)0;
     loadFEN(&board, fen);
 
-    // print_board(&board);
-
     MoveList list = initial_list(&board, moves);
     Move best = ids_search(&board, 50, list, timeout);
 
-    // print_move(&best);
+    #if DEBUG == 1
+        print_board(&board);
+        print_move(&best);
+    #endif
 
     clear_tt();
 

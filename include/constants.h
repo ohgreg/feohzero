@@ -3,6 +3,10 @@
 
 #include <limits.h>
 
+// set DEBUG to 1 to enable debug mode, which includes additional logging and diagnostics,
+// or set DEBUG to 0 to disable debug mode, which removes debug related code
+#define DEBUG 0
+
 // define bitboards for A, B, G, H file
 #define FILE_A 0x0101010101010101ULL
 #define FILE_B 0x0202020202020202ULL
@@ -35,5 +39,10 @@
 #define KING_SAFETY_BONUS_EG 15
 #define OPEN_FILE_KING_MG_PENALTY 25
 #define OPEN_FILE_KING_EG_PENALTY 40
+
+// define search bonuses and constants
+#define BEST_MOVE_BOOST 40000
+#define PREVIOUS_BEST_BOOST 20000
+#define HEURISTIC_THRESHOLD 3500000
 
 #endif

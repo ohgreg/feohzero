@@ -44,7 +44,11 @@ void print_board(const Board *board) {
                     board->castle_black & 1 ? "k" : "-", board->castle_black & 2 ? "q" : "-");
                 break;
             case 5:
-                printf("\tEn passant: %c%d", 'a' + (board->ep_square % 8), 1 + board->ep_square / 8);
+                if (board->ep_square != 64) {
+                    printf("\tEn passant: %c%d", 'a' + (board->ep_square % 8), 1 + board->ep_square / 8);
+                    break;
+                }
+                printf("-");
                 break;
             case 4:
                 printf("\tHalfmove clock: %d", board->half_move);
