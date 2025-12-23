@@ -33,7 +33,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     lldb \
     valgrind \
     clang-format \
-    clang-tidy && \
+    clang-tidy \
+    linux-perf && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 ## Install C/C++ libs

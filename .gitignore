@@ -9,3 +9,7 @@ libs
 scripts/unity
 .github
 .DS_Store
+web
+Dockerfile
+docker-compose.yml
+AUTHORS
