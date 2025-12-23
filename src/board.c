@@ -135,19 +135,19 @@ int load_fen(Board *board, char *fen) {
     U64 pieces = board->pieces[WHITE][piece];
     while (pieces) {
       int sq = pop_lsb(&pieces);
-      board->key ^= zobrist_pieces[WHITE][piece][sq];
+      board->key ^= get_zobrist_piece(WHITE, piece, sq);
     }
     pieces = board->pieces[BLACK][piece];
     while (pieces) {
       int sq = pop_lsb(&pieces);
-      board->key ^= zobrist_pieces[BLACK][piece][sq];
+      board->key ^= get_zobrist_piece(BLACK, piece, sq);
     }
   }
-  board->key ^= zobrist_castling[((int)board->castle_white << 2) |
-                                 (int)board->castle_black];
-  board->key ^= zobrist_enpassant[board->ep_square];
+  board->key ^= get_zobrist_castling(((int)board->castle_white << 2) |
+                                     (int)board->castle_black);
+  board->key ^= get_zobrist_enpassant(board->ep_square);
   if (board->turn == BLACK) {
-    board->key ^= zobrist_side;
+    board->key ^= get_zobrist_side();
   }
 
   return 1;

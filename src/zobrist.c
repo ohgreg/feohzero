@@ -37,6 +37,16 @@ void init_zobrist(void) {
   zobrist_side = rand64(); // randomize side key
 }
 
+U64 get_zobrist_piece(Turn side, PieceType piece, int pos) {
+  return zobrist_pieces[side][piece][pos];
+}
+
+U64 get_zobrist_castling(int pos) { return zobrist_castling[pos]; }
+
+U64 get_zobrist_enpassant(int pos) { return zobrist_enpassant[pos]; }
+
+U64 get_zobrist_side(void) { return zobrist_side; }
+
 void fast_board_key(Board *board, const Move *move) {
   // STEP 1: remove key for the piece's source square
   board->key ^= zobrist_pieces[board->turn][move->piece][move->from];
