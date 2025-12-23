@@ -1,5 +1,6 @@
 #include "moves.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -202,18 +203,21 @@ void init_moves(void) {
         lut.king[square] = moves; // store move in LUT
     }
 
-    // pawn LUT
+    // pawn LUTs
     for (int square = 0; square < 64; square++) {
-        for (int color = 0; color < 2; color++) {
-            int dir = color ? -1 : 1;
-            lut.pawn[color][square] = 0;
-            if (!is_set_bit(color ? FILE_A : FILE_H, square + 7 * dir)) {
-                enable_bit(&lut.pawn[color][square], square + 7 * dir); // capture left
-            }
-            if (!is_set_bit(color ? FILE_H : FILE_A, square + 9 * dir)) {
-                enable_bit(&lut.pawn[color][square], square + 9 * dir); // capture right
-            }
-        }
+        U64 pos = ((U64)1 << square);
+
+        // captures
+        lut.pawn_attack[WHITE][square] = ((pos & ~FILE_H) << 9) | ((pos & ~FILE_A) << 7); // capture right and left
+        lut.pawn_attack[BLACK][square] = ((pos & ~FILE_A) >> 9) | ((pos & ~FILE_H) >> 7); // capture right and left
+
+        // single pawn push
+        lut.pawn_push[WHITE][square] = (pos << 8);
+        lut.pawn_push[BLACK][square] = (pos >> 8);
+
+        // double pawn pushes
+        lut.pawn_double_push[WHITE][square] = ((pos & RANK_2) << 16);
+        lut.pawn_double_push[BLACK][square] = ((pos & RANK_7) >> 16);
     }
 }
 
@@ -232,24 +236,6 @@ U64 (*generate_sliding_attacks[2])(Board *, int) = {
 U64 *slide_mask[2] = {
     bishop_tmask, rook_tmask
 };
-
-// generates all possible moves for a pawn at a given position
-U64 generate_pawn_moves(Board *board, int pos) {
-    Turn turn = board->turn;
-    int dir = turn ? -1 : 1;
-    U64 moves = generate_piece_attacks[PAWN](board, pos) & board->occupied[!board->turn]; // capture moves
-
-    // move 1 forward
-    if (!is_set_bit(board->occupied[2], pos + 8 * dir)) {
-        enable_bit(&moves, pos + 8 * dir);
-        // move 2 forward
-        if (is_set_bit(turn ? RANK_7 : RANK_2, pos) && !is_set_bit(board->occupied[2], pos + 16 * dir)) {
-            enable_bit(&moves, pos + 16 * dir);
-        }
-    }
-
-    return moves;
-}
 
 // generates all attack squares controlled by the opponent, after removing the king
 U64 generate_opponent_attacks(Board *board) {
@@ -365,58 +351,6 @@ U64 generate_pinmask(Board *board, int pos) {
     return pinmask;
 }
 
-// generates castling moves if they are applicable
-void generate_castling(Board *board, MoveList *list, U64 checkers, U64 opponent_attacks) {
-    if (checkers != 0) return; // return if the king is in check
-
-    Turn turn = board->turn;
-    CastleRights rights = turn ? board->castle_black : board->castle_white;
-
-    if (rights == 0) return; // return if there are no castle rights
-
-    U64 occupied = board->occupied[2] & ~board->pieces[turn][KING];
-
-    // check for kingside castling
-    if ((rights & CAN_CASTLE_OO) && !((occupied | opponent_attacks) & (turn ? BSHORT : WSHORT))) {
-        list->moves[list->count++] = (Move){turn ? 60 : 4, turn ? 62 : 6, 0, KING, NONE,
-            CASTLING, board->ep_square, board->castle_white, board->castle_black, 2100};
-    }
-
-    // check for queenside castling
-    if ((rights & CAN_CASTLE_OOO) && !(occupied & (turn ? BLONG_OCCUPIED : WLONG_OCCUPIED))
-        && !(opponent_attacks & (turn ? BLONG_ATTACKED : WLONG_ATTACKED))) {
-        list->moves[list->count++] = (Move){turn ? 60 : 4, turn ? 58 : 2, 0, KING, NONE,
-            CASTLING, board->ep_square, board->castle_white, board->castle_black, 2000};
-    }
-}
-
-// generates en passant moves for the current board state
-// NOTE: this function could possible be implemented better
-void generate_en_passant(Board *board, MoveList *list) {
-    if (board->ep_square == 64) return; // return if there is no en passant square
-
-    Turn turn = board->turn;
-    U8 ep = board->ep_square;
-
-    // determine valid en passant moves based on pawn positions
-    U64 moves = lut.pawn[!turn][ep] & board->pieces[turn][PAWN];
-
-    // iterate over all possible en passant moves
-    while (moves) {
-        Move move = {pop_lsb(&moves), ep, 0, PAWN, NONE, EN_PASSANT, ep, board->castle_white, board->castle_black, -1000};
-
-        // create a temporary board state and apply the en passant move
-        Board temp = *board;
-        apply_move(&temp, &move);
-        temp.turn = turn;
-
-        // check if the move leaves the king in check
-        if (generate_checkers(&temp) != 0) continue;
-
-        list->moves[list->count++] = move;
-    }
-}
-
 // generates all possible and saves them in a list, given a board position
 void generate_moves(Board *board, MoveList *list) {
     Turn turn = board->turn;
@@ -522,10 +456,48 @@ void generate_moves(Board *board, MoveList *list) {
     }
 
     // STEP 5: generate castling moves
-    generate_castling(board, list, checkers, opponent_attacks);
+    if (checkers == 0) { // return if the king is in check
+        CastleRights rights = turn ? board->castle_black : board->castle_white;
+        if (rights != 0) { // return if there are no castle rights
+            U64 occupied = board->occupied[2] & ~board->pieces[turn][KING];
+
+            // check for kingside castling
+            if ((rights & CAN_CASTLE_OO) && !((occupied | opponent_attacks) & (turn ? BSHORT : WSHORT))) {
+                list->moves[list->count++] = (Move){turn ? 60 : 4, turn ? 62 : 6, 0, KING, NONE,
+                    CASTLING, board->ep_square, board->castle_white, board->castle_black, 2100};
+            }
+
+            // check for queenside castling
+            if ((rights & CAN_CASTLE_OOO) && !(occupied & (turn ? BLONG_OCCUPIED : WLONG_OCCUPIED))
+                && !(opponent_attacks & (turn ? BLONG_ATTACKED : WLONG_ATTACKED))) {
+                    list->moves[list->count++] = (Move){turn ? 60 : 4, turn ? 58 : 2, 0, KING, NONE,
+                        CASTLING, board->ep_square, board->castle_white, board->castle_black, 2000};
+            }
+        }
+    }
 
     // STEP 6: generate en passant moves
-    generate_en_passant(board, list);
+    if (board->ep_square == 64) return; // return if there is no en passant square
+
+    U8 ep = board->ep_square;
+
+    // determine valid en passant moves based on pawn positions
+    moves = lut.pawn_attack[!turn][ep] & board->pieces[turn][PAWN];
+
+    // iterate over all possible en passant moves
+    while (moves) {
+        Move move = {pop_lsb(&moves), ep, 0, PAWN, NONE, EN_PASSANT, ep, board->castle_white, board->castle_black, -1000};
+
+        // create a temporary board state and apply the en passant move
+        Board temp = *board;
+        apply_move(&temp, &move);
+        temp.turn = turn;
+
+        // check if the move leaves the king in check
+        if (generate_checkers(&temp) != 0) continue;
+
+        list->moves[list->count++] = move;
+    }
 }
 
 // translates a move from string containing the move in Algebraic notation to the move struct
@@ -638,7 +610,7 @@ Move translate_move(Board *board, const char *move_str) {
         move.flags |= EN_PASSANT; // set en passant flag
         move.score = -1000; // adjust score for en passant
 
-        move.from = lsb(lut.pawn[!turn][move.to] & board->pieces[turn][PAWN] & start_mask);
+        move.from = lsb(lut.pawn_attack[!turn][move.to] & board->pieces[turn][PAWN] & start_mask);
 
         return move;
     }

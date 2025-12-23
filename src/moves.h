@@ -21,14 +21,8 @@ extern U64 rook_mask[64];
 
 extern LUT lut;
 
-// function prototypes
-U64 slide(U64 occupied, int truncate, int pos, int directions[4][2]);
-int square_count(U64 value, int squares[64]);
-
-void init_moves(void);
-
 static inline U64 generate_pawn_attacks(Board *board, int pos) {
-    return lut.pawn[board->turn][pos];
+    return lut.pawn_attack[board->turn][pos];
 }
 
 static inline U64 generate_knight_attacks(Board *board, int pos) {
@@ -54,12 +48,34 @@ static inline U64 generate_king_attacks(Board *board, int pos) {
     return lut.king[pos];
 }
 
+// generates all possible moves for a pawn at a given position
+static inline U64 generate_pawn_moves(Board *board, int pos) {
+    Turn turn = board->turn;
+    U64 empty = ~board->occupied[2];
+
+    U64 moves = 0;
+
+    // capture moves
+    moves = lut.pawn_attack[turn][pos] & board->occupied[!turn];
+
+    // single push
+    U64 single = lut.pawn_push[turn][pos] & empty;
+
+    // add single push, check for double
+    moves |= single | (lut.pawn_double_push[turn][pos] & empty & ((single) ? ~(U64)0 : 0));
+
+    return moves;
+}
+
 extern U64 (*generate_piece_attacks[6])(Board *, int);
 extern U64 (*generate_sliding_attacks[2])(Board *, int);
 
 extern U64 *slide_mask[2];
 
-U64 generate_pawn_moves(Board *board, int pos);
+U64 slide(U64 occupied, int truncate, int pos, int directions[4][2]);
+int square_count(U64 value, int squares[64]);
+
+void init_moves(void);
 
 U64 generate_opponent_attacks(Board *board);
 U64 generate_checkers(Board *board);
