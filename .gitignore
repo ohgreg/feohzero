@@ -11,6 +11,8 @@ compile_commands.json
 
 .DS_Store
 
+docs/
+
 web/
 Dockerfile
 docker-compose.yml
