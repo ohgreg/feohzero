@@ -4,7 +4,7 @@
 #include "zobrist.h"
 
 // loads a chess position in FEN format to a board
-int loadFEN(Board *board, char *fen) {
+int load_fen(Board *board, char *fen) {
     *board = (Board){0};
     int rank = 7, file = 0, last = 0;
 

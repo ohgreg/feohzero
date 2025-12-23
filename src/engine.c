@@ -27,7 +27,7 @@ int choose_move(char *fen, char *moves, int timeout) {
 
     Board board;
     board.key = (U64)0;
-    loadFEN(&board, fen); // load board from FEN
+    load_fen(&board, fen); // load board from FEN
 
     MoveList list = initial_list(&board, moves); // translate moves string to an initial list
     Move best = ids_search(&board, 50, list, timeout); // find best move

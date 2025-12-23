@@ -215,7 +215,7 @@ void perft_tests(void) {
         Board board;
 
         printf("\n[TEST %d] \nTest name: %s\nFEN: %s\n", i + 1, test->name, test->fen);
-        if (!loadFEN(&board, test->fen)) {
+        if (!load_fen(&board, test->fen)) {
             fprintf(stderr, "Failed to load FEN\n");
             exit(1);
         }
