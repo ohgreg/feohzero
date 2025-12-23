@@ -5,7 +5,6 @@
 #include <time.h>
 
 #include "board.h"
-#include "fen.h"
 #include "moves.h"
 
 typedef struct {
@@ -15,6 +14,7 @@ typedef struct {
 } PerftTestCase;
 
 PerftTestCase testcases[] = {
+    // {"Start position", "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", ";D1 20 ;D2 400 ;D3 8902 ;D4 197281 ;D5 4865609 ;D6 119060324"},
     // https://www.chessprogramming.net/perfect-perft/
     {"Illegal en passant move #1", "3k4/3p4/8/K1P4r/8/8/8/8 b - - 0 1", ";D6 1134888"},
     {"Illegal en passant move #2", "8/8/4k3/8/2p5/8/B2P2K1/8 w - - 0 1", ";D6 1015133"},
