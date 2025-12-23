@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "board.h"
 #include "constants.h"
 #include "eval.h"
-#include "fen.h"
 #include "moves.h"
 #include "search.h"
 #include "transposition.h"

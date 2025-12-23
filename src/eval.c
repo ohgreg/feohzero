@@ -167,7 +167,7 @@ int mg_table[2][6][64];
 int eg_table[2][6][64];
 
 // king shield masks for both colors
-int king_shield[2][64];
+U64 king_shield[2][64];
 
 // initializes the evaluation tables
 // NOTE: the final "LUT" tables could be hardcoded

@@ -34,7 +34,7 @@ extern int mg_table_black[6][64];
 extern int eg_table_white[6][64];
 extern int eg_table_black[6][64];
 
-extern int king_shield[2][64];
+extern U64 king_shield[2][64];
 
 // function prototypes
 void init_eval(void);
