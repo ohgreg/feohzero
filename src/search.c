@@ -9,20 +9,18 @@
 #include "transposition.h"
 #include "zobrist.h"
 
-// recursion calls count for timeout
-int count;
+/* recursion calls count for timeout */
+static int count;
 
-// compares moves by score for sorting, returns highest score move
-int compare_moves(const void *a, const void *b) {
+/* compares moves by score for sorting, returns highest score move */
+static int compare_moves(const void *a, const void *b) {
     return ((const Move *)b)->score - ((const Move *)a)->score;
 }
 
-// checks if two moves are equal
-int equal_moves(const Move *m1, const Move *m2) {
-    return (m1->from == m2->from) && (m1->to == m2->to) && (m1->promo == m2->promo);
+int equal_moves(const Move *a, const Move *b) {
+    return (a->from == b->from) && (a->to == b->to) && (a->promo == b->promo);
 }
 
-// depth-limited search (dls) with alpha-beta pruning
 int dls_search(Board *board, int depth, int is_root, Move *best_move, int alpha, int beta, MoveList start_list, Move previous_best, int timeout) {
     count++; // increment recursion calls count
 
@@ -90,7 +88,7 @@ int dls_search(Board *board, int depth, int is_root, Move *best_move, int alpha,
     qsort(list.moves, list.count, sizeof(Move), compare_moves);
 
     // STEP 6: handle end game conditions
-    if (list.count == 0 && generate_checkers(board) != 0) {
+    if (list.count == 0 && is_king_in_check(board)) {
         return (board->turn ? INF : -INF); // checkmate (cooked)
     } else if (list.count == 0) {
         return 0; // stalemate
@@ -160,7 +158,6 @@ int dls_search(Board *board, int depth, int is_root, Move *best_move, int alpha,
     return best_current_score;
 }
 
-// iterative deepening search (ids) for a given board
 Move ids_search(Board *board, int max_depth, MoveList start_list, int timeout){
     count = 0; // reset recursion calls count
     Move best_move = {0};

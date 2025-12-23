@@ -1,48 +1,69 @@
-#ifndef CONSTANTS_H
-#define CONSTANTS_H
+#ifndef FEOHZERO_CONSTANTS_H
+#define FEOHZERO_CONSTANTS_H
 
 #include <limits.h>
 
-// set DEBUG to 1 to enable debug mode, which includes additional logging and diagnostics,
-// or set DEBUG to 0 to disable debug mode, which removes debug related code
+/* set DEBUG to 1 to enable debug mode, which includes additional logging and
+   diagnostics, or set DEBUG to 0 to disable debug mode, which removes debug
+   related code */
 #define DEBUG 0
 
-// define bitboards for A, B, G, H file
+/* bitboard for file A (leftmost file) */
 #define FILE_A 0x0101010101010101ULL
+/* bitboard for file B */
 #define FILE_B 0x0202020202020202ULL
+/* bitboard for file G */
 #define FILE_G 0x4040404040404040ULL
+/* bitboard for file H (rightmost file) */
 #define FILE_H 0x8080808080808080ULL
 
-// define combined files bitboards
-#define FILE_GH (FILE_G | FILE_H)
-#define FILE_AB (FILE_A | FILE_B)
+/* bitboard for files G and H combined */
+#define FILE_GH 0xC0C0C0C0C0C0C0C0ULL
+/* bitboard for files A and B combined */
+#define FILE_AB 0x0303030303030303ULL
 
-// define bitboards for 1, 2, 7, 8 rank
+/* bitboard for rank 1 (white's back rank) */
 #define RANK_1 0x00000000000000FFULL
+/* bitboard for rank 2 */
 #define RANK_2 0x000000000000FF00ULL
+/* bitboard for rank 7 */
 #define RANK_7 0x00FF000000000000ULL
+/* bitboard for rank 8 (black's back rank) */
 #define RANK_8 0xFF00000000000000ULL
 
-// define the castling masks
+/* squares that must be empty for white kingside castling */
 #define WSHORT 0x70ULL
+/* squares that must be empty for black kingside castling */
 #define BSHORT 0x7000000000000000ULL
+/* squares that must be empty for white queenside castling */
 #define WLONG_OCCUPIED 0x1EULL
+/* squares that must not be attacked for white queenside castling */
 #define WLONG_ATTACKED 0x1CULL
+/* squares that must be empty for black queenside castling */
 #define BLONG_OCCUPIED 0x1E00000000000000ULL
+/* squares that must not be attacked for black queenside castling */
 #define BLONG_ATTACKED 0x1C00000000000000ULL
 
-// define evaluation bonuses and penalties
+/* represents infinity in evaluation scores */
 #define INF INT_MAX
+/* penalty for doubled pawns in the middlegame */
 #define DOUBLED_PAWN_MG_PENALTY 10
+/* penalty for doubled pawns in the endgame */
 #define DOUBLED_PAWN_EG_PENALTY 20
+/* bonus for king safety in the middlegame */
 #define KING_SAFETY_BONUS_MG 20
+/* bonus for king safety in the endgame */
 #define KING_SAFETY_BONUS_EG 15
+/* penalty for king on open file in the middlegame */
 #define OPEN_FILE_KING_MG_PENALTY 25
+/* penalty for king on open file in the endgame */
 #define OPEN_FILE_KING_EG_PENALTY 40
 
-// define search bonuses and constants
+/* move ordering boost for the best move from previous search */
 #define BEST_MOVE_BOOST 40000
+/* move ordering boost for the previous iteration's best move */
 #define PREVIOUS_BEST_BOOST 20000
+/* threshold for applying heuristic move ordering */
 #define HEURISTIC_THRESHOLD 3500000
 
 #endif

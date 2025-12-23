@@ -1,15 +1,16 @@
-#ifndef SEARCH_H
-#define SEARCH_H
+#ifndef FEOHZERO_SEARCH_H
+#define FEOHZERO_SEARCH_H
 
 #include "types.h"
 
-// recursion calls counter for timeout
-extern int count;
+/* returns 1 if two moves are equal, 0 otherwise */
+int equal_moves(const Move *a, const Move *b);
 
-// function prototypes
-int equal_moves(const Move *m1, const Move *m2);
-int compare_moves(const void *a, const void *b);
-int dls_search(Board *board, int depth, int is_root, Move *best_move, int alpha, int beta, MoveList start_list, Move previous_best, int timeout);
+/* depth-limited search (dls) with alpha-beta pruning */
+int dls_search(Board *board, int depth, int is_root, Move *best_move, int alpha,
+               int beta, MoveList start_list, Move previous_best, int timeout);
+
+/* iterative deepening search (ids) for a given board */
 Move ids_search(Board *board, int max_depth, MoveList start_list, int timeout);
 
 #endif

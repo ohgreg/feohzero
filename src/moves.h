@@ -1,94 +1,22 @@
-#ifndef MOVES_H
-#define MOVES_H
+#ifndef FEOHZERO_MOVES_H
+#define FEOHZERO_MOVES_H
 
 #include "types.h"
 
-// move generation precomputed attack masks and LUTs
-extern const U64 bishop_magic[64];
-extern const U64 rook_magic[64];
-
-extern const int bishop_shift[64];
-extern const int rook_shift[64];
-
-extern int bishop_offset[64];
-extern int rook_offset[64];
-
-extern U64 bishop_tmask[64];
-extern U64 rook_tmask[64];
-
-extern U64 bishop_mask[64];
-extern U64 rook_mask[64];
-
-extern LUT lut;
-
-static inline U64 generate_pawn_attacks(Board *board, int pos) {
-    return lut.pawn_attack[board->turn][pos];
-}
-
-static inline U64 generate_knight_attacks(Board *board, int pos) {
-    (void)board;
-    return lut.knight[pos];
-}
-
-static inline U64 generate_bishop_attacks(Board *board, int pos) {
-    return lut.bishop[(((board->occupied[2] & bishop_mask[pos]) * bishop_magic[pos]) >> bishop_shift[pos]) + bishop_offset[pos]];
-}
-
-static inline U64 generate_rook_attacks(Board *board, int pos) {
-    return lut.rook[(((board->occupied[2] & rook_mask[pos]) * rook_magic[pos]) >> rook_shift[pos]) + rook_offset[pos]];
-}
-
-static inline U64 generate_queen_attacks(Board *board, int pos) {
-    return lut.bishop[(((board->occupied[2] & bishop_mask[pos]) * bishop_magic[pos]) >> bishop_shift[pos]) + bishop_offset[pos]]
-            | lut.rook[(((board->occupied[2] & rook_mask[pos]) * rook_magic[pos]) >> rook_shift[pos]) + rook_offset[pos]];
-}
-
-static inline U64 generate_king_attacks(Board *board, int pos) {
-    (void)board;
-    return lut.king[pos];
-}
-
-// generates all possible moves for a pawn at a given position
-static inline U64 generate_pawn_moves(Board *board, int pos) {
-    Turn turn = board->turn;
-    U64 empty = ~board->occupied[2];
-
-    U64 moves = 0;
-
-    // capture moves
-    moves = lut.pawn_attack[turn][pos] & board->occupied[!turn];
-
-    // single push
-    U64 single = lut.pawn_push[turn][pos] & empty;
-
-    // add single push, check for double
-    moves |= single | (lut.pawn_double_push[turn][pos] & empty & ((single) ? ~(U64)0 : 0));
-
-    return moves;
-}
-
-extern U64 (*generate_piece_attacks[6])(Board *, int);
-extern U64 (*generate_sliding_attacks[2])(Board *, int);
-
-extern U64 *slide_mask[2];
-
-U64 slide(U64 occupied, int truncate, int pos, int directions[4][2]);
-int square_count(U64 value, int squares[64]);
-
+/* initializes LUT attacks for each piece */
 void init_moves(void);
 
-U64 generate_opponent_attacks(Board *board);
-U64 generate_checkers(Board *board);
-U64 generate_blockmask(Board *board, int pos);
-U64 generate_pinned(Board *board);
-U64 generate_pinmask(Board *board, int pos);
+/* returns 1 if the current side's king is under attack, 0 otherwise */
+int is_king_in_check(Board *board);
 
-void generate_castling(Board *board, MoveList *list, U64 checkers, U64 opponent_attacks);
-void generate_en_passant(Board *board, MoveList *list);
-
+/* generates all possible and saves them in a list, given a board position */
 void generate_moves(Board *board, MoveList *list);
 
+/* translates a move from string containing the move in Algebraic notation to
+ * the move struct */
 Move translate_move(Board *board, const char *move_str);
+
+/* creares a move list from a string of moves in Algebraic notation */
 MoveList initial_list(Board *board, const char *move_str);
 
 #endif
