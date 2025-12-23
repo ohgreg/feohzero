@@ -1,133 +1,59 @@
-## Short makefile to compile my C chess engine
+# the following is an advanced example of a Makefile
+# We assume you know how macros work and how wildcard rules work
+# for simplicity, we have also removed the part of the original makefile that
+# built wasm targets.
 
-## Where our implementation is located (don't change)
-SRCDIR = src
-TESTDIR = test
-LIBDIR = libs/unity
+INCLUDE=src # our include directory
+# -MMD instructs the compiler to emit Makefile dependency rules for the object files it compiles
+# Then those rules are emitted in .d files
+CFLAGS=-Wall -Wextra -Werror -pedantic -O3 -I$(INCLUDE) -MMD
+# the binary target we want to build
+BINS=engine
+# test files we want to build when testing
+TESTS=perft
 
-## List all files you want to be part of your engine below
-## (Okay to add more files)
-SOURCES = \
-  $(SRCDIR)/engine.c \
-  $(SRCDIR)/moves.c \
-  $(SRCDIR)/print.c \
-  $(SRCDIR)/board.c \
-  $(SRCDIR)/eval.c \
-  $(SRCDIR)/search.c \
-  $(SRCDIR)/zobrist.c \
-  $(SRCDIR)/transposition.c
+# include src and tests directories into the default vpath
+# that make default rules search for files in
+# This lets make find the files we want our object files to be built from
+vpath %.c src/
+vpath %.c tests/
 
-## Web-specific sources
-WEB_SOURCES = \
-  $(SRCDIR)/web_wrapper.c \
-  $(SRCDIR)/moves.c \
-  $(SRCDIR)/board.c \
-  $(SRCDIR)/eval.c \
-  $(SRCDIR)/search.c \
-  $(SRCDIR)/zobrist.c \
-  $(SRCDIR)/transposition.c
+# default build target is just the binary targets
+all: $(BINS)
 
-## You SHOULD NOT modify the parameters below
+# the rest of this makefile makes heavy use of built-in rules.
+# Basically, since make was MADE to be used for building software projects
+# it comes with a lot of built-in rules for exactly that
+# The ones we care about, are those that define how an object file may be compiled from a .c files
+# and the ones that define how an executable may be built by linking object files
+# For more info:
+# * The slides on makefiles
+# * https://www.gnu.org/software/make/manual/html_node/Catalogue-of-Rules.html
 
-## Compiler to use by default
-CC = gcc
+# this makes use of the built-in linking rule that make has
+# each one of the object files is then created using the built-in rules for object files
+engine: engine.o \
+  moves.o \
+  print.o \
+  board.o \
+  eval.o \
+  search.o \
+  zobrist.o \
+  transposition.o
 
-## Compiler flags
-CFLAGS = -Wall -Wextra -Werror -pedantic -O3
+# a test runner also depends on object files
+# also makes use of the built-in linking rule
+perft: moves.o board.o zobrist.o
 
-## Where to put the object files
-BINDIR ?= build
-
-## Object filenames derived from source filenames
-OBJECTS = $(SOURCES:$(SRCDIR)/%.c=$(BINDIR)/%.o)
-
-## The name of the binary (executable) file
-TARGET ?= engine
-
-## Optional target: useful for running the website
-WEB_WASM_DIR = web/src/wasm
-
-WEB_TARGET ?= $(WEB_WASM_DIR)/engine.js
-
-## Emscripten compiler
-EMCC = emcc
-
-## Emscripten flags
-EMCC_FLAGS = \
-  -s WASM=1 \
-  -s MODULARIZE=1 \
-  -s EXPORTED_FUNCTIONS='["_init_engine","_get_best_move", "_stop_search_now"]' \
-  -s EXPORTED_RUNTIME_METHODS='["ccall","cwrap","UTF8ToString"]' \
-  -s ALLOW_MEMORY_GROWTH=1 \
-  -s STACK_SIZE=8388608 \
-  -s ENVIRONMENT='web' \
-  --no-entry \
-  -s EXPORT_ES6=1 \
-  -O3
-
-## Create the build directory if it doesn't exist
-$(BINDIR):
-	mkdir -p $(BINDIR)
-
-## Compile each object file
-$(BINDIR)/%.o: $(SRCDIR)/%.c $(BINDIR)
-	$(CC) $(CFLAGS) -c $< -o $@
-
-## Compile the final binary
-$(TARGET): $(OBJECTS)
-	$(CC) $(CFLAGS) $^ -o $@
-
-## Only build the binary by default
-all: $(TARGET)
-
-## Optional target: build the web target
-$(WEB_WASM_DIR):
-	mkdir -p $(WEB_WASM_DIR)
-
-$(WEB_TARGET): $(WEB_SOURCES) $(WEB_WASM_DIR)
-	$(EMCC) $(EMCC_FLAGS) $(WEB_SOURCES) -o $@
-
-.PHONY: web
-web: $(WEB_TARGET)
-
-## Start python3 web server to run the website for the folder web
-.PHONY: run
-run: $(WEB_TARGET)
-	python3 -m http.server --directory web
-
-## Clean up the build directory
-.PHONY: clean
+# clean now has to include .d files as well
 clean:
-	rm -rf $(BINDIR) $(TARGET) $(WEB_TARGET)
+	rm -rf $(BINS) $(TESTS) *.o *.d
 
-## Unit Testing Configuration
+# this runs the resulting test file
+test: $(TESTS)
+	./$(TESTS)
 
-## Test directory and Unity library location
-TESTDIR = tests
-LIBDIR = libs/unity
+.PHONY: test clean all
 
-## List all test files
-TEST_SOURCES = \
-  $(TESTDIR)/perft.c
-
-## Test object filenames
-TEST_OBJECTS = $(TEST_SOURCES:$(TESTDIR)/%.c=$(BINDIR)/%.o)
-
-## Name of the test binary
-TEST_BIN = test_runner
-
-## Ensure Unity is included in the compilation
-CFLAGS += -I$(LIBDIR) -I$(SRCDIR)
-
-## Compile each test object file
-$(BINDIR)/%.o: $(TESTDIR)/%.c $(BINDIR)
-	$(CC) $(CFLAGS) -c $< -o $@
-
-## Build the test executable separately
-$(TEST_BIN): $(TEST_OBJECTS) $(filter-out $(BINDIR)/engine.o, $(OBJECTS))
-	$(CC) $(CFLAGS) $^ -o $@
-
-## Run the tests
-.PHONY: test
-test: $(TEST_BIN)
-	./$(TEST_BIN)
+# this includes all .d files emitted by the compiler which guarantees changes to headers also lead to recompilation of the files that depend on them
+-include *.d
