@@ -5,7 +5,7 @@
 
 #include "types.h"
 
-/* initializes transposition table */
+/* initializes transposition table (size in mb) */
 void init_tt(size_t size);
 
 /* stores an entry in the transposition table, replaces old entries if needed */
