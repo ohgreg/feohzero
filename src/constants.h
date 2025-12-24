@@ -3,11 +3,6 @@
 
 #include <limits.h>
 
-/* set DEBUG to 1 to enable debug mode, which includes additional logging and
-   diagnostics, or set DEBUG to 0 to disable debug mode, which removes debug
-   related code */
-#define DEBUG 0
-
 /* bitboard for file A (leftmost file) */
 #define FILE_A 0x0101010101010101ULL
 /* bitboard for file B */
@@ -63,7 +58,18 @@
 #define BEST_MOVE_BOOST 40000
 /* move ordering boost for the previous iteration's best move */
 #define PREVIOUS_BEST_BOOST 20000
-/* threshold for applying heuristic move ordering */
-#define HEURISTIC_THRESHOLD 3500000
+
+/* macros for stringifying config values */
+#define XSTR(x) STR(x)
+#define STR(x) #x
+
+/* config default timeout */
+#define DEFAULT_TIMEOUT 1000
+/* config default search depth */
+#define DEFAULT_DEPTH 10
+/* config default transposition table size */
+#define DEFAULT_TT_SIZE_MB 16
+/* config default seed */
+#define DEFAULT_SEED 2400118 + 2400141
 
 #endif
