@@ -76,13 +76,13 @@ typedef struct {
 
 /* struct for attack mask tables */
 typedef struct {
-  U64 knight[64];
-  U64 king[64];
-  U64 pawn_attack[2][64];
-  U64 pawn_push[2][64];
-  U64 pawn_double_push[2][64];
-  U64 rook[102400];
-  U64 bishop[5248];
+  U64 knight[64];              // knight attacks
+  U64 king[64];                // king attacks
+  U64 pawn_attack[2][64];      // pawn captures
+  U64 pawn_push[2][64];        // single pushes
+  U64 pawn_double_push[2][64]; // double pushes
+  U64 rook[102400];            // rook attacks
+  U64 bishop[5248];            // bishop attacks
 } LUT;
 
 /* node types for transposition table entries */
@@ -96,5 +96,26 @@ typedef struct {
   Move best_move; // best move found
   Node node_type; // type of position
 } TTentry;
+
+/* results of the search */
+typedef struct {
+  Move best_move;   // best move found
+  int nodes;        // total nodes visited
+  int sol_depth;    // max search depth reached
+  int timeout;      // 1 if search timed out, 0 otherwise
+  int elapsed_time; // total time in ms
+} SearchResult;
+
+/* config for holding all cli arguments */
+typedef struct {
+  char *fen;      // board position
+  char *moves;    // moves to apply
+  int timeout;    // time limit in ms
+  int depth;      // depth limit
+  int tt_size_mb; // hash table size
+  int seed;       // random seed
+  int quiet;      // output toggle
+  int help;       // help toggle
+} Config;
 
 #endif

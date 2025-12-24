@@ -8,7 +8,7 @@ INCLUDE=src # our include directory
 # Then those rules are emitted in .d files
 CFLAGS=-Wall -Wextra -Werror -pedantic -O3 -I$(INCLUDE) -MMD
 # the binary target we want to build
-BINS=engine
+BINS=feohzero
 # test files we want to build when testing
 TESTS=perft
 
@@ -32,7 +32,8 @@ all: $(BINS)
 
 # this makes use of the built-in linking rule that make has
 # each one of the object files is then created using the built-in rules for object files
-engine: engine.o \
+feohzero: feohzero.o \
+  config.o \
   moves.o \
   print.o \
   board.o \

@@ -12,11 +12,7 @@ int is_king_in_check(Board *board);
 /* generates all possible and saves them in a list, given a board position */
 void generate_moves(Board *board, MoveList *list);
 
-/* translates a move from string containing the move in Algebraic notation to
- * the move struct */
-Move translate_move(Board *board, const char *move_str);
-
-/* creares a move list from a string of moves in Algebraic notation */
-MoveList initial_list(Board *board, const char *move_str);
+/* generates initial move list from SAN notation strings, filtering for valid moves only */
+void initial_list(Board *board, MoveList *list, const char *move_str);
 
 #endif

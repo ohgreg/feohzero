@@ -36,10 +36,10 @@ void print_board(const Board *board) {
     // print board details
     switch (rank) {
     case 7:
-      printf("\tTo move: %s", board->turn == 0 ? "White" : "Black");
+      printf("\tto move: %s", board->turn == 0 ? "white" : "black");
       break;
     case 6:
-      printf("\tCastling rights: %s %s %s %s",
+      printf("\tcastling rights: %s %s %s %s",
              board->castle_white & 1 ? "K" : "-",
              board->castle_white & 2 ? "Q" : "-",
              board->castle_black & 1 ? "k" : "-",
@@ -47,17 +47,17 @@ void print_board(const Board *board) {
       break;
     case 5:
       if (board->ep_square != 64) {
-        printf("\tEn passant: %c%d", 'a' + (board->ep_square % 8),
+        printf("\ten passant: %c%d", 'a' + (board->ep_square % 8),
                1 + board->ep_square / 8);
         break;
       }
-      printf("\tEn passant: -");
+      printf("\ten passant: -");
       break;
     case 4:
-      printf("\tHalfmove clock: %d", board->half_move);
+      printf("\thalfmove clock: %d", board->half_move);
       break;
     case 3:
-      printf("\tFullmove number: %d", board->full_move);
+      printf("\tfullmove number: %d", board->full_move);
       break;
     }
 
@@ -66,7 +66,26 @@ void print_board(const Board *board) {
   printf("\n     a  b  c  d  e  f  g  h\n"); // file letters
 }
 
-void print_bitboard(const U64 board) {
+void print_move(Move *move) {
+  if (move->from == move->to) {
+    printf("none");
+    return;
+  }
+  printf("%c%d%c%d", 'a' + (move->from % 8), 1 + move->from / 8,
+         'a' + (move->to % 8), 1 + move->to / 8);
+}
+
+void print_move_list(MoveList *list) {
+  for (int i = 0; i < list->count; i++) {
+    print_move(&list->moves[i]);
+    if ((i + 1) % 10 == 0) {
+      printf("\n");
+    } else if (i != list->count - 1)
+      printf(", ");
+  }
+}
+
+void print_bitboard_debug(const U64 board) {
   for (int rank = 7; rank >= 0; rank--) {
     for (int file = 0; file < 8; file++) {
       if (is_set_bit(board, 8 * rank + file)) {
@@ -80,7 +99,7 @@ void print_bitboard(const U64 board) {
   putchar('\n');
 }
 
-void print_move(Move *move) {
+void print_move_debug(Move *move) {
   const char *pieces[] = {"Pawn", "Knight", "Bishop", "Rook", "Queen", "King"};
 
   // print piece type
@@ -118,15 +137,15 @@ void print_move(Move *move) {
   printf(" |\n");
 }
 
-void print_move_list(MoveList *list) {
+void print_move_list_debug(MoveList *list) {
   printf("\n");
   for (int i = 0; i < list->count; i++) {
     printf("%-2d. ", i);
-    print_move(&list->moves[i]);
+    print_move_debug(&list->moves[i]);
   }
 }
 
-void print_pesto_tables(int table[6][64]) {
+void print_pesto_tables_debug(int table[6][64]) {
   for (int i = 0; i < 1; i++) {
     for (int j = 0; j < 64; j++)
       printf("%d ", table[i][j]);

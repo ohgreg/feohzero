@@ -787,7 +787,9 @@ void generate_moves(Board *board, MoveList *list) {
   }
 }
 
-Move translate_move(Board *board, const char *move_str) {
+/* translates a SAN move string to a Move structure,
+ * setting only from, to, and promo fields */
+static Move translate_move(Board *board, const char *move_str) {
   // STEP 1: initialize variables
   int size = strlen(move_str);
   Turn turn = board->turn;
@@ -795,19 +797,11 @@ Move translate_move(Board *board, const char *move_str) {
   int start_file = -1;
   int final_rank = -1;
   int final_file = -1;
-
   int castle = 0;
 
-  Move move = {0,
-               0,
-               0,
-               PAWN,
-               NONE,
-               NORMAL_MOVE,
-               board->ep_square,
-               board->castle_white,
-               board->castle_black,
-               0};
+  Move move = {0};
+  move.piece = PAWN;
+  move.promo = NONE;
 
   // STEP 2: iterate through each character of the move string
   for (int i = 0; i < size; i++) {
@@ -828,10 +822,8 @@ Move translate_move(Board *board, const char *move_str) {
     case 'K':
       move.piece = KING;
       break;
-    // handle capture
     case 'x':
-      move.flags |= CAPTURE_MOVE; // set capture flag
-      move.score += 1000;         // increase score for capture
+      /* capture indicator - ignore for now */
       break;
     // handle promotion
     case '=': {
@@ -851,34 +843,24 @@ Move translate_move(Board *board, const char *move_str) {
       } else if (c == 'Q') {
         move.promo = QUEEN;
       }
-      move.flags |= PROMOTION;         // set promotion flag
-      move.score += move.promo * 1000; // increase score based on promotion type
       break;
     }
     // handle check
     case '+':
-      // check means good move
-      move.score += 3000;
-      break;
-    // handle end of the game
     case '#':
-      // NOTE: end of the game could indicate score increase or nullification,
-      // or it could triger a new type of a move flag, but it was prefered not
-      // to be implemented in such a way
+      /* check/checkmate indicators - ignore */
       break;
-    // handle castling
     case 'O':
-      castle++; // increment castle count
+      castle++;
       break;
-    // parse rank and file
     default: {
       char c = move_str[i];
       if ('1' <= c && c <= '8') {
         start_rank = final_rank;
-        final_rank = c - '1'; // convert char to rank index
+        final_rank = c - '1';
       } else if ('a' <= c && c <= 'h') {
         start_file = final_file;
-        final_file = c - 'a'; // convert char to file index
+        final_file = c - 'a';
       }
     }
     }
@@ -886,27 +868,13 @@ Move translate_move(Board *board, const char *move_str) {
 
   // STEP 3: handle castling moves
   if (castle == 2) {
-    return (Move){turn ? 60 : 4,
-                  turn ? 62 : 6,
-                  0,
-                  KING,
-                  NONE,
-                  CASTLING,
-                  board->ep_square,
-                  board->castle_white,
-                  board->castle_black,
-                  2100};
+    move.from = turn ? 60 : 4;
+    move.to = turn ? 62 : 6;
+    return move;
   } else if (castle == 3) {
-    return (Move){turn ? 60 : 4,
-                  turn ? 58 : 2,
-                  0,
-                  KING,
-                  NONE,
-                  CASTLING,
-                  board->ep_square,
-                  board->castle_white,
-                  board->castle_black,
-                  2000};
+    move.from = turn ? 60 : 4;
+    move.to = turn ? 58 : 2;
+    return move;
   }
 
   // STEP 4: set the target square for the move
@@ -921,12 +889,8 @@ Move translate_move(Board *board, const char *move_str) {
 
   // STEP 6: handle en passant for pawns
   if (move.to == board->ep_square && move.piece == PAWN) {
-    move.flags |= EN_PASSANT; // set en passant flag
-    move.score = -1000;       // adjust score for en passant
-
     move.from = lsb(lut.pawn_attack[!turn][move.to] &
                     board->pieces[turn][PAWN] & start_mask);
-
     return move;
   }
 
@@ -936,19 +900,11 @@ Move translate_move(Board *board, const char *move_str) {
     while (pieces) {
       int piece_pos = pop_lsb(&pieces);
       U64 moves = generate_pawn_moves(board, piece_pos);
-      if (move.flags & CAPTURE_MOVE)
-        moves &= ~generate_pawn_attacks(board, piece_pos);
       if (is_set_bit(moves, move.to)) {
         move.from = piece_pos; // set source position for pawn
         break;
       }
     }
-
-    // check for double pawn push
-    if (move.to - move.from == (turn ? -16 : 16)) {
-      move.flags |= DOUBLE_PAWN_PUSH;
-    }
-
     return move;
   }
 
@@ -959,26 +915,38 @@ Move translate_move(Board *board, const char *move_str) {
   return move;
 }
 
-MoveList initial_list(Board *board, const char *moves_str) {
-  MoveList list;
-  list.count = 0;
+void initial_list(Board *board, MoveList *list, const char *moves_str) {
+  list->count = 0;
+
+  // generate all legal moves
+  MoveList legal_moves;
+  legal_moves.count = 0;
+  generate_moves(board, &legal_moves);
 
   // allocate memory for temp string
   char *temp = malloc(strlen(moves_str) + 1);
-  if (temp == NULL)
-    return list; // return empty list in case of allocation fail
+  if (temp == NULL) {
+    return; // return empty list in case of allocation fail
+  }
 
   strcpy(temp, moves_str);
 
   // go through each move
   char *token = strtok(temp, " "); // tokenize moves
   while (token != NULL) {
-    Move move = translate_move(board, token); // translate and add move
-    list.moves[list.count++] = move;
-    token = strtok(NULL, " "); // get next token
+    Move parsed = translate_move(board, token);
+
+    // find a matching legal move
+    for (int i = 0; i < legal_moves.count; i++) {
+      Move *legal = &legal_moves.moves[i];
+      if (legal->from == parsed.from && legal->to == parsed.to) {
+        list->moves[list->count++] = *legal;
+        break;
+      }
+    }
+
+    token = strtok(NULL, " ");
   }
 
-  free(temp); // free temp string
-
-  return list;
+  free(temp);
 }

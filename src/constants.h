@@ -58,6 +58,8 @@
 #define BEST_MOVE_BOOST 40000
 /* move ordering boost for the previous iteration's best move */
 #define PREVIOUS_BEST_BOOST 20000
+/* max search depth limit */
+#define MAX_PLY 128
 
 /* macros for stringifying config values */
 #define XSTR(x) STR(x)

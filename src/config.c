@@ -71,7 +71,7 @@ static char **handle_timeout(char **argv, Config *config, const char **error) {
     return NULL;
   }
 
-  const char *err = parse_int(*(argv + 1), &config->timeout, 1, 30000);
+  const char *err = parse_int(*(argv + 1), &config->timeout, 10, 30000);
   if (err != NULL) {
     *error = err;
     return NULL;
