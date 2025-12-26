@@ -336,6 +336,7 @@ static inline U64 generate_piece_attacks(PieceType piece, const Board *board,
   case KING:
     return generate_king_attacks(board, pos);
   case NONE:
+  default:
     return 0;
   }
 }
