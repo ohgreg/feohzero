@@ -40,10 +40,12 @@ int main(int argc, char *argv[]) {
 
   if (!config.quiet) {
     print_board(&board);
+    printf("\n");
   }
 
+  // parse or generate starting moves
   MoveList list = {0};
-  initial_list(&board, &list, config.moves); // parse or generate starting moves
+  initial_list(&board, &list, config.moves, config.str_to_move);
 
   if (list.count == 0) {
     fprintf(stderr, "Error! There no valid moves\n");
@@ -52,8 +54,8 @@ int main(int argc, char *argv[]) {
   }
 
   if (!config.quiet) {
-    printf("\nmove list:\n");
-    print_move_list(&list);
+    printf("board position:\n%s\n\n", config.fen);
+    print_move_list(&board, &list, config.move_to_str);
     printf("\n");
   }
 
@@ -62,14 +64,15 @@ int main(int argc, char *argv[]) {
 
   if (!config.quiet) {
     printf("best move: ");
-    print_move(&result.best_move);
-    double seconds = result.elapsed_time / 1000.0;
-    int nps = (seconds > 0) ? (int)(result.nodes / seconds) : 0;
+    print_move(&board, &result.best_move, config.move_to_str);
+    double secs = result.elapsed / 1000.0;
+    int nps = (secs > 0) ? (int)(result.nodes / secs) : 0;
     printf(", depth: %d, nodes: %d, time: %dms%s, nps: %d\n\n",
-           result.sol_depth, result.nodes, result.elapsed_time,
+           result.sol_depth, result.nodes, result.elapsed,
            result.timeout ? " (timeout)" : "", nps);
   } else {
-    print_move(&result.best_move); // output move only in quiet mode
+    // output move only in quiet mode
+    print_move(&board, &result.best_move, config.move_to_str);
     printf("\n");
   }
 

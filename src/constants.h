@@ -65,6 +65,8 @@
 #define XSTR(x) STR(x)
 #define STR(x) #x
 
+/* config default fen (start position) */
+#define DEFAULT_FEN "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 /* config default timeout */
 #define DEFAULT_TIMEOUT 1000
 /* config default search depth */
@@ -72,6 +74,6 @@
 /* config default transposition table size */
 #define DEFAULT_TT_SIZE_MB 16
 /* config default seed */
-#define DEFAULT_SEED 2400118 + 2400141
+#define DEFAULT_SEED 259
 
 #endif

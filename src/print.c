@@ -1,6 +1,7 @@
 #include "print.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "types.h"
 #include "utils.h"
@@ -66,23 +67,26 @@ void print_board(const Board *board) {
   printf("\n     a  b  c  d  e  f  g  h\n"); // file letters
 }
 
-void print_move(Move *move) {
-  if (move->from == move->to) {
-    printf("none");
-    return;
+void print_move(const Board *board, const Move *move,
+                MoveToStrFunc move_to_str) {
+  char *str = move_to_str(board, move);
+  if (str) {
+    printf("%s", str);
+    free(str);
   }
-  printf("%c%d%c%d", 'a' + (move->from % 8), 1 + move->from / 8,
-         'a' + (move->to % 8), 1 + move->to / 8);
 }
 
-void print_move_list(MoveList *list) {
+void print_move_list(const Board *board, const MoveList *list,
+                     MoveToStrFunc move_to_str) {
+  printf("searching %d move%s:\n", list->count,
+         list->count == 1 ? "" : "s");
+
   for (int i = 0; i < list->count; i++) {
-    print_move(&list->moves[i]);
-    if ((i + 1) % 10 == 0) {
-      printf("\n");
-    } else if (i != list->count - 1)
-      printf(", ");
+    print_move(board, &list->moves[i], move_to_str);
+    printf(" ");
   }
+
+  printf("\n");
 }
 
 void print_bitboard_debug(const U64 board) {
@@ -99,7 +103,7 @@ void print_bitboard_debug(const U64 board) {
   putchar('\n');
 }
 
-void print_move_debug(Move *move) {
+void print_move_debug(const Move *move) {
   const char *pieces[] = {"Pawn", "Knight", "Bishop", "Rook", "Queen", "King"};
 
   // print piece type
@@ -125,7 +129,7 @@ void print_move_debug(Move *move) {
   }
 
   // handle promotion
-  if (move->promo != 0) {
+  if (move->promo != PAWN) {
     printf(" | Promotion: %s", pieces[move->promo]);
   }
 
@@ -137,7 +141,7 @@ void print_move_debug(Move *move) {
   printf(" |\n");
 }
 
-void print_move_list_debug(MoveList *list) {
+void print_move_list_debug(const MoveList *list) {
   printf("\n");
   for (int i = 0; i < list->count; i++) {
     printf("%-2d. ", i);
@@ -145,7 +149,7 @@ void print_move_list_debug(MoveList *list) {
   }
 }
 
-void print_pesto_tables_debug(int table[6][64]) {
+void print_pesto_tables_debug(const int table[6][64]) {
   for (int i = 0; i < 1; i++) {
     for (int j = 0; j < 64; j++)
       printf("%d ", table[i][j]);

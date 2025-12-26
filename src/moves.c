@@ -260,18 +260,18 @@ void init_moves(void) {
 }
 
 /* generates a bitboard of squares attacked by pawns at the given position */
-static inline U64 generate_pawn_attacks(Board *board, int pos) {
+static inline U64 generate_pawn_attacks(const Board *board, int pos) {
   return lut.pawn_attack[board->turn][pos];
 }
 
 /* generates a bitboard of squares attacked by knights at the given position */
-static inline U64 generate_knight_attacks(Board *board, int pos) {
+static inline U64 generate_knight_attacks(const Board *board, int pos) {
   (void)board;
   return lut.knight[pos];
 }
 
 /* generates a bitboard of squares attacked by bishops at the given position */
-static inline U64 generate_bishop_attacks(Board *board, int pos) {
+static inline U64 generate_bishop_attacks(const Board *board, int pos) {
   return lut
       .bishop[(((board->occupied[2] & bishop_mask[pos]) * bishop_magic[pos]) >>
                bishop_shift[pos]) +
@@ -279,14 +279,14 @@ static inline U64 generate_bishop_attacks(Board *board, int pos) {
 }
 
 /* generates a bitboard of squares attacked by rooks at the given position */
-static inline U64 generate_rook_attacks(Board *board, int pos) {
+static inline U64 generate_rook_attacks(const Board *board, int pos) {
   return lut.rook[(((board->occupied[2] & rook_mask[pos]) * rook_magic[pos]) >>
                    rook_shift[pos]) +
                   rook_offset[pos]];
 }
 
 /* generates a bitboard of squares attacked by queen at the given position */
-static inline U64 generate_queen_attacks(Board *board, int pos) {
+static inline U64 generate_queen_attacks(const Board *board, int pos) {
   return lut.bishop[(((board->occupied[2] & bishop_mask[pos]) *
                       bishop_magic[pos]) >>
                      bishop_shift[pos]) +
@@ -297,13 +297,13 @@ static inline U64 generate_queen_attacks(Board *board, int pos) {
 }
 
 /* generates a bitboard of squares attacked by king at the given position */
-static inline U64 generate_king_attacks(Board *board, int pos) {
+static inline U64 generate_king_attacks(const Board *board, int pos) {
   (void)board;
   return lut.king[pos];
 }
 
-/* array of function pointers to generate attacks for each piece type */
-static inline U64 generate_piece_attacks(PieceType piece, Board *board,
+/* generates attacks for each piece type */
+static inline U64 generate_piece_attacks(PieceType piece, const Board *board,
                                          int pos) {
   switch (piece) {
   case PAWN:
@@ -325,7 +325,7 @@ static inline U64 generate_piece_attacks(PieceType piece, Board *board,
 
 /* generates all attack squares controlled by the opponent,
  * after removing the king */
-static inline U64 generate_opponent_attacks(Board *board) {
+static inline U64 generate_opponent_attacks(const Board *board) {
   Turn turn = board->turn;
   int king_pos = lsb(board->pieces[turn][KING]);
   U64 res = 0;
@@ -366,7 +366,7 @@ static inline U64 generate_opponent_attacks(Board *board) {
 }
 
 /* generates a bitboard of pieces giving check to the king */
-static inline U64 generate_checkers(Board *board) {
+static inline U64 generate_checkers(const Board *board) {
   Turn turn = board->turn;
   int king_pos = lsb(board->pieces[turn][KING]);
   U64 res = 0;
@@ -387,11 +387,13 @@ static inline U64 generate_checkers(Board *board) {
   return res;
 }
 
-int is_king_in_check(Board *board) { return generate_checkers(board) != 0; }
+int is_king_in_check(const Board *board) {
+  return generate_checkers(board) != 0;
+}
 
 /* generates a bitboard of squares that can block a check,
  * given the position of the checker */
-static inline U64 generate_blockmask(Board *board, int pos) {
+static inline U64 generate_blockmask(const Board *board, int pos) {
   Turn turn = board->turn;
   int king_pos = lsb(board->pieces[turn][KING]);
   U64 res = 0;
@@ -417,7 +419,7 @@ static inline U64 generate_blockmask(Board *board, int pos) {
 
 /* generates a bitboard of pieces that are pinned by the opponent's
  * sliding pieces */
-static inline U64 generate_pinned(Board *board) {
+static inline U64 generate_pinned(const Board *board) {
   Turn turn = board->turn;
   int king_pos = lsb(board->pieces[turn][KING]);
   U64 res = 0;
@@ -453,7 +455,7 @@ static inline U64 generate_pinned(Board *board) {
 
 /* generates a bitboard mask for the squares that a pinned piece
  * can move to, given its position */
-static inline U64 generate_pinmask(Board *board, int pos) {
+static inline U64 generate_pinmask(const Board *board, int pos) {
   Turn turn = board->turn;
   int king_pos = lsb(board->pieces[turn][KING]);
   U64 res = 0;
@@ -480,7 +482,7 @@ static inline U64 generate_pinmask(Board *board, int pos) {
 }
 
 /* generates all possible moves for a pawn at a given position */
-static inline U64 generate_pawn_moves(Board *board, int pos) {
+static inline U64 generate_pawn_moves(const Board *board, int pos) {
   Turn turn = board->turn;
   U64 empty = ~board->occupied[2];
 
@@ -499,7 +501,7 @@ static inline U64 generate_pawn_moves(Board *board, int pos) {
   return res;
 }
 
-void generate_moves(Board *board, MoveList *list) {
+void generate_moves(const Board *board, MoveList *list) {
   Turn turn = board->turn;
   U64 moves = 0, pieces = 0;
   int from = 0, to = 0;
@@ -787,9 +789,7 @@ void generate_moves(Board *board, MoveList *list) {
   }
 }
 
-/* translates a SAN move string to a Move structure,
- * setting only from, to, and promo fields */
-static Move translate_move(Board *board, const char *move_str) {
+Move san_to_move(const Board *board, const char *move_str) {
   // STEP 1: initialize variables
   int size = strlen(move_str);
   Turn turn = board->turn;
@@ -801,7 +801,7 @@ static Move translate_move(Board *board, const char *move_str) {
 
   Move move = {0};
   move.piece = PAWN;
-  move.promo = NONE;
+  move.promo = PAWN;
 
   // STEP 2: iterate through each character of the move string
   for (int i = 0; i < size; i++) {
@@ -915,13 +915,71 @@ static Move translate_move(Board *board, const char *move_str) {
   return move;
 }
 
-void initial_list(Board *board, MoveList *list, const char *moves_str) {
+Move uci_to_move(const Board *board, const char *move_str) {
+  (void)board;
+  Move move = {0};
+  move.piece = PAWN;
+  move.promo = PAWN;
+
+  int len = strlen(move_str);
+
+  if (len < 4 || len > 5) {
+    return move; // invalid format
+  }
+
+  char from_file = move_str[0];
+  char from_rank = move_str[1];
+  char to_file = move_str[2];
+  char to_rank = move_str[3];
+
+  if (from_file < 'a' || from_file > 'h' || from_rank < '1' ||
+      from_rank > '8' || to_file < 'a' || to_file > 'h' || to_rank < '1' ||
+      to_rank > '8') {
+    return move; // invalid coordinates
+  }
+
+  move.from = (from_rank - '1') * 8 + (from_file - 'a');
+  move.to = (to_rank - '1') * 8 + (to_file - 'a');
+
+  if (len == 4)
+    return move;
+
+  // handle promotion
+  switch (move_str[4]) {
+  case 'n':
+    move.promo = KNIGHT;
+    break;
+  case 'b':
+    move.promo = BISHOP;
+    break;
+  case 'r':
+    move.promo = ROOK;
+    break;
+  case 'q':
+    move.promo = QUEEN;
+    break;
+  }
+
+  return move;
+}
+
+void initial_list(const Board *board, MoveList *list, const char *moves_str,
+                  StrToMoveFunc str_to_move) {
   list->count = 0;
 
   // generate all legal moves
   MoveList legal_moves;
   legal_moves.count = 0;
   generate_moves(board, &legal_moves);
+
+  // if there is no moves_str or translate function,
+  // just copy the legal_moves to list
+  if (!moves_str || !*moves_str || !str_to_move) {
+    for (int i = 0; i < legal_moves.count; i++) {
+      list->moves[list->count++] = legal_moves.moves[i];
+    }
+    return;
+  }
 
   // allocate memory for temp string
   char *temp = malloc(strlen(moves_str) + 1);
@@ -934,12 +992,13 @@ void initial_list(Board *board, MoveList *list, const char *moves_str) {
   // go through each move
   char *token = strtok(temp, " "); // tokenize moves
   while (token != NULL) {
-    Move parsed = translate_move(board, token);
+    Move parsed = str_to_move(board, token);
 
     // find a matching legal move
     for (int i = 0; i < legal_moves.count; i++) {
       Move *legal = &legal_moves.moves[i];
-      if (legal->from == parsed.from && legal->to == parsed.to) {
+      if (legal->from == parsed.from && legal->to == parsed.to &&
+          legal->promo == parsed.promo) {
         list->moves[list->count++] = *legal;
         break;
       }
@@ -949,4 +1008,138 @@ void initial_list(Board *board, MoveList *list, const char *moves_str) {
   }
 
   free(temp);
+}
+
+char *move_to_san(const Board *board, const Move *move) {
+  char *str = malloc(16);
+  if (!str)
+    return NULL;
+
+  int pos = 0;
+
+  // STEP 1: handle null/invalid moves
+  if (move->from == move->to) {
+    strcpy(str, "none");
+    return str;
+  }
+
+  Turn turn = board->turn;
+
+  // STEP 2: handle castling moves
+  if (move->piece == KING) {
+    int diff = move->to - move->from;
+    if (diff == 2) { // kingside castle
+      strcpy(str, "O-O");
+      return str;
+    } else if (diff == -2) { // queenside castle
+      strcpy(str, "O-O-O");
+      return str;
+    }
+  }
+
+  // STEP 3: determine if this move is a capture
+  int is_capture = 0;
+  for (int piece = PAWN; piece <= KING; piece++) {
+    if (is_set_bit(board->pieces[!turn][piece], move->to)) {
+      is_capture = 1;
+      break;
+    }
+  }
+  // check for en passant capture
+  if (move->piece == PAWN && move->to == board->ep_square) {
+    is_capture = 1;
+  }
+
+  // STEP 4: print piece letter (except for pawns)
+  if (move->piece != PAWN) {
+    const char piece_chars[] = {' ', 'N', 'B', 'R', 'Q', 'K'};
+    str[pos++] = piece_chars[move->piece];
+
+    // STEP 5: handle disambiguation for non-pawn pieces
+    U64 pieces = generate_piece_attacks(move->piece, board, move->to) &
+                 board->pieces[turn][move->piece];
+
+    pieces &= ~((U64)1 << move->from);
+
+    if (pieces) {
+      int need_file = 0;
+      int need_rank = 0;
+      int from_file = move->from % 8;
+      int from_rank = move->from / 8;
+
+      U64 same_file = pieces & (FILE_A << from_file);
+      if (!same_file) {
+        need_file = 1;
+      } else {
+        U64 same_rank = pieces & (RANK_1 << (8 * from_rank));
+        if (!same_rank) {
+          need_rank = 1;
+        } else {
+          need_file = 1;
+          need_rank = 1;
+        }
+      }
+
+      if (need_file) {
+        str[pos++] = 'a' + from_file;
+      }
+      if (need_rank) {
+        str[pos++] = '1' + from_rank;
+      }
+    }
+  } else if (is_capture) {
+    // STEP 6: for pawn captures, always print the starting file
+    str[pos++] = 'a' + (move->from % 8);
+  }
+
+  // STEP 7: print capture indicator if applicable
+  if (is_capture) {
+    str[pos++] = 'x';
+  }
+
+  // STEP 8: print destination square
+  str[pos++] = 'a' + (move->to % 8);
+  str[pos++] = '1' + (move->to / 8);
+
+  // STEP 9: print promotion piece if applicable
+  if (move->promo != PAWN) {
+    const char promo_chars[] = {' ', 'N', 'B', 'R', 'Q', 'K'};
+    str[pos++] = '=';
+    str[pos++] = promo_chars[move->promo];
+  }
+
+  str[pos] = '\0';
+  return str;
+}
+
+char *move_to_uci(const Board *board, const Move *move) {
+  (void)board;
+  char *str = malloc(8);
+  if (!str)
+    return NULL;
+
+  int pos = 0;
+
+  // STEP 1: handle null/invalid moves
+  if (move->from == move->to) {
+    strcpy(str, "none");
+    return str;
+  }
+
+  // STEP 2: print from square
+  str[pos++] = 'a' + (move->from % 8);
+  str[pos++] = '1' + (move->from / 8);
+
+  // STEP 3: print to square
+  str[pos++] = 'a' + (move->to % 8);
+  str[pos++] = '1' + (move->to / 8);
+
+  // STEP 4: add promotion piece
+  if (move->promo != PAWN) {
+    const char promo_chars[] = {' ', 'n', 'b', 'r', 'q', 'k'};
+    str[pos++] = promo_chars[move->promo];
+  }
+
+  str[pos] = '\0';
+  return str;
 }

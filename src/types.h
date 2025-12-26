@@ -99,23 +99,31 @@ typedef struct {
 
 /* results of the search */
 typedef struct {
-  Move best_move;   // best move found
-  int nodes;        // total nodes visited
-  int sol_depth;    // max search depth reached
-  int timeout;      // 1 if search timed out, 0 otherwise
-  int elapsed_time; // total time in ms
+  Move best_move; // best move found
+  int nodes;      // total nodes visited
+  int sol_depth;  // max search depth reached
+  int timeout;    // 1 if search timed out, 0 otherwise
+  int elapsed;    // total time in ms
 } SearchResult;
+
+/* function pointer for translating move strings to Move structures */
+typedef Move (*StrToMoveFunc)(const Board *, const char *);
+
+/* function pointer for converting Move structures to strings */
+typedef char *(*MoveToStrFunc)(const Board *, const Move *);
 
 /* config for holding all cli arguments */
 typedef struct {
-  char *fen;      // board position
-  char *moves;    // moves to apply
-  int timeout;    // time limit in ms
-  int depth;      // depth limit
-  int tt_size_mb; // hash table size
-  int seed;       // random seed
-  int quiet;      // output toggle
-  int help;       // help toggle
+  char *fen;                 // board position
+  MoveToStrFunc move_to_str; // function to convert move to string
+  StrToMoveFunc str_to_move; // function to parse move string
+  char *moves;               // moves to apply
+  int timeout;               // time limit in ms
+  int depth;                 // depth limit
+  int tt_size_mb;            // transposition table size
+  int seed;                  // random seed
+  int quiet;                 // quiet mode toggle
+  int help;                  // help toggle
 } Config;
 
 #endif

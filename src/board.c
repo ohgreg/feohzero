@@ -3,7 +3,7 @@
 #include "utils.h"
 #include "zobrist.h"
 
-int load_fen(Board *board, char *fen) {
+int load_fen(Board *board, const char *fen) {
   *board = (Board){0};
   int rank = 7, file = 0, last = 0;
 
@@ -166,7 +166,7 @@ void apply_move(Board *board, Move *move) {
   clear_bit(&board->pieces[turn][piece], move->from);
 
   // check for promotion, and add piece at move->to
-  if (move->promo == 0) {
+  if (move->promo == PAWN) {
     enable_bit(&board->pieces[turn][piece], move->to);
   } else {
     enable_bit(&board->pieces[turn][move->promo], move->to);
@@ -276,7 +276,7 @@ void undo_move(Board *board, Move *move) {
   board->ep_square = move->ep;
 
   // revert promotion
-  if (move->promo == 0) {
+  if (move->promo == PAWN) {
     clear_bit(&board->pieces[turn][piece], move->to);
   } else {
     clear_bit(&board->pieces[turn][move->promo], move->to);

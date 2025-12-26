@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include "constants.h"
+#include "moves.h"
 
 /* handler function type. returns pointer to next argv element
  * to process, or NULL on error */
@@ -61,6 +62,29 @@ static char **handle_moves(char **argv, Config *config, const char **error) {
   }
 
   config->moves = *(argv + 1);
+  return argv + 2;
+}
+
+/* handler for --notation argument */
+static char **handle_notation(char **argv, Config *config, const char **error) {
+  if (*(argv + 1) == NULL) {
+    *error = "requires an argument (san or uci)";
+    return NULL;
+  }
+
+  char *notation = *(argv + 1);
+
+  if (strcmp(notation, "san") == 0) {
+    config->move_to_str = move_to_san;
+    config->str_to_move = san_to_move;
+  } else if (strcmp(notation, "uci") == 0) {
+    config->move_to_str = move_to_uci;
+    config->str_to_move = uci_to_move;
+  } else {
+    *error = "must be 'san' or 'uci'";
+    return NULL;
+  }
+
   return argv + 2;
 }
 
@@ -145,24 +169,28 @@ static char **handle_help(char **argv, Config *config, const char **error) {
 /* lookup table for all args */
 static Arg options[] = {
     {"--moves", handle_moves,
-     "Moves in algebraic notation seperated by spaces"},
-    {"--timeout", handle_timeout,
-     "Search time limit in ms (default: " XSTR(DEFAULT_TIMEOUT) ")"},
+     "moves in algebraic notation seperated by spaces"},
     {"--depth", handle_depth,
-     "Maximum search depth (default: " XSTR(DEFAULT_DEPTH) ")"},
+     "maximum search depth (default: " XSTR(DEFAULT_DEPTH) ")"},
+    {"--timeout", handle_timeout,
+     "search time limit in ms (default: " XSTR(DEFAULT_TIMEOUT) ")"},
+    {"--notation", handle_notation,
+     "move notation format, 'san' or 'uci' (default: san)"},
     {"--tt-size", handle_tt_size,
-     "Transposition table size in MB (default: " XSTR(DEFAULT_TT_SIZE_MB) ")"},
-    {"--seed", handle_seed, "Seed for RNG (default: " XSTR(DEFAULT_SEED) ")"},
-    {"--quiet", handle_quiet, "Only output the final best move"},
-    {"--help", handle_help, "Show this help message"},
+     "transposition table size in MB (default: " XSTR(DEFAULT_TT_SIZE_MB) ")"},
+    {"--seed", handle_seed, "seed for RNG (default: " XSTR(DEFAULT_SEED) ")"},
+    {"--quiet", handle_quiet, "only output the final best move"},
+    {"--help", handle_help, "show this help message"},
     {NULL, NULL, NULL}};
 
 /* prints usage information */
 static void print_usage(const char *progname) {
-  fprintf(stderr, "Usage: %s \"FEN\" [options]\n\n", progname);
-  fprintf(stderr, "Position:\n");
-  fprintf(stderr, "  %-20s Board state in FEN format (required)\n\n", "FEN");
-  fprintf(stderr, "Options:\n");
+  fprintf(stderr, "FeohZero v1.0 - by ohgreg & ItsFeold\n\n");
+  fprintf(stderr, "usage: %s [fen] [options]\n\n", progname);
+  fprintf(stderr,
+          "  %-20s board state in FEN format (default: starting position)\n\n",
+          "fen");
+  fprintf(stderr, "options:\n");
   for (int i = 0; options[i].name != NULL; i++) {
     fprintf(stderr, "  %-20s %s\n", options[i].name, options[i].desc);
   }
@@ -170,6 +198,8 @@ static void print_usage(const char *progname) {
 
 void init_config(Config *config) {
   config->fen = NULL;
+  config->move_to_str = move_to_san;
+  config->str_to_move = san_to_move;
   config->moves = NULL;
   config->timeout = DEFAULT_TIMEOUT;
   config->depth = DEFAULT_DEPTH;
@@ -217,11 +247,9 @@ int parse_args(char *argv[], Config *config) {
     }
   }
 
-  // validate that FEN was provided
-  if (config->fen == NULL && !config->help) {
-    fprintf(stderr, "Error! FEN string is required\n");
-    print_usage(argv[0]);
-    return 0;
+  // start with start position if FEN was not provided
+  if (config->fen == NULL) {
+    config->fen = DEFAULT_FEN;
   }
 
   return 1;
