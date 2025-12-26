@@ -8,11 +8,19 @@ static TTentry *tt = NULL;
 /* transposition table's size */
 static size_t tt_size;
 
+/* bitmask for fast modulo, used as key & tt_mask */
+static size_t tt_mask;
+
 void init_tt(size_t size) {
   clear_tt();
-  tt_size = size * 1024 * 1024 / sizeof(TTentry);
-  if (tt_size == 0)
+  size_t entries = size * 1024 * 1024 / sizeof(TTentry);
+  if (entries == 0)
     return;
+
+  // round to power of 2
+  tt_size = (size_t)1 << (sizeof(size_t) - 1 - __builtin_clz(entries));
+  tt_mask = tt_size - 1;
+
   tt = calloc(tt_size, sizeof(TTentry));
 }
 
@@ -20,7 +28,7 @@ void store_tt(U64 key, int depth, int score, Move best_move, Node node_type) {
   if (tt_size == 0 || tt == NULL)
     return;
 
-  size_t index = key % tt_size;
+  size_t index = key & tt_mask;
   TTentry *entry = &tt[index];
 
   // update entry if new depth is greater
@@ -37,7 +45,7 @@ TTentry *probe_tt(U64 key) {
   if (tt_size == 0 || tt == NULL)
     return NULL;
 
-  size_t index = key % tt_size;
+  size_t index = key & tt_mask;
   TTentry *entry = &tt[index];
 
   return (entry->key == key) ? entry : NULL;
