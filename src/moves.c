@@ -9,7 +9,7 @@
 #include "types.h"
 #include "utils.h"
 
-/* NOTE: the magic bitboard precomputation is from:
+/* NOTE: the magic bitboard logic is from:
  * https://github.com/fogleman/MisterQueen/,
  * the rest of the move generation is crafted from scratch
  * The initial FeohZero project used function pointer tables, in
@@ -98,8 +98,26 @@ static U64 bishop_mask[64];
 /* rook full attack mask with truncate */
 static U64 rook_mask[64];
 
-/* LUT for all pieces */
-static LUT lut;
+/* knight attacks */
+static U64 knight_attacks[64];
+
+/* king attacks */
+static U64 king_attacks[64];
+
+/* pawn captures */
+static U64 pawn_attacks[2][64];
+
+/* single pushes */
+static U64 pawn_push[2][64];
+
+/* double pushes */
+static U64 pawn_double_push[2][64];
+
+/* bishop attacks */
+static U64 bishop_attacks[5248];
+
+/* rook attacks */
+static U64 rook_attacks[102400];
 
 /* generates sliding piece full attack mask given a position,
  * with an option for truncate ends */
@@ -174,7 +192,7 @@ void init_moves(void) {
           slide(occupied, 0, square, bishop_directions); // calculate move
       int index = (occupied * bishop_magic[square]) >>
                   bishop_shift[square];   // index in LUT
-      lut.bishop[offset + index] = value; // store index in LUT
+      bishop_attacks[offset + index] = value; // store index in LUT
     }
     bishop_offset[square] = offset;             // save offset
     offset += 1 << (64 - bishop_shift[square]); // update offset
@@ -195,7 +213,7 @@ void init_moves(void) {
       U64 value = slide(occupied, 0, square, rook_directions); // calculate move
       int index =
           (occupied * rook_magic[square]) >> rook_shift[square]; // index in LUT
-      lut.rook[offset + index] = value; // store move in LUT
+          rook_attacks[offset + index] = value; // store move in LUT
     }
     rook_offset[square] = offset;             // save offset
     offset += 1 << (64 - rook_shift[square]); // update offset
@@ -216,7 +234,7 @@ void init_moves(void) {
     moves |= (pos >> 10) & ~FILE_GH; // down 1, right 2
     moves |= (pos >> 6) & ~FILE_AB;  // down 1, left 2
 
-    lut.knight[square] = moves; // store move in LUT
+    knight_attacks[square] = moves; // store move in LUT
   }
 
   // king LUT
@@ -234,7 +252,7 @@ void init_moves(void) {
     moves |= (pos >> 9) & ~FILE_H; // down - left
     moves |= (pos >> 7) & ~FILE_A; // down - right
 
-    lut.king[square] = moves; // store move in LUT
+    king_attacks[square] = moves; // store move in LUT
   }
 
   // pawn LUTs
@@ -242,56 +260,55 @@ void init_moves(void) {
     U64 pos = ((U64)1 << square);
 
     // captures
-    lut.pawn_attack[WHITE][square] =
+    pawn_attacks[WHITE][square] =
         ((pos & ~FILE_H) << 9) |
         ((pos & ~FILE_A) << 7); // capture right and left
-    lut.pawn_attack[BLACK][square] =
+    pawn_attacks[BLACK][square] =
         ((pos & ~FILE_A) >> 9) |
         ((pos & ~FILE_H) >> 7); // capture right and left
 
     // single pawn push
-    lut.pawn_push[WHITE][square] = (pos << 8);
-    lut.pawn_push[BLACK][square] = (pos >> 8);
+    pawn_push[WHITE][square] = (pos << 8);
+    pawn_push[BLACK][square] = (pos >> 8);
 
     // double pawn pushes
-    lut.pawn_double_push[WHITE][square] = ((pos & RANK_2) << 16);
-    lut.pawn_double_push[BLACK][square] = ((pos & RANK_7) >> 16);
+    pawn_double_push[WHITE][square] = ((pos & RANK_2) << 16);
+    pawn_double_push[BLACK][square] = ((pos & RANK_7) >> 16);
   }
 }
 
 /* generates a bitboard of squares attacked by pawns at the given position */
 static inline U64 generate_pawn_attacks(const Board *board, int pos) {
-  return lut.pawn_attack[board->turn][pos];
+  return pawn_attacks[board->turn][pos];
 }
 
 /* generates a bitboard of squares attacked by knights at the given position */
 static inline U64 generate_knight_attacks(const Board *board, int pos) {
   (void)board;
-  return lut.knight[pos];
+  return knight_attacks[pos];
 }
 
 /* generates a bitboard of squares attacked by bishops at the given position */
 static inline U64 generate_bishop_attacks(const Board *board, int pos) {
-  return lut
-      .bishop[(((board->occupied[2] & bishop_mask[pos]) * bishop_magic[pos]) >>
+  return bishop_attacks[(((board->occupied[2] & bishop_mask[pos]) * bishop_magic[pos]) >>
                bishop_shift[pos]) +
               bishop_offset[pos]];
 }
 
 /* generates a bitboard of squares attacked by rooks at the given position */
 static inline U64 generate_rook_attacks(const Board *board, int pos) {
-  return lut.rook[(((board->occupied[2] & rook_mask[pos]) * rook_magic[pos]) >>
+  return rook_attacks[(((board->occupied[2] & rook_mask[pos]) * rook_magic[pos]) >>
                    rook_shift[pos]) +
                   rook_offset[pos]];
 }
 
 /* generates a bitboard of squares attacked by queen at the given position */
 static inline U64 generate_queen_attacks(const Board *board, int pos) {
-  return lut.bishop[(((board->occupied[2] & bishop_mask[pos]) *
+  return bishop_attacks[(((board->occupied[2] & bishop_mask[pos]) *
                       bishop_magic[pos]) >>
                      bishop_shift[pos]) +
                     bishop_offset[pos]] |
-         lut.rook[(((board->occupied[2] & rook_mask[pos]) * rook_magic[pos]) >>
+         rook_attacks[(((board->occupied[2] & rook_mask[pos]) * rook_magic[pos]) >>
                    rook_shift[pos]) +
                   rook_offset[pos]];
 }
@@ -299,7 +316,7 @@ static inline U64 generate_queen_attacks(const Board *board, int pos) {
 /* generates a bitboard of squares attacked by king at the given position */
 static inline U64 generate_king_attacks(const Board *board, int pos) {
   (void)board;
-  return lut.king[pos];
+  return king_attacks[pos];
 }
 
 /* generates attacks for each piece type */
@@ -489,14 +506,14 @@ static inline U64 generate_pawn_moves(const Board *board, int pos) {
   U64 res = 0;
 
   // capture moves
-  res = lut.pawn_attack[turn][pos] & board->occupied[!turn];
+  res = pawn_attacks[turn][pos] & board->occupied[!turn];
 
   // single push
-  U64 single = lut.pawn_push[turn][pos] & empty;
+  U64 single = pawn_push[turn][pos] & empty;
 
   // add single push, check for double
   res |= single |
-         (lut.pawn_double_push[turn][pos] & empty & ((single) ? ~(U64)0 : 0));
+         (pawn_double_push[turn][pos] & empty & ((single) ? ~(U64)0 : 0));
 
   return res;
 }
@@ -761,7 +778,7 @@ void generate_moves(const Board *board, MoveList *list) {
   U8 ep = board->ep_square;
 
   // determine valid en passant moves based on pawn positions
-  moves = lut.pawn_attack[!turn][ep] & board->pieces[turn][PAWN];
+  moves = pawn_attacks[!turn][ep] & board->pieces[turn][PAWN];
 
   // iterate over all possible en passant moves
   while (moves) {
@@ -889,7 +906,7 @@ Move san_to_move(const Board *board, const char *move_str) {
 
   // STEP 6: handle en passant for pawns
   if (move.to == board->ep_square && move.piece == PAWN) {
-    move.from = lsb(lut.pawn_attack[!turn][move.to] &
+    move.from = lsb(pawn_attacks[!turn][move.to] &
                     board->pieces[turn][PAWN] & start_mask);
     return move;
   }

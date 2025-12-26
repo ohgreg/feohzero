@@ -74,17 +74,6 @@ typedef struct {
   int count;       // number of moves stored
 } MoveList;
 
-/* struct for attack mask tables */
-typedef struct {
-  U64 knight[64];              // knight attacks
-  U64 king[64];                // king attacks
-  U64 pawn_attack[2][64];      // pawn captures
-  U64 pawn_push[2][64];        // single pushes
-  U64 pawn_double_push[2][64]; // double pushes
-  U64 rook[102400];            // rook attacks
-  U64 bishop[5248];            // bishop attacks
-} LUT;
-
 /* node types for transposition table entries */
 typedef enum { EXACT, LOWER, UPPER } Node;
 
