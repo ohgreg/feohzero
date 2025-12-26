@@ -14,7 +14,7 @@
 typedef struct {
   int ply;
   Move previous_best;
-  MoveList start_list;
+  MoveList *start_list;
 } SearchStack;
 
 /* search info for tracking nodes and time constraints */
@@ -99,7 +99,7 @@ static int dls_search(Board *board, int depth, Move *best_move, int alpha,
       }
     }
   } else {
-    list = ss->start_list; // use root move list
+    list = *ss->start_list; // use root move list
 
     // boost previous best move score
     if (ss->previous_best.score == PREVIOUS_BEST_BOOST) {
@@ -210,11 +210,10 @@ void ids_search(Board *board, int max_depth, MoveList start_list, int timeout,
   for (int i = 0; i < 64; i++) {
     ss[i].ply = i;
     ss[i].previous_best = (Move){0};
-    ss[i].start_list.count = 0;
   }
 
   // STEP 3: reset search result
-  ss[0].start_list = start_list;
+  ss[0].start_list = &start_list;
 
   result->best_move = (Move){0};
   result->sol_depth = 0;
@@ -241,6 +240,6 @@ void ids_search(Board *board, int max_depth, MoveList start_list, int timeout,
 
   // STEP 5: update search result
   result->nodes = info.nodes;
-  result->elapsed_time =
+  result->elapsed =
       (int)(((double)(clock() - info.start_time) / CLOCKS_PER_SEC) * 1000);
 }
