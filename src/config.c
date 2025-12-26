@@ -169,7 +169,7 @@ static char **handle_help(char **argv, Config *config, const char **error) {
 /* lookup table for all args */
 static Arg options[] = {
     {"--moves", handle_moves,
-     "moves in algebraic notation seperated by spaces"},
+     "moves to search, seperated by spaces"},
     {"--depth", handle_depth,
      "maximum search depth (default: " XSTR(DEFAULT_DEPTH) ")"},
     {"--timeout", handle_timeout,
