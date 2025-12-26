@@ -81,7 +81,9 @@ The engine can be configured using the following cli flags:
 The current limitations of the engine are:
 
 - UCI protocol: not currently compliant; the engine does not yet support standard GUI communication.
+
 - Knowledge gaps: lacks an opening book and specialized endgame logic or tablebase support.
+
 - Single-threaded: search is limited to a single core with no support for parallel processing.
 
 Some future improvements planned for the project include:
