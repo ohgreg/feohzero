@@ -18,8 +18,18 @@ void init_tt(size_t size) {
     return;
 
   // round to power of 2
-  tt_size = (size_t)1 << (sizeof(size_t) - 1 - __builtin_clz(entries));
-  tt_mask = tt_size - 1;
+  size_t tt_size = entries;
+  tt_size |= tt_size >> 1;
+  tt_size |= tt_size >> 2;
+  tt_size |= tt_size >> 4;
+  tt_size |= tt_size >> 8;
+  tt_size |= tt_size >> 16;
+
+  if (sizeof(size_t) == 8) {
+    tt_size |= tt_size >> 32;
+  }
+
+  tt_size = tt_size - (tt_size >> 1);
 
   tt = calloc(tt_size, sizeof(TTentry));
 }
