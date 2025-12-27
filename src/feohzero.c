@@ -48,7 +48,7 @@ int main(int argc, char *argv[]) {
   initial_list(&board, &list, config.moves, config.str_to_move);
 
   if (list.count == 0) {
-    fprintf(stderr, "Error! There no valid moves\n");
+    fprintf(stderr, "Error! There are no valid moves\n");
     free(list.moves);
     clear_tt();
     return 1;
@@ -66,8 +66,9 @@ int main(int argc, char *argv[]) {
   if (!config.quiet) {
     printf("best move: ");
     print_move(&board, &result.best_move, config.move_to_str);
-    double secs = result.elapsed / 1000.0;
-    int nps = (secs > 0) ? (int)(result.nodes / secs) : 0;
+    int nps = (result.elapsed > 0)
+                  ? (int)((result.nodes * 1000ULL) / result.elapsed)
+                  : 0;
     printf(", depth: %d, nodes: %d, time: %dms%s, nps: %d\n\n",
            result.sol_depth, result.nodes, result.elapsed,
            result.timeout ? " (timeout)" : "", nps);
