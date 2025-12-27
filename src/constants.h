@@ -73,7 +73,7 @@
 /* config default search depth */
 #define DEFAULT_DEPTH 10
 /* config default transposition table size */
-#define DEFAULT_TT_SIZE_MB 16
+#define DEFAULT_TT_SIZE_KB 16384
 /* config default seed */
 #define DEFAULT_SEED 259
 

@@ -127,7 +127,8 @@ static char **handle_tt_size(char **argv, Config *config, const char **error) {
     return NULL;
   }
 
-  const char *err = parse_int(*(argv + 1), &config->tt_size_mb, 0, 64);
+  const char *err =
+      parse_int(*(argv + 1), &config->tt_size_kb, 0, 4 * DEFAULT_TT_SIZE_KB);
   if (err != NULL) {
     *error = err;
     return NULL;
@@ -168,8 +169,7 @@ static char **handle_help(char **argv, Config *config, const char **error) {
 
 /* lookup table for all args */
 static Arg options[] = {
-    {"--moves", handle_moves,
-     "moves to search, seperated by spaces"},
+    {"--moves", handle_moves, "moves to search, seperated by spaces"},
     {"--depth", handle_depth,
      "maximum search depth (default: " XSTR(DEFAULT_DEPTH) ")"},
     {"--timeout", handle_timeout,
@@ -177,7 +177,7 @@ static Arg options[] = {
     {"--notation", handle_notation,
      "move notation format, 'san' or 'uci' (default: san)"},
     {"--tt-size", handle_tt_size,
-     "transposition table size in MB (default: " XSTR(DEFAULT_TT_SIZE_MB) ")"},
+     "transposition table size in KB (default: " XSTR(DEFAULT_TT_SIZE_KB) ")"},
     {"--seed", handle_seed, "seed for RNG (default: " XSTR(DEFAULT_SEED) ")"},
     {"--quiet", handle_quiet, "only output the final best move"},
     {"--help", handle_help, "show this help message"},
@@ -203,7 +203,7 @@ void init_config(Config *config) {
   config->moves = NULL;
   config->timeout = DEFAULT_TIMEOUT;
   config->depth = DEFAULT_DEPTH;
-  config->tt_size_mb = DEFAULT_TT_SIZE_MB;
+  config->tt_size_kb = DEFAULT_TT_SIZE_KB;
   config->seed = DEFAULT_SEED;
   config->quiet = 0;
   config->help = 0;

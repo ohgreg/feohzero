@@ -110,7 +110,7 @@ typedef struct {
   char *moves;               // moves to apply
   int timeout;               // time limit in ms
   int depth;                 // depth limit
-  int tt_size_mb;            // transposition table size
+  int tt_size_kb;            // transposition table size
   int seed;                  // random seed
   int quiet;                 // quiet mode toggle
   int help;                  // help toggle

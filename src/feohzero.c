@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
   init_eval();    // evaluation piece-square tables
   init_zobrist(); // zobrist hashing keys
 
-  init_tt(config.tt_size_mb); // allocate transposition table
+  init_tt(config.tt_size_kb); // allocate transposition table
 
   Board board;
   board.key = (U64)0;
