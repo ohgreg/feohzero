@@ -69,7 +69,7 @@ The engine can be configured using the following cli flags:
 | `--depth` | maximum search depth | 10 |
 | `--timeout` | search time limit in ms | 1000 |
 | `--notation` | move notation format, `san` or `uci` | `san` |
-| `--tt-size` | transposition table size in MB | 16 |
+| `--tt-size` | transposition table size in KB | 16384 |
 | `--seed` | seed for RNG | 259 |
 | `--quiet` | only output the final best move | - |
 | `--help` | show help message | - |
