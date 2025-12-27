@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
 
   if (!load_fen(&board, config.fen)) {
     fprintf(stderr, "Error! Invalid FEN string\n");
-    clear_tt();
+    free_tt();
     return 1;
   }
 
@@ -45,12 +45,13 @@ int main(int argc, char *argv[]) {
 
   // parse or generate starting moves
   MoveList list = {0};
+  list.moves = NULL;
   initial_list(&board, &list, config.moves, config.str_to_move);
 
   if (list.count == 0) {
     fprintf(stderr, "Error! There are no valid moves\n");
     free(list.moves);
-    clear_tt();
+    free_tt();
     return 1;
   }
 
@@ -79,7 +80,7 @@ int main(int argc, char *argv[]) {
   }
 
   free(list.moves);
-  clear_tt(); // free transposition table memory
+  free_tt(); // free transposition table memory
 
   return 0;
 }
