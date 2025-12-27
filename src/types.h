@@ -70,8 +70,9 @@ typedef struct {
 
 /* structure for generated moves */
 typedef struct {
-  Move moves[256]; // array of moves
+  Move *moves; // array of moves
   int count;       // number of moves stored
+  int size;        // number of allocated moves
 } MoveList;
 
 /* node types for transposition table entries */

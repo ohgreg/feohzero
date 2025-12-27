@@ -191,7 +191,7 @@ void init_moves(void) {
       U64 value =
           slide(occupied, 0, square, bishop_directions); // calculate move
       int index = (occupied * bishop_magic[square]) >>
-                  bishop_shift[square];   // index in LUT
+                  bishop_shift[square];       // index in LUT
       bishop_attacks[offset + index] = value; // store index in LUT
     }
     bishop_offset[square] = offset;             // save offset
@@ -213,7 +213,7 @@ void init_moves(void) {
       U64 value = slide(occupied, 0, square, rook_directions); // calculate move
       int index =
           (occupied * rook_magic[square]) >> rook_shift[square]; // index in LUT
-          rook_attacks[offset + index] = value; // store move in LUT
+      rook_attacks[offset + index] = value; // store move in LUT
     }
     rook_offset[square] = offset;             // save offset
     offset += 1 << (64 - rook_shift[square]); // update offset
@@ -290,27 +290,30 @@ static inline U64 generate_knight_attacks(const Board *board, int pos) {
 
 /* generates a bitboard of squares attacked by bishops at the given position */
 static inline U64 generate_bishop_attacks(const Board *board, int pos) {
-  return bishop_attacks[(((board->occupied[2] & bishop_mask[pos]) * bishop_magic[pos]) >>
-               bishop_shift[pos]) +
-              bishop_offset[pos]];
+  return bishop_attacks[(((board->occupied[2] & bishop_mask[pos]) *
+                          bishop_magic[pos]) >>
+                         bishop_shift[pos]) +
+                        bishop_offset[pos]];
 }
 
 /* generates a bitboard of squares attacked by rooks at the given position */
 static inline U64 generate_rook_attacks(const Board *board, int pos) {
-  return rook_attacks[(((board->occupied[2] & rook_mask[pos]) * rook_magic[pos]) >>
-                   rook_shift[pos]) +
-                  rook_offset[pos]];
+  return rook_attacks[(((board->occupied[2] & rook_mask[pos]) *
+                        rook_magic[pos]) >>
+                       rook_shift[pos]) +
+                      rook_offset[pos]];
 }
 
 /* generates a bitboard of squares attacked by queen at the given position */
 static inline U64 generate_queen_attacks(const Board *board, int pos) {
   return bishop_attacks[(((board->occupied[2] & bishop_mask[pos]) *
-                      bishop_magic[pos]) >>
-                     bishop_shift[pos]) +
-                    bishop_offset[pos]] |
-         rook_attacks[(((board->occupied[2] & rook_mask[pos]) * rook_magic[pos]) >>
-                   rook_shift[pos]) +
-                  rook_offset[pos]];
+                          bishop_magic[pos]) >>
+                         bishop_shift[pos]) +
+                        bishop_offset[pos]] |
+         rook_attacks[(((board->occupied[2] & rook_mask[pos]) *
+                        rook_magic[pos]) >>
+                       rook_shift[pos]) +
+                      rook_offset[pos]];
 }
 
 /* generates a bitboard of squares attacked by king at the given position */
@@ -513,19 +516,34 @@ static inline U64 generate_pawn_moves(const Board *board, int pos) {
   U64 single = pawn_push[turn][pos] & empty;
 
   // add single push, check for double
-  res |= single |
-         (pawn_double_push[turn][pos] & empty & ((single) ? ~(U64)0 : 0));
+  res |=
+      single | (pawn_double_push[turn][pos] & empty & ((single) ? ~(U64)0 : 0));
 
   return res;
 }
 
+/* adds a move to the list, resizing if necessary */
+static inline void push_move(MoveList *list, Move move) {
+  if (list->count >= list->size) {
+    list->size *= 2;
+    list->moves = realloc(list->moves, list->size * sizeof(Move));
+  }
+  list->moves[list->count++] = move;
+}
+
 void generate_moves(const Board *board, MoveList *list) {
+  if (list->moves == NULL) {
+    list->size = DEFAULT_MOVELIST_CAPACITY;
+    list->moves = malloc(DEFAULT_MOVELIST_CAPACITY * sizeof(Move));
+  }
+  list->count = 0;
+
   Turn turn = board->turn;
   U64 moves = 0, pieces = 0;
   int from = 0, to = 0;
   Move move;
 
-  // STEP 1: generate king moves
+  // STEP 2: generate king moves
   // NOTE: the king can move to free squares that are not controlled by the
   // opponent
   U64 opponent_attacks = generate_opponent_attacks(board);
@@ -533,21 +551,12 @@ void generate_moves(const Board *board, MoveList *list) {
   moves = generate_piece_attacks(KING, board, from) & ~board->occupied[turn] &
           ~opponent_attacks;
   while (moves) {
-    to = pop_lsb(&moves);
-    move = (Move){from,
-                  to,
-                  0,
-                  KING,
-                  NONE,
-                  NORMAL_MOVE,
-                  board->ep_square,
-                  board->castle_white,
-                  board->castle_black,
-                  0};
-    list->moves[list->count++] = move;
+    push_move(list, (Move){from, pop_lsb(&moves), 0, KING, NONE, NORMAL_MOVE,
+                           board->ep_square, board->castle_white,
+                           board->castle_black, 0});
   }
 
-  // STEP 2: determine valid moves based on check scenarios
+  // STEP 3: determine valid moves based on check scenarios
   // NOTE: if there is one piece checking the king, then moves are filtered to
   // prevent the check if there are multiple such pieces, then only the king
   // might be moved
@@ -562,7 +571,7 @@ void generate_moves(const Board *board, MoveList *list) {
     }
   }
 
-  // STEP 3: generate moves for knight, bishop, rook, and queen
+  // STEP 4: generate moves for knight, bishop, rook, and queen
   // NOTE: Move generation follows a filtering pipeline: raw attacks are
   // retrieved from LUTs, then bitwise ANDed with masks to exclude friendly
   // pieces, satisfy check-evasion requirements, and respect absolute pins
@@ -592,7 +601,7 @@ void generate_moves(const Board *board, MoveList *list) {
         move.flags |= CAPTURE_MOVE;
         move.score += 1000 - 10 * KNIGHT;
       }
-      list->moves[list->count++] = move;
+      push_move(list, move);
     }
   }
 
@@ -620,7 +629,7 @@ void generate_moves(const Board *board, MoveList *list) {
         move.flags |= CAPTURE_MOVE;
         move.score += 1000 - 10 * BISHOP;
       }
-      list->moves[list->count++] = move;
+      push_move(list, move);
     }
   }
 
@@ -647,7 +656,7 @@ void generate_moves(const Board *board, MoveList *list) {
         move.flags |= CAPTURE_MOVE;
         move.score += 1000 - 10 * ROOK;
       }
-      list->moves[list->count++] = move;
+      push_move(list, move);
     }
   }
 
@@ -675,11 +684,11 @@ void generate_moves(const Board *board, MoveList *list) {
         move.flags |= CAPTURE_MOVE;
         move.score += 1000 - 10 * QUEEN;
       }
-      list->moves[list->count++] = move;
+      push_move(list, move);
     }
   }
 
-  // STEP 4: generate moves for pawns
+  // STEP 5: generate moves for pawns
   // NOTE: the code repetitiveness in handling pawn moves separately is
   // intentional for optimization purposes
   pieces = board->pieces[turn][PAWN]; // get pawns
@@ -724,16 +733,16 @@ void generate_moves(const Board *board, MoveList *list) {
           move.promo = promo;         // set promotion type
           move.flags |= PROMOTION;    // set promotion flag
           move.score += promo * 1000; // adjust score
-          list->moves[list->count++] = move;
+          push_move(list, move);
         }
         continue; // skip to next pawn
       }
 
-      list->moves[list->count++] = move;
+      push_move(list, move);
     }
   }
 
-  // STEP 5: generate castling moves
+  // STEP 6: generate castling moves
   if (checkers == 0) { // return if the king is in check
     CastleRights rights = turn ? board->castle_black : board->castle_white;
     if (rights != 0) { // return if there are no castle rights
@@ -742,37 +751,23 @@ void generate_moves(const Board *board, MoveList *list) {
       // check for kingside castling
       if ((rights & CAN_CASTLE_OO) &&
           !((occupied | opponent_attacks) & (turn ? BSHORT : WSHORT))) {
-        list->moves[list->count++] = (Move){turn ? 60 : 4,
-                                            turn ? 62 : 6,
-                                            0,
-                                            KING,
-                                            NONE,
-                                            CASTLING,
-                                            board->ep_square,
-                                            board->castle_white,
-                                            board->castle_black,
-                                            2100};
+        push_move(list, (Move){turn ? 60 : 4, turn ? 62 : 6, 0, KING, NONE,
+                               CASTLING, board->ep_square, board->castle_white,
+                               board->castle_black, 2100});
       }
 
       // check for queenside castling
       if ((rights & CAN_CASTLE_OOO) &&
           !(occupied & (turn ? BLONG_OCCUPIED : WLONG_OCCUPIED)) &&
           !(opponent_attacks & (turn ? BLONG_ATTACKED : WLONG_ATTACKED))) {
-        list->moves[list->count++] = (Move){turn ? 60 : 4,
-                                            turn ? 58 : 2,
-                                            0,
-                                            KING,
-                                            NONE,
-                                            CASTLING,
-                                            board->ep_square,
-                                            board->castle_white,
-                                            board->castle_black,
-                                            2000};
+        push_move(list, (Move){turn ? 60 : 4, turn ? 58 : 2, 0, KING, NONE,
+                               CASTLING, board->ep_square, board->castle_white,
+                               board->castle_black, 2000});
       }
     }
   }
 
-  // STEP 6: generate en passant moves
+  // STEP 7: generate en passant moves
   if (board->ep_square == 64)
     return; // return if there is no en passant square
 
@@ -907,8 +902,8 @@ Move san_to_move(const Board *board, const char *move_str) {
 
   // STEP 6: handle en passant for pawns
   if (move.to == board->ep_square && move.piece == PAWN) {
-    move.from = lsb(pawn_attacks[!turn][move.to] &
-                    board->pieces[turn][PAWN] & start_mask);
+    move.from = lsb(pawn_attacks[!turn][move.to] & board->pieces[turn][PAWN] &
+                    start_mask);
     return move;
   }
 
@@ -984,24 +979,26 @@ Move uci_to_move(const Board *board, const char *move_str) {
 void initial_list(const Board *board, MoveList *list, const char *moves_str,
                   StrToMoveFunc str_to_move) {
   list->count = 0;
+  list->moves = NULL;
+  list->size = 0;
 
   // generate all legal moves
   MoveList legal_moves;
   legal_moves.count = 0;
+  legal_moves.moves = NULL;
   generate_moves(board, &legal_moves);
 
   // if there is no moves_str or translate function,
   // just copy the legal_moves to list
   if (!moves_str || !*moves_str || !str_to_move) {
-    for (int i = 0; i < legal_moves.count; i++) {
-      list->moves[list->count++] = legal_moves.moves[i];
-    }
+    *list = legal_moves;
     return;
   }
 
   // allocate memory for temp string
   char *temp = malloc(strlen(moves_str) + 1);
   if (temp == NULL) {
+    free(legal_moves.moves);
     return; // return empty list in case of allocation fail
   }
 
@@ -1017,13 +1014,20 @@ void initial_list(const Board *board, MoveList *list, const char *moves_str,
       Move *legal = &legal_moves.moves[i];
       if (legal->from == parsed.from && legal->to == parsed.to &&
           legal->promo == parsed.promo) {
-        list->moves[list->count++] = *legal;
+        // swap current move with the last unfiltered move
+        Move temp_move = legal_moves.moves[i]; // CHANGED: save before swap
+        legal_moves.moves[i] = legal_moves.moves[list->count];
+        legal_moves.moves[list->count] = temp_move;
+        list->count++;
         break;
       }
     }
 
     token = strtok(NULL, " ");
   }
+
+  list->moves = legal_moves.moves;
+  list->size = legal_moves.size;
 
   free(temp);
 }

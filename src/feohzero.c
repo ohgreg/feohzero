@@ -49,6 +49,7 @@ int main(int argc, char *argv[]) {
 
   if (list.count == 0) {
     fprintf(stderr, "Error! There no valid moves\n");
+    free(list.moves);
     clear_tt();
     return 1;
   }
@@ -76,6 +77,7 @@ int main(int argc, char *argv[]) {
     printf("\n");
   }
 
+  free(list.moves);
   clear_tt(); // free transposition table memory
 
   return 0;

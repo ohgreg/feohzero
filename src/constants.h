@@ -26,6 +26,9 @@
 /* bitboard for rank 8 (black's back rank) */
 #define RANK_8 0xFF00000000000000ULL
 
+/* default capacity for move lists */
+#define DEFAULT_MOVELIST_CAPACITY 32
+
 /* squares that must be empty for white kingside castling */
 #define WSHORT 0x70ULL
 /* squares that must be empty for black kingside castling */
@@ -58,8 +61,6 @@
 #define BEST_MOVE_BOOST 40000
 /* move ordering boost for the previous iteration's best move */
 #define PREVIOUS_BEST_BOOST 20000
-/* max search depth limit */
-#define MAX_PLY 128
 
 /* macros for stringifying config values */
 #define XSTR(x) STR(x)

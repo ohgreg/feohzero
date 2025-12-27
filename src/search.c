@@ -14,7 +14,8 @@
 typedef struct {
   int ply;
   Move previous_best;
-  MoveList *start_list;
+  MoveList move_list;
+  int is_root;
 } SearchStack;
 
 /* search info for tracking nodes and time constraints */
@@ -84,28 +85,27 @@ static int dls_search(Board *board, int depth, Move *best_move, int alpha,
     return eval(board);
 
   // STEP 5: generate moves based on ply
-  MoveList list;
-  if (ss->ply != 0) {
-    list.count = 0;
-    generate_moves(board, &list);
-
-    // prioritize best move from transposition table
-    if (tt_entry != NULL) {
-      for (int j = 0; j < list.count; j++) {
-        if (equal_moves(&list.moves[j], &tt_entry->best_move)) {
-          list.moves[j].score = BEST_MOVE_BOOST;
+  MoveList *list = &ss->move_list;
+  if (ss->is_root) {
+    // root node already has moves generated and stored in move_list
+    // boost previous best move score
+    if (ss->previous_best.score == PREVIOUS_BEST_BOOST) {
+      for (int j = 0; j < list->count; j++) {
+        if (equal_moves(&list->moves[j], &ss->previous_best)) {
+          list->moves[j].score = PREVIOUS_BEST_BOOST;
           break;
         }
       }
     }
   } else {
-    list = *ss->start_list; // use root move list
+    // generate moves for non-root nodes
+    generate_moves(board, list);
 
-    // boost previous best move score
-    if (ss->previous_best.score == PREVIOUS_BEST_BOOST) {
-      for (int j = 0; j < list.count; j++) {
-        if (equal_moves(&list.moves[j], &ss->previous_best)) {
-          list.moves[j].score = PREVIOUS_BEST_BOOST;
+    // prioritize best move from transposition table
+    if (tt_entry != NULL) {
+      for (int j = 0; j < list->count; j++) {
+        if (equal_moves(&list->moves[j], &tt_entry->best_move)) {
+          list->moves[j].score = BEST_MOVE_BOOST;
           break;
         }
       }
@@ -113,10 +113,10 @@ static int dls_search(Board *board, int depth, Move *best_move, int alpha,
   }
 
   // STEP 6: sort moves based on heuristic scores
-  qsort(list.moves, list.count, sizeof(Move), compare_moves);
+  qsort(list->moves, list->count, sizeof(Move), compare_moves);
 
   // STEP 7: handle end game conditions
-  if (list.count == 0) {
+  if (list->count == 0) {
     if (is_king_in_check(board))
       return (board->turn ? INF : -INF); // checkmate (cooked)
     return 0;                            // stalemate
@@ -124,28 +124,28 @@ static int dls_search(Board *board, int depth, Move *best_move, int alpha,
 
   // STEP 8: iterate through generated moves
   int best_current_score =
-      (side == WHITE) ? -INF : INF;       // initialize best score
-  Move best_current_move = list.moves[0]; // initialize best move
+      (side == WHITE) ? -INF : INF;        // initialize best score
+  Move best_current_move = list->moves[0]; // initialize best move
 
   // minimax logic for white and black respectively
   // NOTE: the code repetitiveness in handling white and black moves is
   // intentional for optimization purposes
   if (side == WHITE) {
-    for (int i = 0; i < list.count; i++) {
-      apply_move(board, &list.moves[i]);
-      fast_board_key(board, &list.moves[i]);
+    for (int i = 0; i < list->count; i++) {
+      apply_move(board, &list->moves[i]);
+      fast_board_key(board, &list->moves[i]);
 
       int rec_score =
           dls_search(board, depth - 1, NULL, alpha, beta, ss + 1, info);
 
-      fast_board_key(board, &list.moves[i]);
-      undo_move(board, &list.moves[i]);
+      fast_board_key(board, &list->moves[i]);
+      undo_move(board, &list->moves[i]);
 
       if (info->stop)
         return eval(board); // exit if timed out
 
       if (rec_score > best_current_score) {
-        best_current_move = list.moves[i];
+        best_current_move = list->moves[i];
         best_current_score = rec_score;
       }
       if (rec_score > alpha)
@@ -154,21 +154,21 @@ static int dls_search(Board *board, int depth, Move *best_move, int alpha,
         break; // prune the search
     }
   } else {
-    for (int i = 0; i < list.count; i++) {
-      apply_move(board, &list.moves[i]);
-      fast_board_key(board, &list.moves[i]);
+    for (int i = 0; i < list->count; i++) {
+      apply_move(board, &list->moves[i]);
+      fast_board_key(board, &list->moves[i]);
 
       int rec_score =
           dls_search(board, depth - 1, NULL, alpha, beta, ss + 1, info);
 
-      fast_board_key(board, &list.moves[i]);
-      undo_move(board, &list.moves[i]);
+      fast_board_key(board, &list->moves[i]);
+      undo_move(board, &list->moves[i]);
 
       if (info->stop)
         return eval(board); // exit if timed out
 
       if (rec_score < best_current_score) {
-        best_current_move = list.moves[i];
+        best_current_move = list->moves[i];
         best_current_score = rec_score;
       }
       if (rec_score < beta)
@@ -190,7 +190,7 @@ static int dls_search(Board *board, int depth, Move *best_move, int alpha,
 
     store_tt(board->key, depth, best_current_score, best_current_move,
              node_type);
-    if (ss->ply == 0)
+    if (ss->is_root)
       *best_move = best_current_move; // update best move only at root
   }
 
@@ -205,22 +205,36 @@ void ids_search(Board *board, int max_depth, MoveList start_list, int timeout,
   info.timeout = timeout;
   info.stop = 0;
 
-  // STEP 2: initialize search stack for each possible ply
-  SearchStack ss[64];
-  for (int i = 0; i < 64; i++) {
-    ss[i].ply = i;
-    ss[i].previous_best = (Move){0};
+  // STEP 2: allocate search stack dynamically
+  SearchStack *ss = malloc(max_depth * sizeof(SearchStack));
+  if (ss == NULL) {
+    result->best_move = (Move){0};
+    result->sol_depth = 0;
+    result->nodes = 0;
+    result->timeout = 0;
+    result->elapsed = 0;
+    return;
   }
 
-  // STEP 3: reset search result
-  ss[0].start_list = &start_list;
+  // STEP 3: initialize search stack for each possible ply
+  for (int i = 0; i < max_depth; i++) {
+    ss[i].ply = i;
+    ss[i].previous_best = (Move){0};
+    ss[i].move_list.moves = NULL;
+    ss[i].move_list.count = 0;
+    ss[i].move_list.size = 0;
+    ss[i].is_root = 0;
+  }
+  ss[0].move_list = start_list;
+  ss[0].is_root = 1;
 
+  // STEP 4: reset search result
   result->best_move = (Move){0};
   result->sol_depth = 0;
   result->nodes = 0;
   result->timeout = 0;
 
-  // STEP 4: iterate through each depth up to max_depth
+  // STEP 5: iterate through each depth up to max_depth
   for (int depth = 1; depth <= max_depth; depth++) {
     Move curr_move = {0};
     dls_search(board, depth, &curr_move, -INF, INF, ss, &info);
@@ -238,8 +252,17 @@ void ids_search(Board *board, int max_depth, MoveList start_list, int timeout,
     ss[0].previous_best.score = PREVIOUS_BEST_BOOST;
   }
 
-  // STEP 5: update search result
+  // STEP 6: update search result
   result->nodes = info.nodes;
   result->elapsed =
       (int)(((double)(clock() - info.start_time) / CLOCKS_PER_SEC) * 1000);
+
+  // STEP 7: free allocated memory
+  // NOTE: don't free ss[0].move_list.moves as it's owned by the caller
+  for (int i = 1; i < max_depth; i++) {
+    if (ss[i].move_list.moves != NULL) {
+      free(ss[i].move_list.moves);
+    }
+  }
+  free(ss);
 }
