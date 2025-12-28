@@ -8,13 +8,18 @@ const AboutPopUp = ({ isOpen, onClose }: AboutPopUpProps) => {
 
   return (
     <div className="popup-overlay" onClick={onClose}>
-      <div className="popup" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "400px" }}>
+      <div
+        className="popup"
+        onClick={(e) => e.stopPropagation()}
+        style={{ maxWidth: "400px" }}
+      >
         <h3>About the engine</h3>
         <div
           style={{ textAlign: "left", marginTop: "15px", lineHeight: "1.6" }}
         >
           <p>
-            FeohZero is a chess engine written in C and compiled to WebAssembly for this interactive web app.
+            FeohZero is a chess engine written in C and compiled to WASM for
+            this interactive web app.
           </p>
           <p style={{ marginTop: "10px" }}>
             View the source code on{" "}
@@ -28,8 +33,12 @@ const AboutPopUp = ({ isOpen, onClose }: AboutPopUpProps) => {
             </a>
             .
           </p>
-          <p style={{ marginTop: "10px", fontSize: "12px", color: "#808080" }}>
-            <strong>Note:</strong> this web version may not be as stable or fast as the native C version due to WebAssembly limitations and browser constraints. Performance may vary depen-ding on your browser and device.
+          <p style={{ marginTop: "10px" }}>
+            This web version may not be as stable or fast as the native C
+            version due to WASM limitations and browser constraints.
+          </p>
+          <p style={{ marginTop: "10px" }}>
+            Performance may vary depen-ding on your browser and device.
           </p>
         </div>
         <div className="popup-buttons">
