@@ -69,15 +69,22 @@ static int dls_search(Board *board, int depth, Move *best_move, int alpha,
   // NOTE: tt's depth has to be bigger depth or there's no point
   TTentry *tt_entry = probe_tt(board->key);
   if (tt_entry != NULL && tt_entry->depth >= depth) {
+    int score = tt_entry->score;
+
+    if (score > MATE_THRESHOLD)
+      score -= ss->ply;
+    else if (score < -MATE_THRESHOLD)
+      score += ss->ply;
+
     if (tt_entry->node_type == EXACT)
-      return tt_entry->score;
+      return score;
     else if (tt_entry->node_type == LOWER)
-      alpha = (alpha > tt_entry->score) ? alpha : tt_entry->score;
+      alpha = (alpha > score) ? alpha : score;
     else if (tt_entry->node_type == UPPER)
-      beta = (beta < tt_entry->score) ? beta : tt_entry->score;
+      beta = (beta < score) ? beta : score;
 
     if (beta <= alpha)
-      return tt_entry->score;
+      return score;
   }
 
   // STEP 4: recursion base case
@@ -118,8 +125,9 @@ static int dls_search(Board *board, int depth, Move *best_move, int alpha,
   // STEP 7: handle end game conditions
   if (list->count == 0) {
     if (is_king_in_check(board))
-      return (board->turn ? INF : -INF); // checkmate (cooked)
-    return 0;                            // stalemate
+      return (side == WHITE) ? (-MATE_SCORE + ss->ply)
+                             : (MATE_SCORE - ss->ply); // checkmate (cooked)
+    return 0;                                          // stalemate
   }
 
   // STEP 8: iterate through generated moves
@@ -180,6 +188,12 @@ static int dls_search(Board *board, int depth, Move *best_move, int alpha,
 
   // STEP 9: store the result in transposition table and update root move
   if (!info->stop) {
+    int score = best_current_score;
+    if (score > MATE_THRESHOLD)
+      score += ss->ply;
+    else if (score < -MATE_THRESHOLD)
+      score -= ss->ply;
+
     Node node_type;
     if (best_current_score <= initial_alpha)
       node_type = UPPER; // upper bound
@@ -188,8 +202,7 @@ static int dls_search(Board *board, int depth, Move *best_move, int alpha,
     else
       node_type = EXACT; // exact
 
-    store_tt(board->key, depth, best_current_score, best_current_move,
-             node_type);
+    store_tt(board->key, depth, score, best_current_move, node_type);
     if (ss->is_root)
       *best_move = best_current_move; // update best move only at root
   }
@@ -237,7 +250,7 @@ void ids_search(Board *board, int max_depth, MoveList start_list, int timeout,
   // STEP 5: iterate through each depth up to max_depth
   for (int depth = 1; depth <= max_depth; depth++) {
     Move curr_move = {0};
-    dls_search(board, depth, &curr_move, -INF, INF, ss, &info);
+    int score = dls_search(board, depth, &curr_move, -INF, INF, ss, &info);
 
     // check if search was aborted
     if (info.stop) {
@@ -250,6 +263,9 @@ void ids_search(Board *board, int max_depth, MoveList start_list, int timeout,
     result->sol_depth = depth;
     ss[0].previous_best = curr_move;
     ss[0].previous_best.score = PREVIOUS_BEST_BOOST;
+
+    if (abs(score) > MATE_THRESHOLD)
+      break;
   }
 
   // STEP 6: update search result

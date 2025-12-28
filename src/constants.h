@@ -44,6 +44,10 @@
 
 /* represents infinity in evaluation scores */
 #define INF INT_MAX
+/* represents the base value for a checkmate */
+#define MATE_SCORE 300000
+/* represents the boundary to distinguish mate scores from normal eval */
+#define MATE_THRESHOLD (MATE_SCORE - 256)
 /* penalty for doubled pawns in the middlegame */
 #define DOUBLED_PAWN_MG_PENALTY 10
 /* penalty for doubled pawns in the endgame */
