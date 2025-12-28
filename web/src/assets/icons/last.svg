@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_1" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 30 30">
+  <!-- Generator: Adobe Illustrator 29.3.1, SVG Export Plug-In . SVG Version: 2.1.0 Build 151)  -->
+  <defs>
+    <style>
+      .st0 {
+        fill: none;
+      }
+
+      .st1 {
+        fill: #b2b2b2;
+      }
+
+      .st1, .st2 {
+        fill-rule: evenodd;
+      }
+
+      .st2 {
+        fill: #1b1b1b;
+      }
+    </style>
+  </defs>
+  <g id="_x32_4x24_x2F_ARROWS_x2F_arrow-05-left">
+    <g id="arrow-05-left">
+      <g id="Bounding_Boxes">
+        <polygon id="Shape" class="st0" points="30 30 0 30 0 0 30 0 30 30"/>
+      </g>
+      <path id="c2_x2F_arrow-05-left" class="st1" d="M25,22.5c0,.69-.56,1.25-1.25,1.25s-1.25-.56-1.25-1.25V7.5c0-.69.56-1.25,1.25-1.25s1.25.56,1.25,1.25v15Z"/>
+      <path id="c1_x2F_arrow-05-left" class="st2" d="M12.868,8.278c-.491-.464-.491-1.216,0-1.68s1.288-.464,1.779,0l7.116,6.722c.982.928.982,2.433,0,3.361l-7.116,6.722c-.491.464-1.288.464-1.779,0-.491-.464-.491-1.216,0-1.68l5.792-5.472H6.25c-.69,0-1.25-.56-1.25-1.25,0-.69.56-1.25,1.25-1.25h12.411s-5.792-5.472-5.792-5.472Z"/>
+    </g>
+  </g>
+</svg>

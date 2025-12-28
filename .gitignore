@@ -3,7 +3,7 @@ feohzero
 perft
 *.o
 *.d
-*.wasm
+#*.wasm
 *.exe
 
 compile_commands.json
@@ -13,8 +13,9 @@ compile_commands.json
 
 docs/
 
-web/
 Dockerfile
 docker-compose.yml
+
+#feohzero.js
 
 AUTHORS
