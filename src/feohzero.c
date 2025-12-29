@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "board.h"
+#include "book.h"
 #include "config.h"
 #include "eval.h"
 #include "moves.h"
@@ -22,19 +23,13 @@ int main(int argc, char *argv[]) {
   }
 
   srand(config.seed); // set seed for RNG
-
-  init_moves();   // move generation LUTs
-  init_eval();    // evaluation piece-square tables
-  init_zobrist(); // zobrist hashing keys
-
-  init_tt(config.tt_size_kb); // allocate transposition table
+  init_zobrist();     // zobrist hashing keys
 
   Board board;
   board.key = (U64)0;
 
   if (!load_fen(&board, config.fen)) {
     fprintf(stderr, "Error! Invalid FEN string\n");
-    free_tt();
     return 1;
   }
 
@@ -42,6 +37,16 @@ int main(int argc, char *argv[]) {
     print_board(&board);
     printf("\n");
   }
+
+  Move book_move;
+  if (probe_book(&board, &book_move)) {
+    printf("book move found: ");
+    print_move(&board, &book_move, move_to_uci);
+    printf("\n");
+    return 0;
+  }
+
+  init_moves(); // move generation LUTs
 
   // parse or generate starting moves
   MoveList list = {0};
@@ -51,7 +56,6 @@ int main(int argc, char *argv[]) {
   if (list.count == 0) {
     fprintf(stderr, "Error! There are no valid moves\n");
     free(list.moves);
-    free_tt();
     return 1;
   }
 
@@ -60,6 +64,9 @@ int main(int argc, char *argv[]) {
     print_move_list(&board, &list, config.move_to_str);
     printf("\n");
   }
+
+  init_eval();                // evaluation piece-square tables
+  init_tt(config.tt_size_kb); // allocate transposition table
 
   SearchResult result;
   ids_search(&board, config.depth, list, config.timeout, &result); // run search
