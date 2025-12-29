@@ -38,7 +38,7 @@ const AboutPopUp = ({ isOpen, onClose }: AboutPopUpProps) => {
             version due to WASM limitations and browser constraints.
           </p>
           <p style={{ marginTop: "10px" }}>
-            Performance may vary depen-ding on your browser and device.
+            Performance may vary depending on your browser and device.
           </p>
         </div>
         <div className="popup-buttons">
