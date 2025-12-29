@@ -61,11 +61,18 @@ function App() {
   const [engineInitialized, setEngineInitialized] = useState<boolean>(false);
   const [isEngineThinking, setIsEngineThinking] = useState<boolean>(false);
   const [searchInfo, setSearchInfo] = useState<{
+    bookMove: boolean;
     depth?: number;
     nodes?: number;
     time?: number;
     nps?: number;
-  }>({});
+  }>({
+    bookMove: false,
+    depth: 0,
+    nodes: 0,
+    time: 0,
+    nps: 0,
+  });
   const [engineSettings, setEngineSettings] = useState({
     depth: 8,
     timeLimit: 3000,
@@ -142,6 +149,7 @@ function App() {
       });
 
       setSearchInfo({
+        bookMove: result.bookMove,
         depth: result.depth,
         nodes: result.nodes,
         time: result.time,
@@ -622,18 +630,29 @@ function App() {
                       .toFixed(2)
                       .padStart(6, "\u00A0")}
                   </span>
-                  <span className="sep">•</span>
                 </>
               )}
-              <span>depth: {searchInfo.depth ?? "-"}</span>
-              <span className="sep">•</span>
-              <span>nodes: {searchInfo.nodes?.toLocaleString() ?? "-"}</span>
-              <span className="sep">•</span>
-              <span>
-                time: {searchInfo.time ? `${searchInfo.time}ms` : "-"}
-              </span>
-              <span className="sep">•</span>
-              <span>nps: {searchInfo.nps?.toLocaleString() ?? "-"}</span>
+              {searchInfo.bookMove ? (
+                <>
+                  <span className="sep">•</span>
+                  <span className="book-badge">book move</span>
+                </>
+              ) : (
+                <>
+                  <span className="sep">•</span>
+                  <span>depth: {searchInfo.depth ?? "-"}</span>
+                  <span className="sep">•</span>
+                  <span>
+                    nodes: {searchInfo.nodes?.toLocaleString() ?? "-"}
+                  </span>
+                  <span className="sep">•</span>
+                  <span>
+                    time: {searchInfo.time ? `${searchInfo.time}ms` : "-"}
+                  </span>
+                  <span className="sep">•</span>
+                  <span>nps: {searchInfo.nps?.toLocaleString() ?? "-"}</span>
+                </>
+              )}
             </div>
           </div>
         )}

@@ -12,6 +12,7 @@ type ChessEngineModule = {
   _wasm_get_time: () => number;
   _wasm_get_nps: () => number;
   _wasm_is_timeout: () => number;
+  _wasm_is_book_move: () => number;
   _wasm_eval: () => number;
   ccall: (
     name: string,
@@ -38,6 +39,7 @@ interface SearchResult {
   time: number;
   nps: number;
   timeout: boolean;
+  bookMove: boolean;
 }
 
 /* chess engine wrapper for WASM module */
@@ -97,6 +99,7 @@ class ChessEngine {
       time: this.module._wasm_get_time(),
       nps: this.module._wasm_get_nps(),
       timeout: this.module._wasm_is_timeout() === 1,
+      bookMove: this.module._wasm_is_book_move() === 1,
     };
   }
 
