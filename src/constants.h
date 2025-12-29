@@ -27,7 +27,7 @@
 #define RANK_8 0xFF00000000000000ULL
 
 /* default capacity for move lists */
-#define DEFAULT_MOVELIST_CAPACITY 32
+#define DEFAULT_MOVELIST_CAPACITY 64
 
 /* squares that must be empty for white kingside castling */
 #define WSHORT 0x70ULL
