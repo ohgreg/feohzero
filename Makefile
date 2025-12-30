@@ -37,6 +37,7 @@ feohzero: feohzero.o \
   moves.o \
   print.o \
   board.o \
+  book.o \
   eval.o \
   search.o \
   zobrist.o \
