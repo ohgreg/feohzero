@@ -3,7 +3,11 @@ import { useState, useEffect } from "react";
 interface SettingsPopUpProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (settings: { depth: number; timeLimit: number; ttSize: number }) => void;
+  onSubmit: (settings: {
+    depth: number;
+    timeLimit: number;
+    ttSize: number;
+  }) => void;
   settings: {
     depth: number;
     timeLimit: number;
@@ -11,16 +15,30 @@ interface SettingsPopUpProps {
   };
 }
 
-const SettingsPopUp = ({ isOpen, onClose, onSubmit, settings }: SettingsPopUpProps) => {
+const SettingsPopUp = ({
+  isOpen,
+  onClose,
+  onSubmit,
+  settings,
+}: SettingsPopUpProps) => {
   const [depth, setDepth] = useState<string>(settings.depth.toString());
-  const [timeLimit, setTimeLimit] = useState<string>(settings.timeLimit.toString());
+  const [timeLimit, setTimeLimit] = useState<string>(
+    settings.timeLimit.toString(),
+  );
   const [ttSize, setTtSize] = useState<string>(settings.ttSize.toString());
+
+  const [depthError, setDepthError] = useState<boolean>(false);
+  const [timeLimitError, setTimeLimitError] = useState<boolean>(false);
+  const [ttSizeError, setTtSizeError] = useState<boolean>(false);
 
   useEffect(() => {
     if (isOpen) {
       setDepth(settings.depth.toString());
       setTimeLimit(settings.timeLimit.toString());
       setTtSize(settings.ttSize.toString());
+      setDepthError(false);
+      setTimeLimitError(false);
+      setTtSizeError(false);
     }
   }, [isOpen, settings]);
 
@@ -31,25 +49,41 @@ const SettingsPopUp = ({ isOpen, onClose, onSubmit, settings }: SettingsPopUpPro
     const parsedTimeLimit = parseInt(timeLimit);
     const parsedTtSize = parseInt(ttSize);
 
-    if (isNaN(parsedDepth) || parsedDepth < 1 || parsedDepth > 20) {
-      alert("Search depth must be between 1 and 20.");
-      return;
+    let hasError = false;
+
+    if (isNaN(parsedDepth) || parsedDepth < 1 || parsedDepth > 50) {
+      setDepthError(true);
+      hasError = true;
+    } else {
+      setDepthError(false);
     }
 
-    if (isNaN(parsedTimeLimit) || parsedTimeLimit < 100 || parsedTimeLimit > 30000) {
-      alert("Time limit must be between 100 and 60000 ms.");
-      return;
+    if (
+      isNaN(parsedTimeLimit) ||
+      parsedTimeLimit < 100 ||
+      parsedTimeLimit > 30000
+    ) {
+      setTimeLimitError(true);
+      hasError = true;
+    } else {
+      setTimeLimitError(false);
     }
 
     if (isNaN(parsedTtSize) || parsedTtSize < 0 || parsedTtSize > 65536) {
-      alert("TT size must be between 0 and 65536 KB.");
+      setTtSizeError(true);
+      hasError = true;
+    } else {
+      setTtSizeError(false);
+    }
+
+    if (hasError) {
       return;
     }
 
     onSubmit({
       depth: parsedDepth,
       timeLimit: parsedTimeLimit,
-      ttSize: parsedTtSize
+      ttSize: parsedTtSize,
     });
     onClose();
   };
@@ -58,27 +92,33 @@ const SettingsPopUp = ({ isOpen, onClose, onSubmit, settings }: SettingsPopUpPro
     setDepth(settings.depth.toString());
     setTimeLimit(settings.timeLimit.toString());
     setTtSize(settings.ttSize.toString());
+    setDepthError(false);
+    setTimeLimitError(false);
+    setTtSizeError(false);
     onClose();
   };
 
   const handleDepthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    if (value === '' || /^\d+$/.test(value)) {
+    if (value === "" || /^\d+$/.test(value)) {
       setDepth(value);
+      setDepthError(false);
     }
   };
 
   const handleTimeLimitChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    if (value === '' || /^\d+$/.test(value)) {
+    if (value === "" || /^\d+$/.test(value)) {
       setTimeLimit(value);
+      setTimeLimitError(false);
     }
   };
 
   const handleTtSizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    if (value === '' || /^\d+$/.test(value)) {
+    if (value === "" || /^\d+$/.test(value)) {
       setTtSize(value);
+      setTtSizeError(false);
     }
   };
 
@@ -86,42 +126,74 @@ const SettingsPopUp = ({ isOpen, onClose, onSubmit, settings }: SettingsPopUpPro
     <div className="popup-overlay" onClick={handleCancel}>
       <div className="popup" onClick={(e) => e.stopPropagation()}>
         <h3>Engine settings</h3>
-        <div style={{ paddingTop: '5px', marginBottom: '15px', textAlign: 'left' }}>
-          <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>
+        <div
+          style={{ paddingTop: "5px", marginBottom: "15px", textAlign: "left" }}
+        >
+          <label
+            style={{ display: "block", marginBottom: "5px", fontSize: "14px" }}
+          >
             Search depth (1 - 50)
           </label>
           <input
             type="text"
             value={depth}
             onChange={handleDepthChange}
+            className={depthError ? "error" : ""}
           />
-          <small style={{ display: 'block', color: '#808080', fontSize: '11px', marginTop: '3px' }}>
+          <small
+            style={{
+              display: "block",
+              color: "#808080",
+              fontSize: "11px",
+              marginTop: "3px",
+            }}
+          >
             maximum search depth to look for
           </small>
         </div>
-        <div style={{ marginBottom: '15px', textAlign: 'left' }}>
-          <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>
+        <div style={{ marginBottom: "15px", textAlign: "left" }}>
+          <label
+            style={{ display: "block", marginBottom: "5px", fontSize: "14px" }}
+          >
             Time limit (100-30000 ms)
           </label>
           <input
             type="text"
             value={timeLimit}
             onChange={handleTimeLimitChange}
+            className={timeLimitError ? "error" : ""}
           />
-          <small style={{ display: 'block', color: '#808080', fontSize: '11px', marginTop: '3px' }}>
+          <small
+            style={{
+              display: "block",
+              color: "#808080",
+              fontSize: "11px",
+              marginTop: "3px",
+            }}
+          >
             maximum time per engine move
           </small>
         </div>
-        <div style={{ marginBottom: '15px', textAlign: 'left' }}>
-          <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>
+        <div style={{ marginBottom: "15px", textAlign: "left" }}>
+          <label
+            style={{ display: "block", marginBottom: "5px", fontSize: "14px" }}
+          >
             TT size (0-65536 KB)
           </label>
           <input
             type="text"
             value={ttSize}
             onChange={handleTtSizeChange}
+            className={ttSizeError ? "error" : ""}
           />
-          <small style={{ display: 'block', color: '#808080', fontSize: '11px', marginTop: '3px' }}>
+          <small
+            style={{
+              display: "block",
+              color: "#808080",
+              fontSize: "11px",
+              marginTop: "3px",
+            }}
+          >
             memory allocated for transposition table
           </small>
         </div>

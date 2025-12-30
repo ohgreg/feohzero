@@ -22,6 +22,9 @@ const AboutPopUp = ({ isOpen, onClose }: AboutPopUpProps) => {
             this interactive web app.
           </p>
           <p style={{ marginTop: "10px" }}>
+            This project won the <strong>1st place</strong> in the DIT NKUA Introduction to Programming class competition (hw3-2024).
+          </p>
+          <p style={{ marginTop: "10px" }}>
             View the source code on{" "}
             <a
               href="https://github.com/ohgreg/feohzero"

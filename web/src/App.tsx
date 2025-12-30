@@ -10,7 +10,7 @@ import chessEngine from "./wasm/engine";
 
 import AboutPopUp from "./components/AboutPopUp";
 import SettingsPopUp from "./components/SettingsPopUp";
-import FENPopup from "./components/FENPopUp";
+import FENPopUp from "./components/FENPopUp";
 import TurnIndicator from "./components/TurnIndicator";
 import {
   Play,
@@ -76,8 +76,9 @@ function App() {
   const [engineSettings, setEngineSettings] = useState({
     depth: 8,
     timeLimit: 3000,
-    ttSize: 16000,
+    ttSize: 16384,
   });
+  const [engineError, setEngineError] = useState<string | null>(null);
 
   /* pop-ups state */
   const [isAboutPopUpOpen, setIsAboutPopUpOpen] = useState(false);
@@ -125,6 +126,7 @@ function App() {
     }
 
     setIsEngineThinking(true);
+    setEngineError(null);
 
     await new Promise((resolve) => requestAnimationFrame(resolve));
 
@@ -166,10 +168,16 @@ function App() {
         if (move) {
           setRedoStack([]);
           setPositionWrapper(game.fen());
+        } else {
+          setEngineError("Engine returned invalid move.");
         }
+      } else {
+        setEngineError("Engine failed to find a move.");
       }
     } catch (error) {
-      console.error("Engine move failed:", error);
+      setEngineError(
+        `Engine error: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
     } finally {
       setIsEngineThinking(false);
     }
@@ -181,7 +189,9 @@ function App() {
         await chessEngine.initialize(engineSettings.ttSize);
         setEngineInitialized(true);
       } catch (error) {
-        console.error("Failed to initialize engine:", error);
+        setEngineError(
+          `Failed to initialize engine: ${error instanceof Error ? error.message : "Unknown error"}`,
+        );
       }
     };
 
@@ -275,8 +285,14 @@ function App() {
 
   const boardPause = () => {
     setIsStarted(false);
-
-    setSearchInfo({});
+    setSearchInfo({
+      bookMove: false,
+      depth: 0,
+      nodes: 0,
+      time: 0,
+      nps: 0,
+    });
+    setEngineError(null);
 
     if (currentTimeout) {
       clearTimeout(currentTimeout);
@@ -290,6 +306,7 @@ function App() {
 
   const boardReset = () => {
     boardPause();
+    setEngineError(null);
     setWinner(null);
     setRedoStack([]);
 
@@ -370,10 +387,12 @@ function App() {
         setInitialFen(fen);
         setPositionWrapper(game.fen());
         setIsFENPopupOpen(false);
+        return true;
       } else {
-        alert("Invalid FEN string. Please try again.");
+        return false;
       }
     }
+    return false;
   };
 
   const boardHandleSettingsSubmit = async (newSettings: {
@@ -619,42 +638,46 @@ function App() {
           </div>
         </div>
 
-        {engineInitialized && (
-          <div className="search-info">
-            <div className="search-info-content">
-              {getCurrentEvaluation() !== null && (
-                <>
-                  <span>
-                    eval:{" "}
-                    {(getCurrentEvaluation() / 100)
-                      .toFixed(2)
-                      .padStart(6, "\u00A0")}
-                  </span>
-                </>
-              )}
-              {searchInfo.bookMove ? (
-                <>
-                  <span className="sep">•</span>
-                  <span className="book-badge">book move</span>
-                </>
-              ) : (
-                <>
-                  <span className="sep">•</span>
-                  <span>depth: {searchInfo.depth ?? "-"}</span>
-                  <span className="sep">•</span>
-                  <span>
-                    nodes: {searchInfo.nodes?.toLocaleString() ?? "-"}
-                  </span>
-                  <span className="sep">•</span>
-                  <span>
-                    time: {searchInfo.time ? `${searchInfo.time}ms` : "-"}
-                  </span>
-                  <span className="sep">•</span>
-                  <span>nps: {searchInfo.nps?.toLocaleString() ?? "-"}</span>
-                </>
-              )}
+        {engineError ? (
+          <div className="engine-error">{engineError}</div>
+        ) : (
+          engineInitialized && (
+            <div className="search-info">
+              <div className="search-info-content">
+                {getCurrentEvaluation() !== null && (
+                  <>
+                    <span>
+                      eval:{" "}
+                      {(getCurrentEvaluation() / 100)
+                        .toFixed(2)
+                        .padStart(6, "\u00A0")}
+                    </span>
+                  </>
+                )}
+                {searchInfo.bookMove ? (
+                  <>
+                    <span className="sep">•</span>
+                    <span className="book-badge">book move</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="sep">•</span>
+                    <span>depth: {searchInfo.depth ?? "-"}</span>
+                    <span className="sep">•</span>
+                    <span>
+                      nodes: {searchInfo.nodes?.toLocaleString() ?? "-"}
+                    </span>
+                    <span className="sep">•</span>
+                    <span>
+                      time: {searchInfo.time ? `${searchInfo.time}ms` : "-"}
+                    </span>
+                    <span className="sep">•</span>
+                    <span>nps: {searchInfo.nps?.toLocaleString() ?? "-"}</span>
+                  </>
+                )}
+              </div>
             </div>
-          </div>
+          )
         )}
 
         <div className="buttons-container">
@@ -776,7 +799,7 @@ function App() {
 
       <footer>
         <div className="credits">
-          <a href="https://github.com/ohgreg/feohzero" target="_blank">
+          <a href="https://github.com/ohgreg/" target="_blank">
             Developed by ohgreg <Github />
           </a>
         </div>
@@ -792,7 +815,7 @@ function App() {
         settings={engineSettings}
         onSubmit={boardHandleSettingsSubmit}
       />
-      <FENPopup
+      <FENPopUp
         isOpen={isFENPopupOpen}
         onClose={() => setIsFENPopupOpen(false)}
         onSubmit={boardHandleFENSubmit}
