@@ -78,7 +78,10 @@ function App() {
     timeLimit: 3000,
     ttSize: 16384,
   });
+
+  /* success / error messages */
   const [engineError, setEngineError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   /* pop-ups state */
   const [isAboutPopUpOpen, setIsAboutPopUpOpen] = useState(false);
@@ -176,7 +179,7 @@ function App() {
       }
     } catch (error) {
       setEngineError(
-        `Engine error: ${error instanceof Error ? error.message : "Unknown error"}`,
+        `Engine error: ${error instanceof Error ? error.message : "unknown error"}`,
       );
     } finally {
       setIsEngineThinking(false);
@@ -190,7 +193,7 @@ function App() {
         setEngineInitialized(true);
       } catch (error) {
         setEngineError(
-          `Failed to initialize engine: ${error instanceof Error ? error.message : "Unknown error"}`,
+          `Failed to initialize engine: ${error instanceof Error ? error.message : "unknown error"}`,
         );
       }
     };
@@ -376,6 +379,8 @@ function App() {
 
   const boardExportFEN = () => {
     navigator.clipboard.writeText(game.fen());
+    setSuccessMessage("FEN copied to clipboard");
+    setTimeout(() => setSuccessMessage(null), 1000);
   };
 
   const boardHandleFENSubmit = (fen: string) => {
@@ -444,6 +449,8 @@ function App() {
             : "*",
     );
     navigator.clipboard.writeText(game.pgn());
+    setSuccessMessage("PGN copied to clipboard");
+    setTimeout(() => setSuccessMessage(null), 1000);
   };
 
   const getCurrentEvaluation = () => {
@@ -451,7 +458,10 @@ function App() {
     try {
       chessEngine.loadFEN(game.fen());
       return chessEngine.getEvaluation();
-    } catch {
+    } catch (error) {
+      setEngineError(
+        `Engine error: ${error instanceof Error ? error.message : "unknown error"}`,
+      );
       return null;
     }
   };
@@ -638,8 +648,10 @@ function App() {
           </div>
         </div>
 
-        {engineError ? (
-          <div className="engine-error">{engineError}</div>
+        {successMessage ? (
+          <div className="success-message">{successMessage}</div>
+        ) : engineError ? (
+          <div className="error-message">{engineError}</div>
         ) : (
           engineInitialized && (
             <div className="search-info">

@@ -61,7 +61,7 @@ class ChessEngine {
       await scriptLoaded;
       const createModule = (window as any).createChessEngine;
       if (!createModule) {
-        throw new Error("createChessEngine function not found on window");
+        throw new Error("WebAssembly failure");
       }
       this.module = await createModule({
         locateFile: (path: string) => {
@@ -72,14 +72,13 @@ class ChessEngine {
       this.module!._wasm_init(ttSizeKb);
       this.initialized = true;
     } catch (error) {
-      console.error("Chess engine failed to initialize:", error);
       throw error;
     }
   }
 
   /* loads a FEN position, returns true on success */
   loadFEN(fen: string): boolean {
-    if (!this.module) throw new Error("Engine not initialized");
+    if (!this.module) throw new Error("engine not initialized");
     const fenPtr = this.module.stringToNewUTF8(fen);
     const result = this.module._wasm_load_fen(fenPtr);
     this.module._free(fenPtr);
@@ -88,7 +87,7 @@ class ChessEngine {
 
   /* runs search and returns its result */
   search(depth: number = 5, timeoutMs: number = 5000): SearchResult {
-    if (!this.module) throw new Error("Engine not initialized");
+    if (!this.module) throw new Error("engine not initialized");
     const movePtr = this.module._wasm_search(depth, timeoutMs);
     const move = this.module.UTF8ToString(movePtr);
     this.module._wasm_clear();
@@ -105,7 +104,7 @@ class ChessEngine {
 
   /* returns static evaluation of current position */
   getEvaluation(): number {
-    if (!this.module) throw new Error("Engine not initialized");
+    if (!this.module) throw new Error("engine not initialized");
     return this.module._wasm_eval();
   }
 
